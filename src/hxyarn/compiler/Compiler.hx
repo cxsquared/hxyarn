@@ -99,12 +99,19 @@ class Compiler {
 
 	static inline var hashTag = "#(?'hashText'[^ \t\r\n#$<]+)";
 	static inline var nodeId = "(?'nodeId'[a-zA-Z_][a-zA-Z0-9_.]*)";
+	static inline var varId = "(?'var'\\$[a-zA-Z_][a-zA-Z0-9_]*)";
+	static inline var expression = "(?'expr'\\S+)";
+	static inline var commandStart = '<<';
+	static inline var commandEnd = '>>';
+	static inline var commandSet = "set";
+	static inline var optionsStart = "\\[\\[";
+	static inline var optionsEnd = "\\]\\]";
+
+	static var jumpRegex = new EReg('\\[\\[$nodeId\\]\\]', "i");
+	static var optionsRegex = new EReg('\\[\\[(?\'optText\'[^\\]{|\\[]+)\\|$nodeId\\]\\]\\s*($hashTag)?', "i");
+	static var setCommandRegex = new EReg('$commandStart$commandSet\\s+$varId\\s+(to|=)\\s+$expression\\s+$commandEnd', 'i');
 
 	function parseLine(line:String, lineNumber:Int) {
-		var jumpRegex = new EReg('\\[\\[$nodeId\\]\\]', "i");
-		var optionsRegex = new EReg('\\[\\[(?\'optText\'[^\\]{|\\[]+)\\|$nodeId\\]\\]\\s*($hashTag)?', "i");
-		var setCommandRegex = ~/<<set\s+(?'var'\$[a-zA-Z_][a-zA-Z0-9_]*)\s+(to|=)\s+(?'expr'\S+)>>/;
-
 		if (jumpRegex.match(line)) {
 			visitOptionJump(line, jumpRegex);
 		} else if (optionsRegex.match(line)) {
@@ -157,17 +164,22 @@ class Compiler {
 		var varId = match.matched(1);
 		var expr = match.matched(3);
 
-		// Actually evaluate this stuff
-		if (expr == 'true' || expr == 'false') {
-			emit(currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(expr == 'true' ? true : false)]);
-		} else if (!Math.isNaN(Std.parseFloat(expr))) {
-			emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(Std.parseFloat(expr))]);
-		} else {
-			emit(currentNode, OpCode.PUSH_STRING, [Operand.fromString(expr)]);
-		}
+		// Adds the compiled expression value to the stack
+		visitExpression(expr);
 
-		emit(currentNode, OpCode.PUSH_VARIABLE, [Operand.fromString(varId)]);
+		// store the variable and pop the value from the stack
+		emit(currentNode, OpCode.STORE_VARIABLE, [Operand.fromString(varId)]);
 		emit(currentNode, OpCode.POP, []);
+	}
+
+	function visitExpression(expression:String) {
+		if (expression == 'true' || expression == 'false') {
+			emit(currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(expression == 'true' ? true : false)]);
+		} else if (!Math.isNaN(Std.parseFloat(expression))) {
+			emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(Std.parseFloat(expression))]);
+		} else {
+			emit(currentNode, OpCode.PUSH_STRING, [Operand.fromString(expression)]);
+		}
 	}
 
 	function emit(node:Node, opCode:OpCode, operands:Array<Operand>) {
