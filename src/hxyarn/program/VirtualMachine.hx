@@ -258,7 +258,8 @@ class VirtualMachine {
 				if (pause == PauseExecution)
 					executionState = Suspended;
 			case ADD_OPTIONS:
-				var line = new Line(i.operands[0].stringValue);
+				var stringKey = i.operands[0].stringValue;
+				var line = new Line(stringKey);
 
 				if (i.operands.length > 2) {
 					var expressionCount = Std.int(i.operands[1].floatValue);
@@ -271,7 +272,9 @@ class VirtualMachine {
 					line.substitutions = strings;
 				}
 
-				state.currentOptions.push({line: line, value: i.operands[1].stringValue});
+				var destination = i.operands[1].stringValue;
+
+				state.currentOptions.push({line: line, value: destination});
 			case SHOW_OPTIONS:
 				if (state.currentOptions.length == 0) {
 					executionState = Stopped;

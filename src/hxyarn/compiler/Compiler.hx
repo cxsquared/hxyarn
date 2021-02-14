@@ -62,6 +62,8 @@ class Compiler {
 		var node = new Node();
 		currentNode = node;
 
+		currentNode.labels.set(registerLabel(), currentNode.instructions.length);
+
 		node.name = obj.title;
 		var tags = cast(obj.tags, String).split(",");
 		node.tags = new Array<String>();
@@ -72,6 +74,22 @@ class Compiler {
 		var lines = cast(obj.body, String).split('\n');
 		for (index => line in lines) {
 			parseLine(line, index);
+		}
+
+		var hasRemainingOptions = false;
+		for (instruction in currentNode.instructions) {
+			if (instruction.opcode == OpCode.ADD_OPTIONS)
+				hasRemainingOptions = true;
+
+			if (instruction.opcode == OpCode.SHOW_OPTIONS)
+				hasRemainingOptions = false;
+		}
+
+		if (hasRemainingOptions) {
+			emit(currentNode, OpCode.SHOW_OPTIONS, []);
+			emit(currentNode, OpCode.RUN_NODE, []);
+		} else {
+			emit(currentNode, OpCode.STOP, []);
 		}
 
 		currentNode = null;
@@ -91,6 +109,8 @@ class Compiler {
 			visitOptionJump(line, jumpRegex);
 		} else if (optionsRegex.match(line)) {
 			visitOptionLink(line, optionsRegex, lineNumber);
+		} else if (setCommandRegex.match(line)) {
+			vistSetCommand(line, setCommandRegex, lineNumber);
 		} else {
 			visitLineStatement(line, lineNumber);
 		}
@@ -131,6 +151,23 @@ class Compiler {
 			Operand.fromString(destination),
 			Operand.fromFloat(formattedText.expressionCount)
 		]);
+	}
+
+	function vistSetCommand(line:String, match:EReg, lineNumber:Int) {
+		var varId = match.matched(1);
+		var expr = match.matched(3);
+
+		// Actually evaluate this stuff
+		if (expr == 'true' || expr == 'false') {
+			emit(currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(expr == 'true' ? true : false)]);
+		} else if (!Math.isNaN(Std.parseFloat(expr))) {
+			emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(Std.parseFloat(expr))]);
+		} else {
+			emit(currentNode, OpCode.PUSH_STRING, [Operand.fromString(expr)]);
+		}
+
+		emit(currentNode, OpCode.PUSH_VARIABLE, [Operand.fromString(varId)]);
+		emit(currentNode, OpCode.POP, []);
 	}
 
 	function emit(node:Node, opCode:OpCode, operands:Array<Operand>) {
@@ -183,5 +220,7 @@ class Compiler {
 		return lineIdUsed;
 	}
 
-	public static function registerLabel() {}
+	function registerLabel(?commentary:String = null) {
+		return 'L${labelCount++}$commentary';
+	}
 }

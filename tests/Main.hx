@@ -3,7 +3,6 @@ package tests;
 import src.hxyarn.dialogue.Command;
 import src.hxyarn.dialogue.OptionSet;
 import src.hxyarn.dialogue.Line;
-import sys.ssl.Lib;
 import src.hxyarn.dialogue.VariableStorage.MemoryVariableStore;
 import src.hxyarn.dialogue.Dialogue;
 import src.hxyarn.compiler.Compiler;

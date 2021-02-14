@@ -8,7 +8,7 @@ typedef LineKeyValuePair = {line:Line, value:String}
 class State {
 	public var currentNodeName:String;
 	public var programCounter:Int;
-	public var currentOptions:Array<LineKeyValuePair>;
+	public var currentOptions = new Array<LineKeyValuePair>();
 
 	var stack = new GenericStack<Value>();
 
