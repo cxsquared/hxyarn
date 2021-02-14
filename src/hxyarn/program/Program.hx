@@ -4,7 +4,7 @@ import haxe.Exception;
 
 class Program {
 	public var name:String;
-	public var nodes:Map<String, Node>;
+	public var nodes = new Map<String, Node>();
 
 	public function new() {}
 

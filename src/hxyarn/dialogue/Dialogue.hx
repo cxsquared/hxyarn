@@ -1,5 +1,6 @@
 package src.hxyarn.dialogue;
 
+import src.hxyarn.dialogue.DialogueExcpetion.DialogueException;
 import sys.io.File;
 import src.hxyarn.Library.FunctionInfo;
 import haxe.Exception;
@@ -21,7 +22,7 @@ enum HandlerExecutionType {
 }
 
 class Dialogue {
-	var variableStorage:VariableStorage;
+	public var variableStorage:VariableStorage;
 
 	public var logDebugMessage:Logger;
 	public var logErrorMessage:Logger;
@@ -108,7 +109,7 @@ class Dialogue {
 
 	public function new(variableStorage:VariableStorage) {
 		if (variableStorage == null)
-			throw new Dialogue("Must provide a VariableStorage for a Dialogue");
+			throw new DialogueException("Must provide a VariableStorage for a Dialogue");
 
 		this.variableStorage = variableStorage;
 		library = new Library();
@@ -160,10 +161,10 @@ class Dialogue {
 	public var currentNode(get, null):String;
 
 	public function get_currentNode() {
-		if (vm == nul)
+		if (vm == null)
 			return null;
 
-		return vm.currentNodeName;
+		return vm.currentNodeName();
 	}
 
 	public function getStringIdForNode(nodeName:String) {
@@ -217,5 +218,9 @@ class Dialogue {
 	public static function expandFormatFunctions(input:String, localeCode:String) {}
 
 	// TODO
-	static function parseFormatFunctions(input:String, localeCode:String):{lineWithReplacements:String, parsedFunctions:Array<ParsedFormatFunction>} {}
+	static function parseFormatFunctions(input:String, localeCode:String):{lineWithReplacements:String, parsedFunctions:Array<ParsedFormatFunction>} {
+		throw new Exception("Not implemented");
+
+		return {lineWithReplacements: "", parsedFunctions: new Array<ParsedFormatFunction>()};
+	}
 }

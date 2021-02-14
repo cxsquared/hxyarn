@@ -1,6 +1,6 @@
 package src.hxyarn.dialogue;
 
-import src.hxyarn.dialogue.Dialogue.Line;
+import src.hxyarn.dialogue.Line;
 
 class Option {
 	public function new(line:Line, id:Int, destinationNode:String) {

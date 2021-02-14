@@ -67,11 +67,7 @@ class Value {
 				return this.numberValue;
 			case String:
 				var parsedFloat = Std.parseFloat(this.stringValue);
-				if (parsedFloat == null) {
-					return 0;
-				} else {
-					return parsedFloat;
-				}
+				return parsedFloat;
 			case Bool:
 				return this.boolValue ? 1 : 0;
 			case Null:

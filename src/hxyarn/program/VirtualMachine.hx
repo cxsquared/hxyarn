@@ -148,14 +148,14 @@ class VirtualMachine {
 				var line = new Line(stringKey);
 
 				if (i.operands.length > 1) {
-					var expressionCount = Std.int(i.operands[i].floatValue);
+					var expressionCount = Std.int(i.operands[1].floatValue);
 
 					var strings = [];
 
-					for (expressionIndex in expressionCount)
+					for (expressionIndex in 0...expressionCount)
 						strings[expressionIndex] = state.PopValue().asString();
 
-					line.substituations = strings;
+					line.substitutions = strings;
 				}
 
 				var pause = lineHandler(line);
@@ -168,7 +168,7 @@ class VirtualMachine {
 				if (i.operands.length > 0) {
 					var expressionCount = Std.int(i.operands[1].floatValue);
 
-					for (expressionIndex in expressionCount) {
+					for (expressionIndex in 0...expressionCount) {
 						var substituation = state.PopValue().asString();
 
 						commandText = StringTools.replace(commandText, '{$expressionIndex}', substituation);
@@ -189,11 +189,11 @@ class VirtualMachine {
 			case PUSH_NULL:
 				state.PushValue(Value.NULL);
 			case JUMP_IF_FALSE:
-				if (state.PeekValue().asBool == false) {
+				if (state.PeekValue().asBool() == false) {
 					state.programCounter = findInstructionPointForLabel(i.operands[0].stringValue) - 1;
 				}
 			case JUMP:
-				var jumpDestination = state.PeekValue().asString;
+				var jumpDestination = state.PeekValue().asString();
 				state.programCounter = findInstructionPointForLabel(jumpDestination) - 1;
 			case POP:
 				state.PopValue();
@@ -261,21 +261,17 @@ class VirtualMachine {
 				var line = new Line(i.operands[0].stringValue);
 
 				if (i.operands.length > 2) {
-					var expressionCount = Std.int(i.operands[i].floatValue);
+					var expressionCount = Std.int(i.operands[1].floatValue);
 
 					var strings = [];
 
-					for (expressionIndex in expressionCount)
+					for (expressionIndex in 0...expressionCount)
 						strings[expressionIndex] = state.PopValue().asString();
 
-					line.substituations = strings;
+					line.substitutions = strings;
 				}
 
-				var lkvp = new LineKeyValuePair();
-				lkvp.line = line;
-				lkvp = i.operands[1].stringValue;
-
-				state.currentOptions.push(lkvp);
+				state.currentOptions.push({line: line, value: i.operands[1].stringValue});
 			case SHOW_OPTIONS:
 				if (state.currentOptions.length == 0) {
 					executionState = Stopped;

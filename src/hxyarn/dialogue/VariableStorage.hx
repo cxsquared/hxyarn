@@ -6,7 +6,7 @@ interface VariableStorage {
 	public function clear():Void;
 }
 
-class MemortyVariableStore implements VariableStorage {
+class MemoryVariableStore implements VariableStorage {
 	var variables = new Map<String, Value>();
 
 	public function new() {}

@@ -1,7 +1,7 @@
 package src.hxyarn.program;
 
 import haxe.ds.GenericStack;
-import src.hxyarn.dialogue.Dialogue.Line;
+import src.hxyarn.dialogue.Line;
 
 typedef LineKeyValuePair = {line:Line, value:String}
 

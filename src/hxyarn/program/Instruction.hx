@@ -1,6 +1,8 @@
 package src.hxyarn.program;
 
 class Instruction {
+	public function new() {}
+
 	public var opcode:OpCode;
 	public var operands:Array<Operand>;
 }
