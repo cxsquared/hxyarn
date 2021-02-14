@@ -59,5 +59,7 @@ class Main {
 
 		d.setNode("Sally");
 		d.resume();
+		d.setSelectedOption(0);
+		d.resume();
 	}
 }

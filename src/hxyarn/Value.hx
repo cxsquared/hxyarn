@@ -18,7 +18,7 @@ class Value {
 
 	public function new(value:Dynamic) {
 		if (value == null) {
-			type = Null;
+			type = NullValue;
 			return;
 		}
 
@@ -26,13 +26,13 @@ class Value {
 			var otherValue = cast(value, Value);
 			this.type = otherValue.type;
 			switch (type) {
-				case Number:
+				case NumberValue:
 					this.numberValue = otherValue.numberValue;
-				case String:
+				case StringValue:
 					this.stringValue = otherValue.stringValue;
-				case Bool:
+				case BoolValue:
 					this.boolValue = otherValue.boolValue;
-				case Null:
+				case NullValue:
 				case _:
 					throw new Exception('Cannot create new Value from Value with type of $type');
 			}
@@ -41,19 +41,19 @@ class Value {
 		}
 
 		if (Std.isOfType(value, String)) {
-			type = String;
+			type = StringValue;
 			stringValue = Std.string(value);
 			return;
 		}
 
 		if (Std.isOfType(value, Int) || Std.isOfType(value, Float)) {
-			type = Number;
+			type = NumberValue;
 			numberValue = cast(value, Float);
 			return;
 		}
 
 		if (Std.isOfType(value, Bool)) {
-			type = Bool;
+			type = BoolValue;
 			boolValue = cast(value, Bool);
 			return;
 		}
@@ -63,14 +63,14 @@ class Value {
 
 	public function asNumber():Float {
 		switch (type) {
-			case Number:
+			case NumberValue:
 				return this.numberValue;
-			case String:
+			case StringValue:
 				var parsedFloat = Std.parseFloat(this.stringValue);
 				return parsedFloat;
-			case Bool:
+			case BoolValue:
 				return this.boolValue ? 1 : 0;
-			case Null:
+			case NullValue:
 				return 0;
 			case _:
 				throw new Exception('Cannot cast to number from $type');
@@ -79,13 +79,13 @@ class Value {
 
 	public function asBool():Bool {
 		switch (type) {
-			case Number:
+			case NumberValue:
 				return !Math.isNaN(this.numberValue) && this.numberValue != 0;
-			case String:
+			case StringValue:
 				return !(this.stringValue == null || this.stringValue.length == 0);
-			case Bool:
+			case BoolValue:
 				return this.boolValue;
-			case Null:
+			case NullValue:
 				return false;
 			case _:
 				throw new Exception('Cannot cast to bool from $type');
@@ -94,13 +94,13 @@ class Value {
 
 	public function asString():String {
 		switch (type) {
-			case Number:
+			case NumberValue:
 				return Math.isNaN(this.numberValue) ? "NaN" : Std.string(this.numberValue);
-			case String:
+			case StringValue:
 				return this.stringValue;
-			case Bool:
+			case BoolValue:
 				return Std.string(this.boolValue);
-			case Null:
+			case NullValue:
 				return "null";
 			case _:
 				throw new Exception('Cannot cast to string from $type');
@@ -109,13 +109,13 @@ class Value {
 
 	function getValue():Dynamic {
 		switch (this.type) {
-			case Number:
+			case NumberValue:
 				return this.numberValue;
-			case String:
+			case StringValue:
 				return this.stringValue;
-			case Bool:
+			case BoolValue:
 				return this.boolValue;
-			case Null:
+			case NullValue:
 				return null;
 			case _:
 		}
@@ -124,11 +124,13 @@ class Value {
 
 	public function add(b:Value) {
 		var a = this;
-		if (a.type == String || b.type == String) {
+		if (a.type == StringValue || b.type == StringValue) {
 			return new Value(a.asString() + b.asString());
 		}
 
-		if ((a.type == Number || b.type == Number) || (a.type == Bool && b.type == Bool) || (a.type == Null && b.type == Null))
+		if ((a.type == NumberValue || b.type == NumberValue)
+			|| (a.type == BoolValue && b.type == BoolValue)
+			|| (a.type == NullValue && b.type == NullValue))
 			return new Value(a.asNumber() + b.asNumber());
 
 		throw new Exception('Cannot add types ${a.type} and ${b.type}.');
@@ -136,7 +138,10 @@ class Value {
 
 	public function sub(b:Value) {
 		var a = this;
-		if (a.type == Number && (b.type == Number || b.type == Null) || b.type == Number && (a.type == Number || a.type == Null))
+		if (a.type == NumberValue
+			&& (b.type == NumberValue || b.type == NullValue)
+			|| b.type == NumberValue
+			&& (a.type == NumberValue || a.type == NullValue))
 			return new Value(a.asNumber() - b.asNumber());
 
 		throw new Exception('Cannot sub types ${a.type} and ${b.type}.');
@@ -144,7 +149,10 @@ class Value {
 
 	public function div(b:Value) {
 		var a = this;
-		if (a.type == Number && (b.type == Number || b.type == Null) || b.type == Number && (a.type == Number || a.type == Null))
+		if (a.type == NumberValue
+			&& (b.type == NumberValue || b.type == NullValue)
+			|| b.type == NumberValue
+			&& (a.type == NumberValue || a.type == NullValue))
 			return new Value(a.asNumber() / b.asNumber());
 
 		throw new Exception('Cannot div types ${a.type} and ${b.type}.');
@@ -152,7 +160,10 @@ class Value {
 
 	public function mul(b:Value) {
 		var a = this;
-		if (a.type == Number && (b.type == Number || b.type == Null) || b.type == Number && (a.type == Number || a.type == Null))
+		if (a.type == NumberValue
+			&& (b.type == NumberValue || b.type == NullValue)
+			|| b.type == NumberValue
+			&& (a.type == NumberValue || a.type == NullValue))
 			return new Value(a.asNumber() * b.asNumber());
 
 		throw new Exception('Cannot mul types ${a.type} and ${b.type}.');
@@ -160,18 +171,21 @@ class Value {
 
 	public function mod(b:Value) {
 		var a = this;
-		if (a.type == Number && (b.type == Number || b.type == Null) || b.type == Number && (a.type == Number || a.type == Null))
+		if (a.type == NumberValue
+			&& (b.type == NumberValue || b.type == NullValue)
+			|| b.type == NumberValue
+			&& (a.type == NumberValue || a.type == NullValue))
 			return new Value(a.asNumber() % b.asNumber());
 
 		throw new Exception('Cannot mul types ${a.type} and ${b.type}.');
 	}
 
 	public function neg() {
-		if (type == Number) {
+		if (type == NumberValue) {
 			return new Value(-asNumber());
 		}
 
-		if (type == Null || type == String && (asString() == null || StringTools.trim(asString()).length <= 0))
+		if (type == NullValue || type == StringValue && (asString() == null || StringTools.trim(asString()).length <= 0))
 			return new Value(-0);
 
 		return new Value(Math.NaN);
@@ -202,13 +216,13 @@ class Value {
 
 		if (a.type == b.type) {
 			switch (a.type) {
-				case Null:
+				case NullValue:
 					return 0;
-				case String:
+				case StringValue:
 					return a.asString() < b.asString() ? -1 : a.asString() > b.asString() ? 1 : 0;
-				case Number:
+				case NumberValue:
 					return a.asNumber() < b.asNumber() ? -1 : a.asNumber() > b.asNumber() ? 1 : 0;
-				case Bool:
+				case BoolValue:
 					return a.asBool() == b.asBool() ? 0 : 1;
 				case _:
 					throw new Exception('Cannot compare type of ${a.type} to ${b.type}');
@@ -225,13 +239,13 @@ class Value {
 		var other = cast(obj, Value);
 
 		switch (this.type) {
-			case Null:
-				return other.type == Null || other.asNumber() == 0 || other.asBool() == false;
-			case String:
+			case NullValue:
+				return other.type == NullValue || other.asNumber() == 0 || other.asBool() == false;
+			case StringValue:
 				return this.asString() == other.asString();
-			case Number:
+			case NumberValue:
 				return this.asNumber() == other.asNumber();
-			case Bool:
+			case BoolValue:
 				return this.asBool() == other.asBool();
 			case _:
 				throw new Exception('Cannot compare type of ${type} to ${(other.type)}');
@@ -240,9 +254,9 @@ class Value {
 }
 
 enum ValueType {
-	Number;
-	String;
-	Bool;
-	Variable;
-	Null;
+	NumberValue;
+	StringValue;
+	BoolValue;
+	VariableValue;
+	NullValue;
 }
