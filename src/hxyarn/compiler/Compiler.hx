@@ -254,23 +254,32 @@ class Compiler {
 	static inline var logicalGreaterThanEquals = "(>=|gte)";
 	static inline var logicalLess = "(<|lt)";
 	static inline var logicalGreater = "(>|gt)";
+	static inline var logicalAnd = "(and|&&)";
+	static inline var logicalOr = "(or|\\|\\|)";
+	static inline var logicalXor = "(xor|\\^)";
 
 	static var exprParen = new EReg('(\\S*$expressionRegex\\S*)', 'i');
 	static var exprEquals = new EReg('$expressionRegex\\s+($logicalEquals|$logicalNotEquals)\\s+$expressionRegex', 'i');
-	static var exprNot = new EReg('($logicalNot)\\s+$expressionRegex', 'i');
+	static var exprNot = new EReg('^$logicalNot\\s+$expressionRegex', 'i');
+	static var exprAnd = new EReg('$expressionRegex\\s+($logicalAnd|$logicalOr|$logicalXor)\\s+$expressionRegex', 'i');
 	static var funcRegex = new EReg('$funcId\\($expressionRegex?\\s?(,$expressionRegex)*\\)', 'i');
+	static var variableRegex = new EReg(varId, 'i');
 
 	function visitExpression(expression:String) {
 		if (exprEquals.match(expression)) {
 			genericExpVisitor(exprEquals.matched(1), exprEquals.matched(2), exprEquals.matched(5));
 		} else if (exprNot.match(expression)) {
-			visitExpNot(exprNot.matched(3));
+			visitExpNot(exprNot.matched(2));
+		} else if (exprAnd.match(expression)) {
+			genericExpVisitor(exprAnd.matched(1), exprAnd.matched(2), exprAnd.matched(6));
 		} else if (funcRegex.match(expression)) {
 			visitFunction(funcRegex);
 		} else if (expression == 'true' || expression == 'false') {
 			emit(currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(expression == 'true' ? true : false)]);
 		} else if (!Math.isNaN(Std.parseFloat(expression))) {
 			emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(Std.parseFloat(expression))]);
+		} else if (variableRegex.match(expression)) {
+			emit(currentNode, OpCode.PUSH_VARIABLE, [Operand.fromString(variableRegex.matched(0))]);
 		} else {
 			emit(currentNode, OpCode.PUSH_STRING, [Operand.fromString(unescape(expression))]);
 		}
@@ -377,5 +386,11 @@ class Compiler {
 		tokens["eq"] = TokenType.EqualTo;
 		tokens["!="] = TokenType.NotEqualTo;
 		tokens["neq"] = TokenType.NotEqualTo;
+		tokens["and"] = TokenType.And;
+		tokens["&&"] = TokenType.And;
+		tokens["or"] = TokenType.Or;
+		tokens["||"] = TokenType.Or;
+		tokens["xor"] = TokenType.Xor;
+		tokens["^"] = TokenType.Xor;
 	}
 }
