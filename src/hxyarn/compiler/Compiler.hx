@@ -160,7 +160,7 @@ class Compiler {
 		var hashtagText:String = null;
 		if (hashTagReg.match(line)) {
 			hashtagText = hashTagReg.matched(1);
-			formattedText.composedString = StringTools.replace(line, '#$hashtagText', '');
+			formattedText.composedString = StringTools.replace(formattedText.composedString, '#$hashtagText', '');
 		}
 
 		var stringId = registerString(formattedText.composedString, currentNode.name, getLineId(hashtagText), lineNumber, [hashtagText]);
