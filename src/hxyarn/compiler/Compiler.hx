@@ -1,5 +1,6 @@
 package src.hxyarn.compiler;
 
+import haxe.Exception;
 import src.hxyarn.program.VirtualMachine.TokenType;
 import src.hxyarn.program.Operand;
 import src.hxyarn.program.Instruction;
@@ -67,9 +68,13 @@ class Compiler {
 		var node = new Node();
 		currentNode = node;
 
+		node.name = obj.title;
+		if (invalidNodeTilteNameRegex.match(node.name)) {
+			throw new Exception('The node \'${node.name}\' contains illegal characters in the title.');
+		}
+
 		currentNode.labels.set(registerLabel(), currentNode.instructions.length);
 
-		node.name = obj.title;
 		var tags = cast(obj.tags, String).split(",");
 		node.tags = new Array<String>();
 		for (tag in tags) {
@@ -335,11 +340,39 @@ class Compiler {
 	}
 
 	function generateFormattedText(text:String):{composedString:String, expressionCount:Int} {
-		// TODO check for expressions/commands
+		var inExpr = false;
+		var expressions = [];
+		var currentExpr = "";
+
+		var finalString = "";
+
+		for (index in 0...text.length) {
+			var char = text.charAt(index);
+			if (inExpr) {
+				if (char == "}") {
+					finalString += expressions.length;
+					finalString += char;
+					expressions.push(currentExpr);
+					currentExpr = "";
+					inExpr = false;
+				} else {
+					currentExpr += char;
+				}
+			} else if (char == "{") {
+				inExpr = true;
+				finalString += char;
+			} else {
+				finalString += char;
+			}
+		}
+
+		for (expr in expressions) {
+			visitExpression(expr);
+		}
 
 		return {
-			composedString: StringTools.trim(text),
-			expressionCount: 0
+			composedString: StringTools.trim(finalString),
+			expressionCount: expressions.length
 		};
 	}
 

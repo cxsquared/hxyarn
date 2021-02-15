@@ -24,7 +24,11 @@ class Main {
 		}
 
 		d.lineHandler = function(line:Line):HandlerExecutionType {
-			trace(compiler.stringTable.get(line.id).text);
+			var string = compiler.stringTable.get(line.id).text;
+			for (index => sub in line.substitutions) {
+				string = StringTools.replace(string, '{$index}', sub);
+			}
+			trace(string);
 
 			return HandlerExecutionType.ContinueExecution;
 		}
