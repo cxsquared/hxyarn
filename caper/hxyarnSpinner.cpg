@@ -1,9 +1,0 @@
-%external_token;
-%namespace src.hxyarn.compiler
-
-statement<String>
-    : [visitLineStatement] line_statement
-    ;
-
-line_statement<String>
-    : 

@@ -75,5 +75,10 @@ class Main {
 		d.resume();
 		d.setNode("Sally");
 		d.resume();
+		d.setSelectedOption(0);
+		d.resume();
+		d.setNode("Sally");
+		d.resume();
+		d.setSelectedOption(0);
 	}
 }

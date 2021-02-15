@@ -257,12 +257,14 @@ class Compiler {
 
 	static var exprParen = new EReg('(\\S*$expressionRegex\\S*)', 'i');
 	static var exprEquals = new EReg('$expressionRegex\\s+($logicalEquals|$logicalNotEquals)\\s+$expressionRegex', 'i');
-	// TODO Fix this to support multiple arguments
+	static var exprNot = new EReg('($logicalNot)\\s+$expressionRegex', 'i');
 	static var funcRegex = new EReg('$funcId\\($expressionRegex?\\s?(,$expressionRegex)*\\)', 'i');
 
 	function visitExpression(expression:String) {
 		if (exprEquals.match(expression)) {
 			genericExpVisitor(exprEquals.matched(1), exprEquals.matched(2), exprEquals.matched(5));
+		} else if (exprNot.match(expression)) {
+			visitExpNot(exprNot.matched(3));
 		} else if (funcRegex.match(expression)) {
 			visitFunction(funcRegex);
 		} else if (expression == 'true' || expression == 'false') {
@@ -280,12 +282,21 @@ class Compiler {
 		return newString;
 	}
 
+	function visitExpNot(expression:String) {
+		visitExpression(expression);
+
+		// number of arguments
+		emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(1)]);
+		emit(currentNode, OpCode.CALL_FUNC, [Operand.fromString(TokenType.Not.getName())]);
+	}
+
 	function visitFunction(funcRegex:EReg) {
 		var functionName = funcRegex.matched(1);
 
 		handleFunction(functionName, funcRegex.matched(2));
 	}
 
+	// https://stackabuse.com/regex-splitting-by-character-unless-in-quotes/
 	static var splitEscapedRegex = ~/,(?=([^\\"]*\\"[^\\"]*\\")*[^\\"]*$)/;
 
 	function handleFunction(functionName:String, arguments:String) {

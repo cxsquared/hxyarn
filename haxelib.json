@@ -1,11 +1,12 @@
 {
 	"name": "hxyarn",
-	"url" : "",
+	"url" : "https://github.com/cxsquared/hxyarn",
 	"license": "MIT",
 	"tags": ["Yarn"],
 	"description": "Parser and runner for Yarn dialogue files",
 	"version": "0.0.1",
 	"classPath": "src/",
 	"contributors": ["cxsquared"],
+	"releasenote": "",
 	"dependencies": {}
 }
