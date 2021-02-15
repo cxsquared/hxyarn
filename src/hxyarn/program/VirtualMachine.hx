@@ -219,8 +219,8 @@ class VirtualMachine {
 					result = func.invoke(null);
 				} else {
 					var parameters = new Array<Value>();
-					for (param in actualParamCount - 1...0) {
-						parameters[param] = state.PopValue();
+					for (param in 0...actualParamCount) {
+						parameters[actualParamCount - 1 - param] = state.PopValue();
 					}
 
 					result = func.invokeWithArray(parameters);

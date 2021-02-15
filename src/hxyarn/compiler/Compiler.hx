@@ -1,5 +1,6 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.program.VirtualMachine.TokenType;
 import src.hxyarn.program.Operand;
 import src.hxyarn.program.Instruction;
 import sys.FileSystem;
@@ -20,10 +21,12 @@ class Compiler {
 	var stringTable = new Map<String, StringInfo>();
 	var ifStatementEndLabels = new List<String>();
 	var currentGenerateClauseLabel:String = null;
+	var tokens = new Map<String, TokenType>();
 
 	public function new(fileName:String) {
 		program = new Program();
 		this.fileName = fileName;
+		this.loadOperators();
 	}
 
 	public static function compileFile(path:String):{program:Program, stringTable:Map<String, StringInfo>} {
@@ -102,7 +105,7 @@ class Compiler {
 	static inline var hashTag = "#(?'hashText'[^ \t\r\n#$<]+)";
 	static inline var nodeId = "(?'nodeId'[a-zA-Z_][a-zA-Z0-9_.]*)";
 	static inline var varId = "(?'var'\\$[a-zA-Z_][a-zA-Z0-9_]*)";
-	static inline var expression = "(?'expr'[\\S[:blank:]]+)";
+	static inline var expressionRegex = "(.+)";
 	static inline var commandStart = '<<';
 	static inline var commandEnd = '>>';
 	static inline var commandSet = "set";
@@ -116,9 +119,9 @@ class Compiler {
 
 	static var jumpRegex = new EReg('\\[\\[$nodeId\\]\\]', "i");
 	static var optionsRegex = new EReg('\\[\\[(?\'optText\'[^\\]{|\\[]+)\\|$nodeId\\]\\]\\s*($hashTag)?', "i");
-	static var setCommandRegex = new EReg('$commandStart$commandSet\\s+$varId\\s+(to|=)\\s+$expression$commandEnd', 'i');
-	static var ifClauseRegex = new EReg('$commandStart$commandIf\\s+$expression$commandEnd', 'i');
-	static var elseIfClauseRegex = new EReg('$commandStart$commandElseIf\\s+$expression$commandEnd', 'i');
+	static var setCommandRegex = new EReg('$commandStart$commandSet\\s+$varId\\s+(to|=)\\s+$expressionRegex$commandEnd', 'i');
+	static var ifClauseRegex = new EReg('$commandStart$commandIf\\s+$expressionRegex$commandEnd', 'i');
+	static var elseIfClauseRegex = new EReg('$commandStart$commandElseIf\\s+$expressionRegex$commandEnd', 'i');
 	static var elseClauseRegex = new EReg('$commandStart$commandElse$commandEnd', 'i');
 	static var endClauseRegex = new EReg('$commandStart$commandEndIf$commandEnd', 'i');
 
@@ -224,6 +227,12 @@ class Compiler {
 	}
 
 	function visitEndIfClause() {
+		if (currentGenerateClauseLabel != null) {
+			currentNode.labels.set(currentGenerateClauseLabel, currentNode.instructions.length);
+			emit(currentNode, OpCode.POP, []);
+			currentGenerateClauseLabel = null;
+		}
+
 		currentNode.labels.set(ifStatementEndLabels.pop(), currentNode.instructions.length);
 	}
 
@@ -237,14 +246,35 @@ class Compiler {
 		}
 	}
 
+	static inline var logicalNot = "(not|\\!)";
+	static inline var logicalEquals = "(==|is|eq)";
+	static inline var logicalNotEquals = "(!=|neq)";
+	static inline var logicalLessThanEquals = "(<=|lte)";
+	static inline var logicalGreaterThanEquals = "(>=|gte)";
+	static inline var logicalLess = "(<|lt)";
+	static inline var logicalGreater = "(>|gt)";
+
+	static var exprParen = new EReg('(\\S*$expressionRegex\\S*)', 'i');
+	static var exprEquals = new EReg('$expressionRegex\\s+($logicalEquals|$logicalNotEquals)\\s+$expressionRegex', 'i');
+
 	function visitExpression(expression:String) {
-		if (expression == 'true' || expression == 'false') {
+		if (exprEquals.match(expression)) {
+			genericExpVisitor(exprEquals.matched(1), exprEquals.matched(2), exprEquals.matched(5));
+		} else if (expression == 'true' || expression == 'false') {
 			emit(currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(expression == 'true' ? true : false)]);
 		} else if (!Math.isNaN(Std.parseFloat(expression))) {
 			emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(Std.parseFloat(expression))]);
 		} else {
 			emit(currentNode, OpCode.PUSH_STRING, [Operand.fromString(expression)]);
 		}
+	}
+
+	function genericExpVisitor(left:String, op:String, right:String) {
+		visitExpression(left);
+		visitExpression(right);
+
+		emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(2)]);
+		emit(currentNode, OpCode.CALL_FUNC, [Operand.fromString(tokens[StringTools.trim(op)].getName())]);
 	}
 
 	function emit(node:Node, opCode:OpCode, operands:Array<Operand>) {
@@ -299,5 +329,13 @@ class Compiler {
 
 	function registerLabel(?commentary:String = null) {
 		return 'L${labelCount++}$commentary';
+	}
+
+	function loadOperators() {
+		tokens["is"] = TokenType.EqualTo;
+		tokens["=="] = TokenType.EqualTo;
+		tokens["eq"] = TokenType.EqualTo;
+		tokens["!="] = TokenType.NotEqualTo;
+		tokens["neq"] = TokenType.NotEqualTo;
 	}
 }
