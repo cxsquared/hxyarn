@@ -18,6 +18,8 @@ class Compiler {
 	var containsImplicitStringTags:Bool;
 	var stringCount = 0;
 	var stringTable = new Map<String, StringInfo>();
+	var ifStatementEndLabels = new List<String>();
+	var currentGenerateClauseLabel:String = null;
 
 	public function new(fileName:String) {
 		program = new Program();
@@ -100,24 +102,44 @@ class Compiler {
 	static inline var hashTag = "#(?'hashText'[^ \t\r\n#$<]+)";
 	static inline var nodeId = "(?'nodeId'[a-zA-Z_][a-zA-Z0-9_.]*)";
 	static inline var varId = "(?'var'\\$[a-zA-Z_][a-zA-Z0-9_]*)";
-	static inline var expression = "(?'expr'\\S+)";
+	static inline var expression = "(?'expr'[\\S[:blank:]]+)";
 	static inline var commandStart = '<<';
 	static inline var commandEnd = '>>';
 	static inline var commandSet = "set";
+	static inline var commandIf = "if";
+	static inline var commandElseIf = "elseif";
+	static inline var commandElse = "else";
+	static inline var commandEndIf = "endif";
+	static inline var commandCall = "call";
 	static inline var optionsStart = "\\[\\[";
 	static inline var optionsEnd = "\\]\\]";
 
 	static var jumpRegex = new EReg('\\[\\[$nodeId\\]\\]', "i");
 	static var optionsRegex = new EReg('\\[\\[(?\'optText\'[^\\]{|\\[]+)\\|$nodeId\\]\\]\\s*($hashTag)?', "i");
-	static var setCommandRegex = new EReg('$commandStart$commandSet\\s+$varId\\s+(to|=)\\s+$expression\\s+$commandEnd', 'i');
+	static var setCommandRegex = new EReg('$commandStart$commandSet\\s+$varId\\s+(to|=)\\s+$expression$commandEnd', 'i');
+	static var ifClauseRegex = new EReg('$commandStart$commandIf\\s+$expression$commandEnd', 'i');
+	static var elseIfClauseRegex = new EReg('$commandStart$commandElseIf\\s+$expression$commandEnd', 'i');
+	static var elseClauseRegex = new EReg('$commandStart$commandElse$commandEnd', 'i');
+	static var endClauseRegex = new EReg('$commandStart$commandEndIf$commandEnd', 'i');
 
 	function parseLine(line:String, lineNumber:Int) {
+		if (line.length <= 0)
+			return;
+
 		if (jumpRegex.match(line)) {
 			visitOptionJump(line, jumpRegex);
 		} else if (optionsRegex.match(line)) {
 			visitOptionLink(line, optionsRegex, lineNumber);
 		} else if (setCommandRegex.match(line)) {
 			vistSetCommand(line, setCommandRegex, lineNumber);
+		} else if (ifClauseRegex.match(line)) {
+			visitIfClause(ifClauseRegex);
+		} else if (elseIfClauseRegex.match(line)) {
+			visitIfElseClause(elseIfClauseRegex);
+		} else if (elseClauseRegex.match(line)) {
+			visitElseClause();
+		} else if (endClauseRegex.match(line)) {
+			visitEndIfClause();
 		} else {
 			visitLineStatement(line, lineNumber);
 		}
@@ -170,6 +192,49 @@ class Compiler {
 		// store the variable and pop the value from the stack
 		emit(currentNode, OpCode.STORE_VARIABLE, [Operand.fromString(varId)]);
 		emit(currentNode, OpCode.POP, []);
+	}
+
+	function visitIfClause(regex:EReg) {
+		var endOfIfStatmentLabel = registerLabel("endif");
+		ifStatementEndLabels.push(endOfIfStatmentLabel);
+
+		generateClause(ifStatementEndLabels.first(), regex.matched(1));
+	}
+
+	function visitIfElseClause(regex:EReg) {
+		emit(currentNode, OpCode.JUMP_TO, [Operand.fromString(ifStatementEndLabels.first())]);
+		if (currentGenerateClauseLabel != null) {
+			currentNode.labels.set(currentGenerateClauseLabel, currentNode.instructions.length);
+			emit(currentNode, OpCode.POP, []);
+			currentGenerateClauseLabel = null;
+		}
+
+		generateClause(ifStatementEndLabels.first(), regex.matched(1));
+	}
+
+	function visitElseClause() {
+		emit(currentNode, OpCode.JUMP_TO, [Operand.fromString(ifStatementEndLabels.first())]);
+		if (currentGenerateClauseLabel != null) {
+			currentNode.labels.set(currentGenerateClauseLabel, currentNode.instructions.length);
+			emit(currentNode, OpCode.POP, []);
+			currentGenerateClauseLabel = null;
+		}
+
+		generateClause(ifStatementEndLabels.first(), null);
+	}
+
+	function visitEndIfClause() {
+		currentNode.labels.set(ifStatementEndLabels.pop(), currentNode.instructions.length);
+	}
+
+	function generateClause(jumpLabel:String, expr:String) {
+		var endOfCluase = registerLabel("skipclause");
+
+		if (expr != null && StringTools.trim(expr).length > 0) {
+			visitExpression(expr);
+			emit(currentNode, OpCode.JUMP_IF_FALSE, [Operand.fromString(endOfCluase)]);
+			currentGenerateClauseLabel = endOfCluase;
+		}
 	}
 
 	function visitExpression(expression:String) {
