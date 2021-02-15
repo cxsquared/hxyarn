@@ -21,7 +21,7 @@ class Compiler {
 	var stringCount = 0;
 	var stringTable = new Map<String, StringInfo>();
 	var ifStatementEndLabels = new List<String>();
-	var currentGenerateClauseLabel:String = null;
+	var generateClauseLabels = new List<String>();
 	var tokens = new Map<String, TokenType>();
 
 	public function new(fileName:String) {
@@ -212,10 +212,9 @@ class Compiler {
 
 	function visitIfElseClause(regex:EReg) {
 		emit(currentNode, OpCode.JUMP_TO, [Operand.fromString(ifStatementEndLabels.first())]);
-		if (currentGenerateClauseLabel != null) {
-			currentNode.labels.set(currentGenerateClauseLabel, currentNode.instructions.length);
+		if (!generateClauseLabels.isEmpty()) {
+			currentNode.labels.set(generateClauseLabels.pop(), currentNode.instructions.length);
 			emit(currentNode, OpCode.POP, []);
-			currentGenerateClauseLabel = null;
 		}
 
 		generateClause(ifStatementEndLabels.first(), regex.matched(1));
@@ -223,20 +222,18 @@ class Compiler {
 
 	function visitElseClause() {
 		emit(currentNode, OpCode.JUMP_TO, [Operand.fromString(ifStatementEndLabels.first())]);
-		if (currentGenerateClauseLabel != null) {
-			currentNode.labels.set(currentGenerateClauseLabel, currentNode.instructions.length);
+		if (!generateClauseLabels.isEmpty()) {
+			currentNode.labels.set(generateClauseLabels.pop(), currentNode.instructions.length);
 			emit(currentNode, OpCode.POP, []);
-			currentGenerateClauseLabel = null;
 		}
 
 		generateClause(ifStatementEndLabels.first(), null);
 	}
 
 	function visitEndIfClause() {
-		if (currentGenerateClauseLabel != null) {
-			currentNode.labels.set(currentGenerateClauseLabel, currentNode.instructions.length);
+		if (!generateClauseLabels.isEmpty()) {
+			currentNode.labels.set(generateClauseLabels.pop(), currentNode.instructions.length);
 			emit(currentNode, OpCode.POP, []);
-			currentGenerateClauseLabel = null;
 		}
 
 		currentNode.labels.set(ifStatementEndLabels.pop(), currentNode.instructions.length);
@@ -248,7 +245,7 @@ class Compiler {
 		if (expr != null && StringTools.trim(expr).length > 0) {
 			visitExpression(expr);
 			emit(currentNode, OpCode.JUMP_IF_FALSE, [Operand.fromString(endOfCluase)]);
-			currentGenerateClauseLabel = endOfCluase;
+			generateClauseLabels.push(endOfCluase);
 		}
 	}
 
