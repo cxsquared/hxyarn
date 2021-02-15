@@ -105,6 +105,7 @@ class Compiler {
 	static inline var hashTag = "#(?'hashText'[^ \t\r\n#$<]+)";
 	static inline var nodeId = "(?'nodeId'[a-zA-Z_][a-zA-Z0-9_.]*)";
 	static inline var varId = "(?'var'\\$[a-zA-Z_][a-zA-Z0-9_]*)";
+	static inline var funcId = "(?'funcId'[a-zA-Z_][a-zA-Z0-9_]*)";
 	static inline var expressionRegex = "(.+)";
 	static inline var commandStart = '<<';
 	static inline var commandEnd = '>>';
@@ -256,17 +257,45 @@ class Compiler {
 
 	static var exprParen = new EReg('(\\S*$expressionRegex\\S*)', 'i');
 	static var exprEquals = new EReg('$expressionRegex\\s+($logicalEquals|$logicalNotEquals)\\s+$expressionRegex', 'i');
+	// TODO Fix this to support multiple arguments
+	static var funcRegex = new EReg('$funcId\\($expressionRegex?\\s?(,$expressionRegex)*\\)', 'i');
 
 	function visitExpression(expression:String) {
 		if (exprEquals.match(expression)) {
 			genericExpVisitor(exprEquals.matched(1), exprEquals.matched(2), exprEquals.matched(5));
+		} else if (funcRegex.match(expression)) {
+			visitFunction(funcRegex);
 		} else if (expression == 'true' || expression == 'false') {
 			emit(currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(expression == 'true' ? true : false)]);
 		} else if (!Math.isNaN(Std.parseFloat(expression))) {
 			emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(Std.parseFloat(expression))]);
 		} else {
-			emit(currentNode, OpCode.PUSH_STRING, [Operand.fromString(expression)]);
+			emit(currentNode, OpCode.PUSH_STRING, [Operand.fromString(unescape(expression))]);
 		}
+	}
+
+	function unescape(string:String):String {
+		var newString = StringTools.replace(string, "\"", "");
+
+		return newString;
+	}
+
+	function visitFunction(funcRegex:EReg) {
+		var functionName = funcRegex.matched(1);
+
+		handleFunction(functionName, funcRegex.matched(2));
+	}
+
+	static var splitEscapedRegex = ~/,(?=([^\\"]*\\"[^\\"]*\\")*[^\\"]*$)/;
+
+	function handleFunction(functionName:String, arguments:String) {
+		var splitExp = splitEscapedRegex.split(arguments);
+		for (exp in splitExp) {
+			visitExpression(exp);
+		}
+
+		emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(splitExp.length)]);
+		emit(currentNode, OpCode.CALL_FUNC, [Operand.fromString(functionName)]);
 	}
 
 	function genericExpVisitor(left:String, op:String, right:String) {

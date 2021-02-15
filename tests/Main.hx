@@ -1,5 +1,6 @@
 package tests;
 
+import src.hxyarn.Value;
 import src.hxyarn.dialogue.Command;
 import src.hxyarn.dialogue.OptionSet;
 import src.hxyarn.dialogue.Line;
@@ -10,6 +11,7 @@ import src.hxyarn.compiler.Compiler;
 class Main {
 	public static function main() {
 		var compiler = Compiler.compileFile('./yarns/Sally.json');
+		var visited = new Map<String, Bool>();
 
 		var d = new Dialogue(new MemoryVariableStore());
 		d.addProgram(compiler.program);
@@ -43,6 +45,7 @@ class Main {
 
 		d.nodeCompleteHandler = function(nodeName:String):HandlerExecutionType {
 			trace('Completed $nodeName');
+			visited.set(nodeName, true);
 
 			return HandlerExecutionType.ContinueExecution;
 		}
@@ -57,9 +60,20 @@ class Main {
 			trace('Done');
 		}
 
+		d.library.registerReturningFunction("visited", 1, function(nodeName:Array<Value>):Bool {
+			if (visited.exists(nodeName[0].asString()))
+				return visited[nodeName[0].asString()];
+
+			visited.set(nodeName[0].asString(), false);
+
+			return false;
+		});
+
 		d.setNode("Sally");
 		d.resume();
 		d.setSelectedOption(0);
+		d.resume();
+		d.setNode("Sally");
 		d.resume();
 	}
 }

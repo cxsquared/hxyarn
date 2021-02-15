@@ -29,12 +29,12 @@ class Library {
 		functions.set(func.name, func);
 	}
 
-	function registerFunction(name:String, parameterCount:Int, implementation:Function) {
+	public function registerFunction(name:String, parameterCount:Int, implementation:Function) {
 		var info = new FunctionInfo(name, parameterCount).forFunction(implementation);
 		registerFunctionInfo(info);
 	}
 
-	function registerReturningFunction(name:String, parameterCount:Int, implementation:ReturingFunction) {
+	public function registerReturningFunction(name:String, parameterCount:Int, implementation:ReturingFunction) {
 		var info = new FunctionInfo(name, parameterCount).forReturningFunction(implementation);
 		registerFunctionInfo(info);
 	}
