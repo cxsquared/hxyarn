@@ -8,11 +8,11 @@ Only supports .json yarn files.
 
 ## TODO 
  * Finsh adding Expresion logical operators
-   * *
+   * \*
    * /
-   * +
-   * -
-   * %
+   * \+
+   * \-
+   * \%
  * Shortcut option support
  * Formated lines
  * Commands
