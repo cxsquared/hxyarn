@@ -80,7 +80,7 @@ class Step {
 		var reader = new Reader(s);
 
 		try {
-			type = reader.readNext(StepType);
+			type = reader.readNext(Line);
 
 			var delimiter = reader.read();
 			if (delimiter != ":") {
@@ -89,8 +89,20 @@ class Step {
 
 			switch (type) {
 				case Line:
+					stringValue = StringTools.trim(reader.readTillEnd());
+					if (stringValue == "*") {
+						stringValue = null;
+					}
 				case Option:
+					stringValue = StringTools.trim(reader.readTillEnd());
+					if (stringValue == "*") {
+						stringValue = null;
+					}
 				case Command:
+					stringValue = StringTools.trim(reader.readTillEnd());
+					if (stringValue == "*") {
+						stringValue = null;
+					}
 				case Select:
 					intValue = reader.readNext(Int);
 
@@ -118,19 +130,32 @@ class Reader {
 	}
 
 	public function read():String {
-		return source.charAt(start);
+		var char = source.charAt(start);
+		start++;
+		return char;
+	}
+
+	public function readTillEnd():String {
+		var text = source.substr(start, source.length - start - 1);
+		start = source.length - 1;
+		return text;
 	}
 
 	public function readNext(any:Dynamic):Dynamic {
 		do {
 			var char = source.charAt(current);
+			current++;
 
-			if (isWhiteSpace.match(char))
+			if (isWhiteSpace.match(char)) {
+				current++;
 				continue;
+			}
 
 			var next = source.charAt(current + 1);
-			if (!isAlphaNumeric.match(next))
+			if (!isAlphaNumeric.match(next)) {
+				current++;
 				break;
+			}
 		} while (true);
 
 		var value = source.substr(start, current - start);

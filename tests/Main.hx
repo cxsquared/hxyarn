@@ -7,7 +7,9 @@ import tests.ShipTest;
 class Main {
 	public static function main() {
 		// Basic
-		new TestBase('./yarns/Basic.json').start();
+		new TestBase('./yarns/Basic.json', './yarns/testcases/Basic.testplan').start();
+		// Commands FAILING
+		// new TestBase('./yarns/Commands.json', './yarns/testcases/Commands.testplan').start();
 		// Expression
 		new TestBase('./yarns/Expressions.json', './yarns/testcases/Expressions.testplan').start();
 		// Function
