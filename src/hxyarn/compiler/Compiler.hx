@@ -13,7 +13,9 @@ import src.hxyarn.program.Program;
 class Compiler {
 	var invalidNodeTilteNameRegex = ~/[\[<>\]{}\|:\s#\$]/i;
 	var labelCount = 0;
-	var currentNode:Node;
+
+	public var currentNode:Node;
+
 	var rawTextNode = false;
 	var program:Program;
 	var fileName:String;
@@ -22,12 +24,10 @@ class Compiler {
 	var stringTable = new Map<String, StringInfo>();
 	var ifStatementEndLabels = new List<String>();
 	var generateClauseLabels = new List<String>();
-	var tokens = new Map<String, TokenType>();
 
 	public function new(fileName:String) {
 		program = new Program();
 		this.fileName = fileName;
-		this.loadOperators();
 	}
 
 	public static function compileFile(path:String):{program:Program, stringTable:Map<String, StringInfo>} {
@@ -111,6 +111,7 @@ class Compiler {
 	static inline var nodeId = "(?'nodeId'[a-zA-Z_][a-zA-Z0-9_.]*)";
 	static inline var varId = "(?'var'\\$[a-zA-Z_][a-zA-Z0-9_]*)";
 	static inline var funcId = "(?'funcId'[a-zA-Z_][a-zA-Z0-9_]*)";
+	static inline var operationExpressionRegex = "([a-zA-Z0-9_\\$]+)";
 	static inline var expressionRegex = "(.+)";
 	static inline var commandStart = '<<';
 	static inline var commandEnd = '>>';
@@ -259,46 +260,32 @@ class Compiler {
 	static inline var logicalAnd = "(and|&&)";
 	static inline var logicalOr = "(or|\\|\\|)";
 	static inline var logicalXor = "(xor|\\^)";
+	static inline var multDivMod = "(\\*|\\/|%)";
+	static inline var addSub = "(\\+|\\-)";
 
-	static var exprParen = new EReg('(\\S*$expressionRegex\\S*)', 'i');
-	static var exprEquals = new EReg('$expressionRegex\\s+($logicalEquals|$logicalNotEquals)\\s+$expressionRegex', 'i');
-	static var exprNot = new EReg('^$logicalNot\\s+$expressionRegex', 'i');
-	static var exprAnd = new EReg('$expressionRegex\\s+($logicalAnd|$logicalOr|$logicalXor)\\s+$expressionRegex', 'i');
-	static var funcRegex = new EReg('$funcId\\($expressionRegex?\\s?(,$expressionRegex)*\\)', 'i');
+	static var exprParen = new EReg('^\\(\\s*(.+)\\s*\\)$$', 'i');
+	static var exprNegative = new EReg('^-$expressionRegex', 'i');
+	static var exprMultDivMod = new EReg('$expressionRegex\\s*$multDivMod\\s*$expressionRegex', 'i');
+	static var exprAddSub = new EReg('$expressionRegex\\s*$addSub\\s*$expressionRegex', 'i');
+	static var exprCompare = new EReg('$expressionRegex\\s*($logicalLess|$logicalLessThanEquals|$logicalGreater|$logicalGreaterThanEquals)\\s*$expressionRegex',
+		'i');
+	static var exprEquals = new EReg('$expressionRegex\\s*($logicalEquals|$logicalNotEquals)\\s*$expressionRegex', 'i');
+	static var exprNot = new EReg('^$logicalNot\\s*$expressionRegex', 'i');
+	static var exprAnd = new EReg('$expressionRegex\\s*($logicalAnd|$logicalOr|$logicalXor)\\s*$expressionRegex', 'i');
+	static var funcRegex = new EReg('$funcId\\($expressionRegex?\\s*(,$expressionRegex)*\\)', 'i');
 	static var variableRegex = new EReg(varId, 'i');
 
 	function visitExpression(expression:String) {
-		if (exprEquals.match(expression)) {
-			genericExpVisitor(exprEquals.matched(1), exprEquals.matched(2), exprEquals.matched(5));
-		} else if (exprNot.match(expression)) {
-			visitExpNot(exprNot.matched(2));
-		} else if (exprAnd.match(expression)) {
-			genericExpVisitor(exprAnd.matched(1), exprAnd.matched(2), exprAnd.matched(6));
-		} else if (funcRegex.match(expression)) {
-			visitFunction(funcRegex);
-		} else if (expression == 'true' || expression == 'false') {
-			emit(currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(expression == 'true' ? true : false)]);
-		} else if (!Math.isNaN(Std.parseFloat(expression))) {
-			emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(Std.parseFloat(expression))]);
-		} else if (variableRegex.match(expression)) {
-			emit(currentNode, OpCode.PUSH_VARIABLE, [Operand.fromString(variableRegex.matched(0))]);
-		} else {
-			emit(currentNode, OpCode.PUSH_STRING, [Operand.fromString(unescape(expression))]);
-		}
+		var exprs = new ExpressionParser(Scanner.scan(expression)).parse();
+		var visitor = new ExpresionVisitor(this);
+
+		visitor.resolve(exprs);
 	}
 
 	function unescape(string:String):String {
 		var newString = StringTools.replace(string, "\"", "");
 
 		return newString;
-	}
-
-	function visitExpNot(expression:String) {
-		visitExpression(expression);
-
-		// number of arguments
-		emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(1)]);
-		emit(currentNode, OpCode.CALL_FUNC, [Operand.fromString(TokenType.Not.getName())]);
 	}
 
 	function visitFunction(funcRegex:EReg) {
@@ -320,15 +307,7 @@ class Compiler {
 		emit(currentNode, OpCode.CALL_FUNC, [Operand.fromString(functionName)]);
 	}
 
-	function genericExpVisitor(left:String, op:String, right:String) {
-		visitExpression(left);
-		visitExpression(right);
-
-		emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(2)]);
-		emit(currentNode, OpCode.CALL_FUNC, [Operand.fromString(tokens[StringTools.trim(op)].getName())]);
-	}
-
-	function emit(node:Node, opCode:OpCode, operands:Array<Operand>) {
+	public function emit(node:Node, opCode:OpCode, operands:Array<Operand>) {
 		var instruction = new Instruction();
 		instruction.opcode = opCode;
 		instruction.operands = operands;
@@ -409,6 +388,16 @@ class Compiler {
 	function registerLabel(?commentary:String = null) {
 		return 'L${labelCount++}$commentary';
 	}
+}
+
+class ExpresionVisitor implements Expr.Visitor {
+	var tokens = new Map<String, TokenType>();
+	var compiler:Compiler;
+
+	public function new(compiler:Compiler) {
+		this.compiler = compiler;
+		loadOperators();
+	}
 
 	function loadOperators() {
 		tokens["is"] = TokenType.EqualTo;
@@ -422,5 +411,133 @@ class Compiler {
 		tokens["||"] = TokenType.Or;
 		tokens["xor"] = TokenType.Xor;
 		tokens["^"] = TokenType.Xor;
+		tokens["*"] = TokenType.Multiply;
+		tokens["/"] = TokenType.Divide;
+		tokens["%"] = TokenType.Modulo;
+		tokens["+"] = TokenType.Add;
+		tokens["-"] = TokenType.Minus;
+		tokens["*="] = TokenType.Multiply;
+		tokens["/="] = TokenType.Divide;
+		tokens["%="] = TokenType.Modulo;
+		tokens["+="] = TokenType.Add;
+		tokens["-="] = TokenType.Minus;
+		tokens["<="] = TokenType.LessThanOrEqualTo;
+		tokens["lte"] = TokenType.LessThanOrEqualTo;
+		tokens["<"] = TokenType.LessThan;
+		tokens["lt"] = TokenType.LessThan;
+		tokens[">="] = TokenType.GreaterThanOrEqualTo;
+		tokens["gte"] = TokenType.GreaterThanOrEqualTo;
+		tokens[">"] = TokenType.GreaterThan;
+		tokens["gt"] = TokenType.GreaterThan;
+	}
+
+	public function resolve(exprs:Array<Expr>) {
+		for (expr in exprs) {
+			expr.accept(this);
+		}
+	}
+
+	public function visitExpParens(expr:Expr.ExpParens):Dynamic {
+		return expr.expression.accept(this);
+	}
+
+	public function visitExpNegative(expr:Expr.ExpNegative):Dynamic {
+		expr.expression.accept(this);
+
+		compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(1)]);
+		compiler.emit(compiler.currentNode, OpCode.CALL_FUNC, [Operand.fromString(TokenType.UnaryMinus.getName())]);
+
+		return 0;
+	}
+
+	public function visitExpNot(expr:Expr.ExpNot):Dynamic {
+		expr.expression.accept(this);
+
+		compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(1)]);
+		compiler.emit(compiler.currentNode, OpCode.CALL_FUNC, [Operand.fromString(TokenType.Not.getName())]);
+
+		return 0;
+	}
+
+	public function visitExpMultDivMod(expr:Expr.ExpMultDivMod):Dynamic {
+		genericExpVisitor(expr.left, expr.right, expr.op);
+
+		return 0;
+	}
+
+	public function visitExpAddSub(expr:Expr.ExpAddSub):Dynamic {
+		genericExpVisitor(expr.left, expr.right, expr.op);
+
+		return 0;
+	}
+
+	public function visitExpComparison(expr:Expr.ExpComparision):Dynamic {
+		genericExpVisitor(expr.left, expr.right, expr.op);
+
+		return 0;
+	}
+
+	public function visitExpEquality(expr:Expr.ExpEquality):Dynamic {
+		genericExpVisitor(expr.left, expr.right, expr.op);
+
+		return 0;
+	}
+
+	public function visitExpMultDivModEquals(expr:Expr.ExpMultDivModEquals):Dynamic {
+		opEquals(expr.variableName.literal, expr.left, expr.op);
+
+		return 0;
+	}
+
+	public function visitExpPlusMinusEquals(expr:Expr.ExpPlusMinusEquals):Dynamic {
+		opEquals(expr.variableName.literal, expr.left, expr.op);
+
+		return 0;
+	}
+
+	public function visitExpAndOrXor(expr:Expr.ExpAndOrXor):Dynamic {
+		genericExpVisitor(expr.left, expr.right, expr.op);
+
+		return 0;
+	}
+
+	public function visitExpValue(expr:Expr.ExpValue):Dynamic {
+		switch (expr.value.type) {
+			case src.hxyarn.compiler.Token.TokenType.VAR_ID:
+				compiler.emit(compiler.currentNode, OpCode.PUSH_VARIABLE, [Operand.fromString(expr.value.lexeme)]);
+			case src.hxyarn.compiler.Token.TokenType.NUMBER:
+				var number = expr.value.literal;
+				compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(number)]);
+			case src.hxyarn.compiler.Token.TokenType.KEYWORD_TRUE:
+				compiler.emit(compiler.currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(true)]);
+			case src.hxyarn.compiler.Token.TokenType.KEYWORD_FALSE:
+				compiler.emit(compiler.currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(false)]);
+			case src.hxyarn.compiler.Token.TokenType.STRING:
+				compiler.emit(compiler.currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(false)]);
+			case _:
+				throw new Exception('Expresion value not implemented: ${expr.value.toString()}');
+		}
+
+		return 0;
+	}
+
+	function opEquals(varName:String, expr:Expr, op:Token) {
+		compiler.emit(compiler.currentNode, OpCode.PUSH_VARIABLE, [Operand.fromString(varName)]);
+
+		expr.accept(this);
+
+		compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(2)]);
+		compiler.emit(compiler.currentNode, OpCode.CALL_FUNC, [Operand.fromString(tokens[op.lexeme].getName())]);
+
+		compiler.emit(compiler.currentNode, OpCode.STORE_VARIABLE, [Operand.fromString(varName)]);
+		compiler.emit(compiler.currentNode, OpCode.POP, []);
+	}
+
+	function genericExpVisitor(left:Expr, right:Expr, op:src.hxyarn.compiler.Token) {
+		left.accept(this);
+		right.accept(this);
+
+		compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(2)]);
+		compiler.emit(compiler.currentNode, OpCode.CALL_FUNC, [Operand.fromString(tokens[op.lexeme].getName())]);
 	}
 }
