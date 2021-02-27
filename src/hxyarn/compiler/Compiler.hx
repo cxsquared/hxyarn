@@ -115,6 +115,7 @@ class Compiler {
 	static inline var expressionRegex = "(.+)";
 	static inline var commandStart = '<<';
 	static inline var commandEnd = '>>';
+	static inline var commandText = "(?'text'[^>{]+)";
 	static inline var commandSet = "set";
 	static inline var commandIf = "if";
 	static inline var commandElseIf = "elseif";
@@ -128,6 +129,7 @@ class Compiler {
 	static var optionsRegex = new EReg('\\[\\[(?\'optText\'[^\\]{|\\[]+)\\|$nodeId\\]\\]\\s*($hashTag)?', "i");
 	static var setCommandRegex = new EReg('$commandStart$commandSet\\s+$expressionRegex$commandEnd', 'i');
 	static var callCommandRegex = new EReg('$commandStart$commandCall\\s+$expressionRegex$commandEnd', 'i');
+	static var customCommandRegex = new EReg('$commandStart$commandText$commandEnd', 'i');
 	static var ifClauseRegex = new EReg('$commandStart$commandIf\\s+$expressionRegex$commandEnd', 'i');
 	static var elseIfClauseRegex = new EReg('$commandStart$commandElseIf\\s+$expressionRegex$commandEnd', 'i');
 	static var elseClauseRegex = new EReg('$commandStart$commandElse$commandEnd', 'i');
@@ -155,6 +157,8 @@ class Compiler {
 			visitElseClause();
 		} else if (endClauseRegex.match(line)) {
 			visitEndIfClause();
+		} else if (customCommandRegex.match(line)) {
+			visitCommand(line, customCommandRegex, lineNumber);
 		} else {
 			visitLineStatement(line, lineNumber);
 		}
@@ -205,6 +209,21 @@ class Compiler {
 	function vistCallCommand(line:String, match:EReg, lineNumber:Int) {
 		// Adds the compiled expression value to the stack
 		visitExpression(match.matched(1));
+	}
+
+	function visitCommand(line:String, match:EReg, lineNumber:Int) {
+		// Adds the compiled expression value to the stack
+		var formattedText = generateFormattedText(match.matched(1));
+
+		switch (formattedText.composedString) {
+			case "stop":
+				emit(currentNode, OpCode.STOP, []);
+			case _:
+				emit(currentNode, OpCode.RUN_COMMAND, [
+					Operand.fromString(formattedText.composedString),
+					Operand.fromFloat(formattedText.expressionCount)
+				]);
+		}
 	}
 
 	function visitIfClause(regex:EReg) {

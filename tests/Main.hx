@@ -9,7 +9,7 @@ class Main {
 		// Basic
 		new TestBase('./yarns/Basic.json', './yarns/testcases/Basic.testplan').start();
 		// Commands FAILING
-		// new TestBase('./yarns/Commands.json', './yarns/testcases/Commands.testplan').start();
+		new TestBase('./yarns/Commands.json', './yarns/testcases/Commands.testplan').start();
 		// Expression
 		new TestBase('./yarns/Expressions.json', './yarns/testcases/Expressions.testplan').start();
 		// FormatFunctions FAILING
