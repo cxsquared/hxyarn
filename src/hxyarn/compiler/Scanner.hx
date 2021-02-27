@@ -30,6 +30,7 @@ class Scanner {
 		keywords.set("false", KEYWORD_FALSE);
 		keywords.set("true", KEYWORD_TRUE);
 		keywords.set("null", KEYWORD_NULL);
+		keywords.set("to", OPERATOR_ASSIGNMENT);
 	}
 
 	public static function scan(source:String) {
@@ -62,17 +63,17 @@ class Scanner {
 				addToken(COMMA);
 			case '.':
 				addToken(DOT);
-			case '-':
-				addToken(MINUS);
-			case '+':
-				addToken(PLUS);
-			case '*':
-				addToken(STAR);
-			case '/':
-				addToken(SLASH);
 			case '^':
 				addToken(OPERATOR_LOGICAL_XOR);
 			// two char
+			case '-':
+				addToken(match("=") ? OPERATOR_ASSIGNMENT_MINUS : MINUS);
+			case '*':
+				addToken(match("=") ? OPERATOR_ASSIGNMENT_STAR : STAR);
+			case '/':
+				addToken(match("=") ? OPERATOR_ASSIGNMENT_SLASH : SLASH);
+			case '+':
+				addToken(match("=") ? OPERATOR_ASSIGNMENT_PLUS : PLUS);
 			case '!':
 				addToken(match("=") ? OPERATOR_LOGICAL_NOT_EQUALS : BANG);
 			case '=':

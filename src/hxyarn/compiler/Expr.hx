@@ -4,6 +4,7 @@ import haxe.Exception;
 
 interface Visitor {
 	function visitExpParens(expr:ExpParens):Dynamic;
+	function visitExpAssign(expr:ExpAssign):Dynamic;
 	function visitExpNegative(expr:ExpNegative):Dynamic;
 	function visitExpNot(expr:ExpNot):Dynamic;
 	function visitExpMultDivMod(expr:ExpMultDivMod):Dynamic;
@@ -20,6 +21,20 @@ class Expr {
 	public function accept(visitor:Visitor):Dynamic {
 		throw new Exception("This should be overriden");
 	};
+}
+
+class ExpAssign extends Expr {
+	public function new(name:Token, value:Expr) {
+		this.name = name;
+		this.value = value;
+	}
+
+	override public function accept(visitor:Visitor) {
+		return visitor.visitExpAssign(this);
+	}
+
+	public var name:Token;
+	public var value:Expr;
 }
 
 class ExpParens extends Expr {

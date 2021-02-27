@@ -1,5 +1,9 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.compiler.Expr.ExpPlusMinusEquals;
+import src.hxyarn.compiler.Expr.ExpMultDivModEquals;
+import src.hxyarn.compiler.Expr.ExpValue;
+import src.hxyarn.compiler.Expr.ExpAssign;
 import src.hxyarn.compiler.Expr.ExpParens;
 import src.hxyarn.compiler.Expr.ExpNot;
 import src.hxyarn.compiler.Expr.ExpNegative;
@@ -30,7 +34,37 @@ class ExpressionParser {
 	}
 
 	function expression():Expr {
-		return or();
+		return assignment();
+	}
+
+	function assignment() {
+		var expr = or();
+
+		if (match([
+			OPERATOR_ASSIGNMENT,
+			OPERATOR_ASSIGNMENT_MINUS,
+			OPERATOR_ASSIGNMENT_MOD,
+			OPERATOR_ASSIGNMENT_PLUS,
+			OPERATOR_ASSIGNMENT_SLASH,
+			OPERATOR_ASSIGNMENT_STAR
+		])) {
+			var op = previous();
+			var value = assignment();
+
+			if (Std.isOfType(expr, ExpValue)) {
+				if (op.type == OPERATOR_ASSIGNMENT_MINUS || op.type == OPERATOR_ASSIGNMENT_PLUS) {
+					return new ExpPlusMinusEquals(cast(expr, ExpValue).value, op, value);
+				} else if (op.type != OPERATOR_ASSIGNMENT) {
+					return new ExpMultDivModEquals(cast(expr, ExpValue).value, op, value);
+				}
+
+				return new ExpAssign(cast(expr, ExpValue).value, value);
+			}
+
+			throw new Exception("Invalid assignment target.");
+		}
+
+		return expr;
 	}
 
 	function or():Expr {

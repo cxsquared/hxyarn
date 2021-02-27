@@ -126,7 +126,7 @@ class Compiler {
 
 	static var jumpRegex = new EReg('\\[\\[$nodeId\\]\\]', "i");
 	static var optionsRegex = new EReg('\\[\\[(?\'optText\'[^\\]{|\\[]+)\\|$nodeId\\]\\]\\s*($hashTag)?', "i");
-	static var setCommandRegex = new EReg('$commandStart$commandSet\\s+$varId\\s+(to|=)\\s+$expressionRegex$commandEnd', 'i');
+	static var setCommandRegex = new EReg('$commandStart$commandSet\\s+$expressionRegex$commandEnd', 'i');
 	static var ifClauseRegex = new EReg('$commandStart$commandIf\\s+$expressionRegex$commandEnd', 'i');
 	static var elseIfClauseRegex = new EReg('$commandStart$commandElseIf\\s+$expressionRegex$commandEnd', 'i');
 	static var elseClauseRegex = new EReg('$commandStart$commandElse$commandEnd', 'i');
@@ -193,15 +193,8 @@ class Compiler {
 	}
 
 	function vistSetCommand(line:String, match:EReg, lineNumber:Int) {
-		var varId = match.matched(1);
-		var expr = match.matched(3);
-
 		// Adds the compiled expression value to the stack
-		visitExpression(expr);
-
-		// store the variable and pop the value from the stack
-		emit(currentNode, OpCode.STORE_VARIABLE, [Operand.fromString(varId)]);
-		emit(currentNode, OpCode.POP, []);
+		visitExpression(match.matched(1));
 	}
 
 	function visitIfClause(regex:EReg) {
@@ -441,6 +434,15 @@ class ExpresionVisitor implements Expr.Visitor {
 		return expr.expression.accept(this);
 	}
 
+	public function visitExpAssign(expr:Expr.ExpAssign):Dynamic {
+		expr.value.accept(this);
+
+		compiler.emit(compiler.currentNode, OpCode.STORE_VARIABLE, [Operand.fromString(expr.name.lexeme)]);
+		compiler.emit(compiler.currentNode, OpCode.POP, []);
+
+		return 0;
+	};
+
 	public function visitExpNegative(expr:Expr.ExpNegative):Dynamic {
 		expr.expression.accept(this);
 
@@ -484,13 +486,13 @@ class ExpresionVisitor implements Expr.Visitor {
 	}
 
 	public function visitExpMultDivModEquals(expr:Expr.ExpMultDivModEquals):Dynamic {
-		opEquals(expr.variableName.literal, expr.left, expr.op);
+		opEquals(expr.variableName.lexeme, expr.left, expr.op);
 
 		return 0;
 	}
 
 	public function visitExpPlusMinusEquals(expr:Expr.ExpPlusMinusEquals):Dynamic {
-		opEquals(expr.variableName.literal, expr.left, expr.op);
+		opEquals(expr.variableName.lexeme, expr.left, expr.op);
 
 		return 0;
 	}
