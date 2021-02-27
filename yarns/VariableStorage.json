@@ -1,0 +1,12 @@
+[
+	{
+		"title": "Start",
+		"tags": "",
+		"body": "// Variable testing\r\n\r\n// Testing variable storage\r\n<<set $foo to 1>>\r\n\r\n// Test numeric storage\r\n<<call assert($foo == 1)>>\r\n\r\n<<set $foo to -1>>\r\n\r\n// Test numeric storage (negative)\r\n<<call assert($foo == -1)>>\r\n\r\n// Test string storage\r\n<<set $foo to \"foo\">>\r\n<<call assert($foo == \"foo\")>>\r\n\r\n<<set $foo to null>>\r\n\r\n// Test null storage\r\n<<call assert($foo == null)>>\r\n\r\n// Test immediate value arithmetic\r\n<<set $foo = 45>>\r\n\r\n<<set $bar = $foo + 1>>\r\n\r\n// Test immediate addition\r\n<<call assert($bar == 46)>>\r\n\r\n<<set $bar = $foo - 1>>\r\n\r\n// Test immediate subtraction\r\n<<call assert($bar == 44)>>\r\n\r\n<<set $foo = 46>>\r\n<<set $bar = $foo * 2>>\r\n\r\n// Test immediate multiplication\r\n<<call assert($bar == 92)>>\r\n\r\n<<set $bar = $foo / 2>>\r\n\r\n// Test immediate division\r\n<<call assert($bar == 23)>>\r\n\r\n<<set $foo = 45>>\r\n<<set $foo += 1>>\r\n\r\n// Test immediate assignment addition\r\n<<call assert($foo == 46)>>\r\n\r\n<<set $foo *= 2>>\r\n\r\n// Test immediate assignment multiplication\r\n<<call assert($foo == 92)>>\r\n\r\n<<set $foo /= 2>>\r\n\r\n// Test immediate assignment division\r\n<<call assert($foo == 46)>>\r\n\r\n<<set $foo -= 1>>\r\n\r\n// Test immediate assignment subtraction\r\n<<call assert($foo == 45)>>\r\n\r\n// Testing variable arithmetic\r\n<<set $foo = 46>>\r\n<<set $bar = 1>>\r\n<<set $foobar = $foo + $bar>>\r\n\r\n// Test variable addition\r\n<<call assert($foobar == 47)>>\r\n\r\n<<set $foobar = $foo - $bar>>\r\n\r\n// Test variable subtraction\r\n<<call assert($foobar == 45)>>\r\n\r\n<<set $bar = 2>>\r\n<<set $foobar = $foo * $bar>>\r\n\r\n// Test variable multiplication\r\n<<call assert($foobar == 92)>>\r\n\r\n<<set $foobar = $foo / $bar>>\r\n\r\n// Test variable division\r\n<<call assert($foobar == 23)>>\r\n\r\n// Testing default variable values\r\n<<set $foounused += 1>>\r\n\r\n// An undefined variable must default to 0 for arithmetic\r\n<<call assert($foounused == 1)>>\r\n\r\n// Testing string addition\r\n<<set $foo = \"foo\">>\r\n<<set $bar = \"bar\">>\r\n<<set $foobar = $foo + \"bar\">>\r\n\r\n// \"Test immediate string addition\r\n<<call assert($foobar == \"foobar\")>>\r\n\r\n<<set $foobar = $foo + $bar>>\r\n\r\n// \"Test string addition\r\n<<call assert($foobar == \"foobar\")>>",
+		"position": {
+			"x": -228,
+			"y": -434
+		},
+		"colorID": 0
+	}
+]

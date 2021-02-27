@@ -1,0 +1,12 @@
+[
+	{
+		"title": "Start",
+		"tags": "",
+		"body": "// Testing commands\r\n\r\n<<flip Harley3 +1>>\r\n\r\n// Commands that begin with keywords\r\n<<toggle>>\r\n\r\n<<settings>>\r\n\r\n<<iffy>>\r\n\r\n<<nulled>>\r\n\r\n<<orion>>\r\n\r\n<<andorian>>\r\n\r\n<<note>>\r\n\r\n<<isActive>>\r\n\r\n// Commands with a single character\r\n<<p>>\r\n\r\n// Commands with punctuation\r\n//<<!@#$%^&*()⁄€‹›ﬁﬂ‡°·‚‘-=_+>>\r\n\r\n// Commands with colons\r\n<<hide Collision:GermOnPorch>>",
+		"position": {
+			"x": -64,
+			"y": -64
+		},
+		"colorID": 0
+	}
+]

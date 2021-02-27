@@ -1,0 +1,12 @@
+[
+	{
+		"title": "Start",
+		"tags": "",
+		"body": "// Testing options\r\n\r\n// Expect 2 options (the second one in the following group of three\r\n// will not be run) and select the first one\r\n\r\n\r\n-> Option 1\r\n\t<<set $selected += 1>>\r\n\tThis line should appear.\r\n\t-> Sub Option 1\r\n\t\t// should be selected\r\n\t\tThis line should also appear.\r\n\t\t<<set $selected += 1>>\r\n\t-> Sub Option 2\r\n\t-> Sub Option 3 <<if false>>\r\n-> Option 2 <<if false>>\r\n\tThis line should not appear.\r\n-> Option 3\r\n\tThis line should not appear.\r\n\r\n// Test two shortcut options with no text\r\n\r\nBea: line text\r\n-> option1\r\n-> option2\r\nBea: line text2\r\n\r\n\r\n\tBea: indented line text\r\n\t-> indented option1\r\n\t-> indented option2\r\n\tBea: indented line text2\r\n\r\n\r\nBea: line text\r\n\t->indented option1 following unindented line\r\n\t->indented option2 following unindented line\r\n\t\toption2.1\r\n\t\toption2.2\r\n\t\toption2.3\r\n\t\toption2.4\r\n\r\n// Shortcut options and line tags should work regardless of whitespace\r\n\r\n// No whitespace between condition and line tag\r\n-> Option A <<if true>>#line:0e8a7ce\r\n-> Option B #line:0405c66\r\n\r\n(Break up the commands)\r\n\r\n// Whitespace between condition and line tag\r\n-> Option A <<if true>> #line:0e8a7cd\r\n-> Option B #line:0405c67\r\n\r\n(Break up the commands)\r\n\r\n// Single-line shortcut options inside an indented context\r\n<<if true>>\r\n    -> Option1\r\n<<else>>\r\n    -> Option2\r\n<<endif>>",
+		"position": {
+			"x": -212,
+			"y": -396
+		},
+		"colorID": 0
+	}
+]

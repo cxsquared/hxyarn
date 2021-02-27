@@ -1,0 +1,12 @@
+[
+	{
+		"title": "Start",
+		"tags": "",
+		"body": "// Tests a single line\r\n\r\nThis is a line of dialogue.\r\n\r\nMae: <shake=.01>HA HA HA HA HA NO I'M FINE.</shake>\r\n\r\n// Comments after lines\r\nMae: Testing comments after lines // comment\r\nMae: Testing comments after hashtags #hashtag // comment\r\nMae: Testing comments after line conditions <<if true>> // comment",
+		"position": {
+			"x": -64,
+			"y": -64
+		},
+		"colorID": 0
+	}
+]

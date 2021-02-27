@@ -1,0 +1,12 @@
+[
+	{
+		"title": "Start",
+		"tags": "",
+		"body": "// Testing types\r\n\r\n// string equality\r\n<<call assert(\"test\" == \"test\")>>\r\n\r\n// string-number inequality\r\n<<call assert(\"test\" != 1)>>\r\n\r\n// string case sensitivity\r\n<<call assert(\"hi\" != \"HI\")>>\r\n\r\n// multiple-type concatenation\r\n<<call assert(1+1+\"hi\" == \"2hi\")>>\r\n\r\n// gt test\r\n<<call assert(3 gt 2)>>\r\n\r\n// lt test\r\n<<call assert(1 lt 2)>>\r\n\r\n// lte test\r\n<<call assert(2 lte 2)>>\r\n\r\n// gte test\r\n<<call assert(2 gte 2)>>",
+		"position": {
+			"x": -224,
+			"y": -425
+		},
+		"colorID": 0
+	}
+]

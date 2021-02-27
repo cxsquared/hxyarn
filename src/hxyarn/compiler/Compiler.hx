@@ -134,7 +134,7 @@ class Compiler {
 	static var endClauseRegex = new EReg('$commandStart$commandEndIf$commandEnd', 'i');
 
 	function parseLine(line:String, lineNumber:Int) {
-		if (line.length <= 0)
+		if (line.length <= 0 || StringTools.trim(line).substr(0, 2) == "//")
 			return;
 
 		if (jumpRegex.match(line)) {

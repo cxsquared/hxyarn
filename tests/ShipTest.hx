@@ -6,15 +6,12 @@ import src.hxyarn.compiler.Compiler;
 import tests.TestBase;
 
 class ShipTest extends TestBase {
-    var visited:Map<String, Bool>;
+	var visited:Map<String, Bool>;
 
-    public function new() {
-        super();
+	public function new() {
+		super('./yarns/Sally.json', null);
 
-        var compiler = Compiler.compileFile('./yarns/Sally.json');
-        stringTable = compiler.stringTable;
-
-	    visited = new Map<String, Bool>();
+		visited = new Map<String, Bool>();
 
 		dialogue.library.registerReturningFunction("visited", 1, function(nodeName:Array<Value>):Bool {
 			if (visited.exists(nodeName[0].asString()))
@@ -24,8 +21,9 @@ class ShipTest extends TestBase {
 
 			return false;
 		});
+	}
 
-        dialogue.addProgram(compiler.program);
+	override public function start() {
 		dialogue.setNode("Sally");
 		dialogue.resume();
 		dialogue.setSelectedOption(0);
@@ -37,7 +35,7 @@ class ShipTest extends TestBase {
 		dialogue.setNode("Sally");
 		dialogue.resume();
 		dialogue.setSelectedOption(0);
-    }
+	}
 
 	override public function nodeCompleteHandler(nodeName:String):HandlerExecutionType {
 		visited.set(nodeName, true);

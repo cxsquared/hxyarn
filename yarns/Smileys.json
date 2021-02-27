@@ -1,0 +1,12 @@
+[
+	{
+		"title": "Start",
+		"tags": "",
+		"body": "// Testing smileys\r\n\r\n\r\nMae: ¯\\_(ツ)_/¯\r\nMae: <o>\r\nMae: :|\r\nMae: :)\r\nMae: :(\r\nMae: :o\r\nMae: :\\\r\nMae: :<\r\nMae: D:\r\nMae: -_-\r\nMae: =_=\r\nMae: U_U\r\nMae: O_O\r\nMae: o_o\r\nMae: \\o/\r\nMae: /o\\\r\nMae: o/\r\nMae: _o_\r\nMae: o>\r\nMae: / \\\r\nMae: \\ /\r\nMae: ~~\r\n\r\n// Testing in an option group\r\n\r\n\r\n\r\n-> Mae: ¯\\_(ツ)_/¯\r\n-> Mae: <o>\r\n-> Mae: :|\r\n-> Mae: :)\r\n-> Mae: :(\r\n-> Mae: :o\r\n-> Mae: :\\\r\n-> Mae: :<\r\n-> Mae: D:\r\n-> Mae: -_-\r\n-> Mae: =_=\r\n-> Mae: U_U\r\n-> Mae: O_O\r\n-> Mae: o_o\r\n-> Mae: \\o/\r\n-> Mae: /o\\\r\n-> Mae: o/\r\n-> Mae: _o_\r\n-> Mae: o>\r\n-> Mae: / \\\r\n-> Mae: \\ /\r\n-> Mae: ~~\r\n\r\nSeparating the option groups here.\r\n\r\n// Testing in an option group, with conditionals\r\n\r\n\r\n-> Mae: ¯\\_(ツ)_/¯ <<if true>>\r\n-> Mae: <o> <<if true>>\r\n-> Mae: :| <<if true>>\r\n-> Mae: :) <<if true>>\r\n-> Mae: :( <<if true>>\r\n-> Mae: :o <<if true>>\r\n-> Mae: :\\ <<if true>>\r\n-> Mae: :< <<if true>>\r\n-> Mae: D: <<if true>>\r\n-> Mae: -_- <<if true>>\r\n-> Mae: =_= <<if true>>\r\n-> Mae: U_U <<if true>>\r\n-> Mae: O_O <<if true>>\r\n-> Mae: o_o <<if true>>\r\n-> Mae: \\o/ <<if true>>\r\n-> Mae: /o\\ <<if true>>\r\n-> Mae: o/ <<if true>>\r\n-> Mae: _o_ <<if true>>\r\n-> Mae: o> <<if true>>\r\n-> Mae: / \\ <<if true>>\r\n-> Mae: \\ / <<if true>>\r\n-> Mae: ~~ <<if true>>",
+		"position": {
+			"x": -219,
+			"y": -413
+		},
+		"colorID": 0
+	}
+]

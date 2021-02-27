@@ -1,5 +1,6 @@
 package tests;
 
+import src.hxyarn.compiler.Compiler;
 import haxe.Exception;
 import tests.TestPlan;
 import src.hxyarn.Value;
@@ -16,7 +17,7 @@ class TestBase {
 	var stringTable:Map<String, StringInfo>;
 	var testPlan:TestPlan;
 
-	public function new() {
+	public function new(yarnFile:String, ?testPlanFile:String = null) {
 		dialogue = new Dialogue(new MemoryVariableStore());
 
 		dialogue.logDebugMessage = this.logDebugMessage;
@@ -33,6 +34,19 @@ class TestBase {
 				trace("--------ASSERT FAILED------");
 			}
 		});
+
+		if (testPlanFile != null && StringTools.trim(testPlanFile).length > 0)
+			testPlan = new TestPlan(testPlanFile);
+
+		var compiler = Compiler.compileFile(yarnFile);
+		stringTable = compiler.stringTable;
+
+		dialogue.addProgram(compiler.program);
+	}
+
+	public function start() {
+		dialogue.setNode("Start");
+		dialogue.resume();
 	}
 
 	public function getComposedTextForLine(line:Line):String {

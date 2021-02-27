@@ -1,15 +1,18 @@
 package tests;
 
+import tests.TestBase;
 import tests.FunctionTest;
-import tests.ExpressionTest;
-import tests.BasicTest;
 import tests.ShipTest;
 
 class Main {
 	public static function main() {
-		// new BasicTest();
-		// new ExpressionTest();
-		new FunctionTest();
-		// new ShipTest();
+		// Basic
+		new TestBase('./yarns/Basic.json').start();
+		// Expression
+		new TestBase('./yarns/Expressions.json', './yarns/testcases/Expressions.testplan').start();
+		// Function
+		new FunctionTest().start();
+		// Ship
+		new ShipTest().start();
 	}
 }
