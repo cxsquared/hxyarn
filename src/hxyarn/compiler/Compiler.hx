@@ -502,7 +502,7 @@ class ExpresionVisitor implements Expr.Visitor {
 			case src.hxyarn.compiler.Token.TokenType.KEYWORD_FALSE:
 				compiler.emit(compiler.currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(false)]);
 			case src.hxyarn.compiler.Token.TokenType.STRING:
-				compiler.emit(compiler.currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(false)]);
+				compiler.emit(compiler.currentNode, OpCode.PUSH_STRING, [Operand.fromString(expr.value.literal)]);
 			case src.hxyarn.compiler.Token.TokenType.KEYWORD_NULL:
 				compiler.emit(compiler.currentNode, OpCode.PUSH_NULL, []);
 			case _:

@@ -151,7 +151,7 @@ class Scanner {
 		}
 
 		advance();
-		var value = source.substr(start + 1, current - 1 - start);
+		var value = source.substr(start + 1, current - 2 - start);
 		addToken(STRING, value);
 	}
 

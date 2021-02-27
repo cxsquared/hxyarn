@@ -223,7 +223,7 @@ class Dialogue {
 			if (pFunc.functionName == "select") {
 				var replacement = '<no replacement for ${pFunc.value}>';
 				if (pFunc.data.exists(pFunc.value))
-					replacement = StringTools.replace(replacement, formatFunctionValuePlaceHolder, pFunc.value);
+					replacement = pFunc.value;
 
 				parsedFunction.lineWithReplacements = StringTools.replace(parsedFunction.lineWithReplacements, '{$i}', replacement);
 			} else {
