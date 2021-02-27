@@ -288,39 +288,47 @@ class Compiler {
 	}
 
 	function generateFormattedText(text:String):{composedString:String, expressionCount:Int} {
-		var inExpr = false;
-		var expressions = [];
-		var currentExpr = "";
-
+		var expressionCount = 0;
 		var finalString = "";
 
-		for (index in 0...text.length) {
+		var index = 0;
+		while (index < text.length) {
 			var char = text.charAt(index);
-			if (inExpr) {
-				if (char == "}") {
-					finalString += expressions.length;
-					finalString += char;
-					expressions.push(currentExpr);
-					currentExpr = "";
-					inExpr = false;
-				} else {
-					currentExpr += char;
+			if (char == "{") {
+				index++; // consume {
+				var start = index;
+				while (text.charAt(index) != "}") {
+					index++;
 				}
-			} else if (char == "{") {
-				inExpr = true;
-				finalString += char;
+				visitExpression(text.substr(start, index - start));
+				finalString += '{$expressionCount}';
+				expressionCount += 1;
+				index++; // consume }
+			} else if (char == "[") {
+				index++; // consume [
+				var start = index;
+				while (text.charAt(index) != "]") {
+					index++;
+				}
+				var functions = text.substr(start, index - start).split(' ');
+				visitExpression(functions[1].substr(1, functions[1].length - 2)); // variable. Remvoe {}
+				finalString += '[${functions[0]} "{$expressionCount}"';
+				for (kvp in functions.slice(2)) {
+					finalString += ' $kvp';
+				}
+				finalString += ']';
+				expressionCount += 1;
+				index++; // consume ]
 			} else {
 				finalString += char;
 			}
-		}
 
-		for (expr in expressions) {
-			visitExpression(expr);
+			index++;
 		}
 
 		return {
 			composedString: StringTools.trim(finalString),
-			expressionCount: expressions.length
+			expressionCount: expressionCount
 		};
 	}
 

@@ -56,7 +56,7 @@ class TestBase {
 			text = StringTools.replace(text, '{$index}', sub);
 		}
 
-		return text;
+		return Dialogue.expandFormatFunctions(text, "EN");
 	}
 
 	function setUp(fileName:String) {}

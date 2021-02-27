@@ -7,13 +7,13 @@ import tests.ShipTest;
 class Main {
 	public static function main() {
 		// Basic
-		new TestBase('./yarns/Basic.json', './yarns/testcases/Basic.testplan').start();
-		// Commands FAILING
-		new TestBase('./yarns/Commands.json', './yarns/testcases/Commands.testplan').start();
+		// new TestBase('./yarns/Basic.json', './yarns/testcases/Basic.testplan').start();
+		// Commands
+		// new TestBase('./yarns/Commands.json', './yarns/testcases/Commands.testplan').start();
 		// Expression
-		new TestBase('./yarns/Expressions.json', './yarns/testcases/Expressions.testplan').start();
+		// new TestBase('./yarns/Expressions.json', './yarns/testcases/Expressions.testplan').start();
 		// FormatFunctions FAILING
-		// new TestBase('./yarns/FormatFunctions.json', './yarns/testcases/FormatFunctions.testplan').start();
+		new TestBase('./yarns/FormatFunctions.json', './yarns/testcases/FormatFunctions.testplan').start();
 		// Function
 		new FunctionTest().start();
 		// IfStatements

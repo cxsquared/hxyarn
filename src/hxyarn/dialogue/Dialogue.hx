@@ -214,13 +214,105 @@ class Dialogue {
 	// TODO
 	public function analyse() {}
 
-	// TODO
-	public static function expandFormatFunctions(input:String, localeCode:String) {}
+	public static function expandFormatFunctions(input:String, localeCode:String) {
+		var parsedFunction = parseFormatFunctions(input, localeCode);
 
-	// TODO
+		for (i in 0...parsedFunction.parsedFunctions.length) {
+			var pFunc = parsedFunction.parsedFunctions[i];
+
+			if (pFunc.functionName == "select") {
+				var replacement = '<no replacement for ${pFunc.value}>';
+				if (pFunc.data.exists(pFunc.value))
+					replacement = StringTools.replace(replacement, formatFunctionValuePlaceHolder, pFunc.value);
+
+				parsedFunction.lineWithReplacements = StringTools.replace(parsedFunction.lineWithReplacements, '{$i}', replacement);
+			} else {
+				// TODO plural and ordinal stuff
+			}
+		}
+
+		return parsedFunction.lineWithReplacements;
+	}
+
 	static function parseFormatFunctions(input:String, localeCode:String):{lineWithReplacements:String, parsedFunctions:Array<ParsedFormatFunction>} {
-		throw new Exception("Not implemented");
+		var returnedLine = "";
+		var returnedFunctions = new Array<ParsedFormatFunction>();
 
-		return {lineWithReplacements: "", parsedFunctions: new Array<ParsedFormatFunction>()};
+		var i = 0;
+		while (i < input.length) {
+			var c = input.charAt(i);
+
+			if (c != '[') {
+				if (c != ']')
+					returnedLine += c;
+				i++;
+			} else {
+				var pFunc = new ParsedFormatFunction();
+				i += 1; // consume [
+
+				var name = "";
+				while (input.charAt(i) != " ") {
+					name += input.charAt(i);
+					i++;
+				}
+				pFunc.functionName = name;
+
+				switch (pFunc.functionName) {
+					case "select":
+					case "plural":
+					case "ordinal":
+					case _:
+						throw new Exception('Invalid formatting function ${pFunc.functionName} in line "$input"');
+				}
+				i += 1; // consume whitespace
+
+				if (input.charAt(i) != "\"")
+					throw new Exception('Expecting variable start in line "$input"');
+
+				i += 1; // consume "
+
+				var variable = "";
+				while (input.charAt(i) != "\"") {
+					variable += input.charAt(i);
+					i++;
+				}
+				pFunc.value = variable;
+				i += 2; // consume " and whitespace
+
+				var kvp = "";
+				while (input.charAt(i) != ']') {
+					var c = input.charAt(i);
+					if (c == " " || input.charAt(i + 1) == ']') {
+						if (StringTools.trim(kvp).length <= 0) {
+							i++;
+							continue;
+						}
+
+						if (input.charAt(i + 1) == ']')
+							kvp += c;
+
+						var key = kvp.split('=')[0];
+						var value = kvp.split('=')[1];
+						if (pFunc.data.exists(key))
+							throw new Exception('Duplicate value "$key" in format function inside line "$input"');
+
+						pFunc.data.set(key, value.substr(1, value.length - 2)); // remove "" around value
+
+						kvp = "";
+						i++;
+						continue;
+					}
+
+					kvp += c;
+					i++;
+				}
+
+				returnedFunctions.push(pFunc);
+
+				returnedLine += '{${returnedFunctions.length - 1}}';
+			}
+		}
+
+		return {lineWithReplacements: returnedLine, parsedFunctions: returnedFunctions};
 	}
 }
