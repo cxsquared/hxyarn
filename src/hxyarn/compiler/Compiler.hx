@@ -127,6 +127,7 @@ class Compiler {
 	static var jumpRegex = new EReg('\\[\\[$nodeId\\]\\]', "i");
 	static var optionsRegex = new EReg('\\[\\[(?\'optText\'[^\\]{|\\[]+)\\|$nodeId\\]\\]\\s*($hashTag)?', "i");
 	static var setCommandRegex = new EReg('$commandStart$commandSet\\s+$expressionRegex$commandEnd', 'i');
+	static var callCommandRegex = new EReg('$commandStart$commandCall\\s+$expressionRegex$commandEnd', 'i');
 	static var ifClauseRegex = new EReg('$commandStart$commandIf\\s+$expressionRegex$commandEnd', 'i');
 	static var elseIfClauseRegex = new EReg('$commandStart$commandElseIf\\s+$expressionRegex$commandEnd', 'i');
 	static var elseClauseRegex = new EReg('$commandStart$commandElse$commandEnd', 'i');
@@ -142,6 +143,8 @@ class Compiler {
 			visitOptionLink(line, optionsRegex, lineNumber);
 		} else if (setCommandRegex.match(line)) {
 			vistSetCommand(line, setCommandRegex, lineNumber);
+		} else if (callCommandRegex.match(line)) {
+			vistCallCommand(line, callCommandRegex, lineNumber);
 		} else if (ifClauseRegex.match(line)) {
 			visitIfClause(ifClauseRegex);
 		} else if (elseIfClauseRegex.match(line)) {
@@ -197,6 +200,11 @@ class Compiler {
 		visitExpression(match.matched(1));
 	}
 
+	function vistCallCommand(line:String, match:EReg, lineNumber:Int) {
+		// Adds the compiled expression value to the stack
+		visitExpression(match.matched(1));
+	}
+
 	function visitIfClause(regex:EReg) {
 		var endOfIfStatmentLabel = registerLabel("endif");
 		ifStatementEndLabels.push(endOfIfStatmentLabel);
@@ -243,61 +251,11 @@ class Compiler {
 		}
 	}
 
-	static inline var logicalNot = "(not|\\!)";
-	static inline var logicalEquals = "(==|is|eq)";
-	static inline var logicalNotEquals = "(!=|neq)";
-	static inline var logicalLessThanEquals = "(<=|lte)";
-	static inline var logicalGreaterThanEquals = "(>=|gte)";
-	static inline var logicalLess = "(<|lt)";
-	static inline var logicalGreater = "(>|gt)";
-	static inline var logicalAnd = "(and|&&)";
-	static inline var logicalOr = "(or|\\|\\|)";
-	static inline var logicalXor = "(xor|\\^)";
-	static inline var multDivMod = "(\\*|\\/|%)";
-	static inline var addSub = "(\\+|\\-)";
-
-	static var exprParen = new EReg('^\\(\\s*(.+)\\s*\\)$$', 'i');
-	static var exprNegative = new EReg('^-$expressionRegex', 'i');
-	static var exprMultDivMod = new EReg('$expressionRegex\\s*$multDivMod\\s*$expressionRegex', 'i');
-	static var exprAddSub = new EReg('$expressionRegex\\s*$addSub\\s*$expressionRegex', 'i');
-	static var exprCompare = new EReg('$expressionRegex\\s*($logicalLess|$logicalLessThanEquals|$logicalGreater|$logicalGreaterThanEquals)\\s*$expressionRegex',
-		'i');
-	static var exprEquals = new EReg('$expressionRegex\\s*($logicalEquals|$logicalNotEquals)\\s*$expressionRegex', 'i');
-	static var exprNot = new EReg('^$logicalNot\\s*$expressionRegex', 'i');
-	static var exprAnd = new EReg('$expressionRegex\\s*($logicalAnd|$logicalOr|$logicalXor)\\s*$expressionRegex', 'i');
-	static var funcRegex = new EReg('$funcId\\($expressionRegex?\\s*(,$expressionRegex)*\\)', 'i');
-	static var variableRegex = new EReg(varId, 'i');
-
 	function visitExpression(expression:String) {
 		var exprs = new ExpressionParser(Scanner.scan(expression)).parse();
 		var visitor = new ExpresionVisitor(this);
 
 		visitor.resolve(exprs);
-	}
-
-	function unescape(string:String):String {
-		var newString = StringTools.replace(string, "\"", "");
-
-		return newString;
-	}
-
-	function visitFunction(funcRegex:EReg) {
-		var functionName = funcRegex.matched(1);
-
-		handleFunction(functionName, funcRegex.matched(2));
-	}
-
-	// https://stackabuse.com/regex-splitting-by-character-unless-in-quotes/
-	static var splitEscapedRegex = ~/,(?=([^\\"]*\\"[^\\"]*\\")*[^\\"]*$)/;
-
-	function handleFunction(functionName:String, arguments:String) {
-		var splitExp = splitEscapedRegex.split(arguments);
-		for (exp in splitExp) {
-			visitExpression(exp);
-		}
-
-		emit(currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(splitExp.length)]);
-		emit(currentNode, OpCode.CALL_FUNC, [Operand.fromString(functionName)]);
 	}
 
 	public function emit(node:Node, opCode:OpCode, operands:Array<Operand>) {
@@ -522,6 +480,17 @@ class ExpresionVisitor implements Expr.Visitor {
 
 		return 0;
 	}
+
+	public function visitExpFunc(expr:Expr.ExpFunc):Dynamic {
+		for (arg in expr.arguments) {
+			arg.accept(this);
+		}
+
+		compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(expr.arguments.length)]);
+		compiler.emit(compiler.currentNode, OpCode.CALL_FUNC, [Operand.fromString(expr.callee)]);
+
+		return 0;
+	};
 
 	function opEquals(varName:String, expr:Expr, op:Token) {
 		compiler.emit(compiler.currentNode, OpCode.PUSH_VARIABLE, [Operand.fromString(varName)]);

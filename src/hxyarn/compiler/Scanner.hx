@@ -1,6 +1,5 @@
 package src.hxyarn.compiler;
 
-import haxe.display.Display.Keyword;
 import haxe.Exception;
 import src.hxyarn.compiler.Token.TokenType;
 
@@ -63,6 +62,8 @@ class Scanner {
 				addToken(COMMA);
 			case '.':
 				addToken(DOT);
+			case '%':
+				addToken(MOD);
 			case '^':
 				addToken(OPERATOR_LOGICAL_XOR);
 			// two char
@@ -75,7 +76,7 @@ class Scanner {
 			case '+':
 				addToken(match("=") ? OPERATOR_ASSIGNMENT_PLUS : PLUS);
 			case '!':
-				addToken(match("=") ? OPERATOR_LOGICAL_NOT_EQUALS : BANG);
+				addToken(match("=") ? OPERATOR_LOGICAL_NOT_EQUALS : OPERATOR_LOGICAL_NOT);
 			case '=':
 				addToken(match("=") ? OPERATOR_LOGICAL_EQUALS : OPERATOR_ASSIGNMENT);
 			case '<':

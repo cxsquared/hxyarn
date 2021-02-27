@@ -1,0 +1,12 @@
+[
+    {
+        "title": "Start",
+        "body": "// Function tests\n\n// \"add_three_operands\" is a function that adds three operands together\n\n<<call assert(add_three_operands(1, 2, 4*1) == 7)>>\n\n// last_value is a function that returns the last parameter\n\n<<call assert(last_value(1,2,3) == 3)>>\n\n// function calls as parameters\n\n<<call assert(last_value(1, last_value(2,3)) == 3)>>",
+        "tags": "",
+		"position": {
+			"x": 0,
+			"y": 0 
+		},
+		"colorID": 0
+    }
+]

@@ -15,6 +15,7 @@ interface Visitor {
 	function visitExpPlusMinusEquals(expr:ExpPlusMinusEquals):Dynamic;
 	function visitExpAndOrXor(expr:ExpAndOrXor):Dynamic;
 	function visitExpValue(expr:ExpValue):Dynamic;
+	function visitExpFunc(expr:ExpFunc):Dynamic;
 }
 
 class Expr {
@@ -197,4 +198,20 @@ class ExpValue extends Expr {
 
 	public var value:Token;
 	public var literal:Dynamic;
+}
+
+class ExpFunc extends Expr {
+	public function new(callee:String, paren:Token, arguments:Array<Expr>) {
+		this.callee = callee;
+		this.paren = paren;
+		this.arguments = arguments;
+	}
+
+	override public function accept(visitor:Visitor) {
+		return visitor.visitExpFunc(this);
+	}
+
+	public var callee:String;
+	public var paren:Token;
+	public var arguments:Array<Expr>;
 }

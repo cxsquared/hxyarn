@@ -1,5 +1,7 @@
 package tests;
 
+import haxe.Exception;
+import tests.TestPlan;
 import src.hxyarn.Value;
 import src.hxyarn.compiler.StringInfo;
 import src.hxyarn.dialogue.Command;
@@ -12,6 +14,7 @@ class TestBase {
 	var storage = new MemoryVariableStore();
 	var dialogue:Dialogue;
 	var stringTable:Map<String, StringInfo>;
+	var testPlan:TestPlan;
 
 	public function new() {
 		dialogue = new Dialogue(new MemoryVariableStore());
@@ -54,14 +57,50 @@ class TestBase {
 
 	public function lineHandler(line:Line):HandlerExecutionType {
 		var text = getComposedTextForLine(line);
-		trace(text);
+		trace('Line: $text');
+
+		if (testPlan != null) {
+			testPlan.next();
+
+			if (testPlan.nextExpectedType == StepType.Line) {
+				assertString(testPlan.nextExpectedValue, text);
+			} else {
+				throw new Exception('Recieved line $text, but was expected a ${testPlan.nextExpectedType.getName()}');
+			}
+		}
 
 		return HandlerExecutionType.ContinueExecution;
 	}
 
 	public function optionsHandler(options:OptionSet):HandlerExecutionType {
+		var optionCount = options.options.length;
+		var optionText = new Array<String>();
+
+		trace("Options:");
 		for (option in options.options) {
-			trace(' - ${getComposedTextForLine(option.line)}');
+			var text = getComposedTextForLine(option.line);
+			optionText.push(text);
+			trace(' - $text');
+		}
+
+		if (testPlan != null) {
+			testPlan.next();
+
+			if (testPlan.nextExpectedType != StepType.Select) {
+				throw new Exception('Recieved $optionCount options, but wasn\'t expecting them (was expecting ${testPlan.nextExpectedType.getName()})');
+			}
+
+			assertInt(testPlan.nextExpectedOptions.length, optionCount);
+
+			for (index => option in optionText) {
+				assertString(testPlan.nextExpectedOptions[index], option);
+			}
+
+			if (testPlan.nextOptionToSelect != -1) {
+				dialogue.setSelectedOption(testPlan.nextOptionToSelect - 1);
+			} else {
+				dialogue.setSelectedOption(0);
+			}
 		}
 
 		return HandlerExecutionType.ContinueExecution;
@@ -69,6 +108,15 @@ class TestBase {
 
 	public function commandHanlder(command:Command):HandlerExecutionType {
 		trace('Command: ${command.text}');
+
+		if (testPlan != null) {
+			testPlan.next();
+			if (testPlan.nextExpectedType != StepType.Command) {
+				throw new Exception('Recieved command ${command.text}, but wasn\'t expecting to select one (was expecting ${testPlan.nextExpectedType.getName()})');
+			} else {
+				assertString(testPlan.nextExpectedValue, command.text);
+			}
+		}
 
 		return HandlerExecutionType.ContinueExecution;
 	}
@@ -82,5 +130,22 @@ class TestBase {
 	}
 
 	public function dialogueCompleteHandler() {
+		if (testPlan != null) {
+			testPlan.next();
+
+			if (testPlan.nextExpectedType != StepType.Stop) {
+				throw new Exception('Stopped dialogue,  but wasn\'t expecting to select one (was expecting ${testPlan.nextExpectedType.getName()})');
+			}
+		}
+	}
+
+	function assertString(expected:String, actual:String) {
+		if (expected != actual)
+			throw new Exception('Expected: "$expected", but got "$actual"');
+	}
+
+	function assertInt(expected:Int, actual:Int) {
+		if (expected != actual)
+			throw new Exception('Expected: "$expected", but got "$actual"');
 	}
 }

@@ -1,17 +1,7 @@
 package src.hxyarn.compiler;
 
-import src.hxyarn.compiler.Expr.ExpPlusMinusEquals;
-import src.hxyarn.compiler.Expr.ExpMultDivModEquals;
 import src.hxyarn.compiler.Expr.ExpValue;
-import src.hxyarn.compiler.Expr.ExpAssign;
-import src.hxyarn.compiler.Expr.ExpParens;
-import src.hxyarn.compiler.Expr.ExpNot;
-import src.hxyarn.compiler.Expr.ExpNegative;
-import src.hxyarn.compiler.Expr.ExpMultDivMod;
-import src.hxyarn.compiler.Expr.ExpAddSub;
-import src.hxyarn.compiler.Expr.ExpComparision;
-import src.hxyarn.compiler.Expr.ExpEquality;
-import src.hxyarn.compiler.Expr.ExpAndOrXor;
+import src.hxyarn.compiler.Expr.ExpFunc;
 import haxe.Exception;
 import src.hxyarn.compiler.Token.TokenType;
 
@@ -51,14 +41,14 @@ class ExpressionParser {
 			var op = previous();
 			var value = assignment();
 
-			if (Std.isOfType(expr, ExpValue)) {
+			if (Std.isOfType(expr, Expr.ExpValue)) {
 				if (op.type == OPERATOR_ASSIGNMENT_MINUS || op.type == OPERATOR_ASSIGNMENT_PLUS) {
-					return new ExpPlusMinusEquals(cast(expr, ExpValue).value, op, value);
+					return new Expr.ExpPlusMinusEquals(cast(expr, Expr.ExpValue).value, op, value);
 				} else if (op.type != OPERATOR_ASSIGNMENT) {
-					return new ExpMultDivModEquals(cast(expr, ExpValue).value, op, value);
+					return new Expr.ExpMultDivModEquals(cast(expr, Expr.ExpValue).value, op, value);
 				}
 
-				return new ExpAssign(cast(expr, ExpValue).value, value);
+				return new Expr.ExpAssign(cast(expr, Expr.ExpValue).value, value);
 			}
 
 			throw new Exception("Invalid assignment target.");
@@ -73,7 +63,7 @@ class ExpressionParser {
 		while (match([TokenType.OPERATOR_LOGICAL_OR])) {
 			var op = previous();
 			var right = and();
-			expr = new ExpAndOrXor(expr, op, right);
+			expr = new Expr.ExpAndOrXor(expr, op, right);
 		}
 		return expr;
 	}
@@ -84,7 +74,7 @@ class ExpressionParser {
 		while (match([TokenType.OPERATOR_LOGICAL_AND])) {
 			var op = previous();
 			var right = xor();
-			expr = new ExpAndOrXor(expr, op, right);
+			expr = new Expr.ExpAndOrXor(expr, op, right);
 		}
 
 		return expr;
@@ -96,7 +86,7 @@ class ExpressionParser {
 		while (match([TokenType.OPERATOR_LOGICAL_XOR])) {
 			var op = previous();
 			var right = equality();
-			expr = new ExpAndOrXor(expr, op, right);
+			expr = new Expr.ExpAndOrXor(expr, op, right);
 		}
 
 		return expr;
@@ -108,7 +98,7 @@ class ExpressionParser {
 		while (match([TokenType.OPERATOR_LOGICAL_NOT_EQUALS, TokenType.OPERATOR_LOGICAL_EQUALS])) {
 			var op = previous();
 			var right = comparision();
-			expr = new ExpEquality(expr, op, right);
+			expr = new Expr.ExpEquality(expr, op, right);
 		}
 
 		return expr;
@@ -125,7 +115,7 @@ class ExpressionParser {
 		])) {
 			var op = previous();
 			var right = term();
-			expr = new ExpComparision(expr, op, right);
+			expr = new Expr.ExpComparision(expr, op, right);
 		}
 
 		return expr;
@@ -137,7 +127,7 @@ class ExpressionParser {
 		while (match([TokenType.PLUS, TokenType.MINUS])) {
 			var op = previous();
 			var right = factor();
-			expr = new ExpAddSub(expr, op, right);
+			expr = new Expr.ExpAddSub(expr, op, right);
 		}
 
 		return expr;
@@ -149,7 +139,7 @@ class ExpressionParser {
 		while (match([TokenType.SLASH, TokenType.STAR, TokenType.MOD])) {
 			var op = previous();
 			var right = unary();
-			expr = new ExpMultDivMod(expr, op, right);
+			expr = new Expr.ExpMultDivMod(expr, op, right);
 		}
 
 		return expr;
@@ -158,15 +148,45 @@ class ExpressionParser {
 	function unary():Expr {
 		if (match([TokenType.OPERATOR_LOGICAL_NOT])) {
 			var right = unary();
-			return new ExpNot(right);
+			return new Expr.ExpNot(right);
 		}
 
 		if (match([TokenType.MINUS])) {
 			var right = unary();
-			return new ExpNegative(right);
+			return new Expr.ExpNegative(right);
 		}
 
-		return primary();
+		return call();
+	}
+
+	function call() {
+		var expr = primary();
+
+		while (true) {
+			if (match([TokenType.LPAREN])) {
+				expr = finishCall(expr);
+			} else {
+				break;
+			}
+		}
+
+		return expr;
+	}
+
+	function finishCall(callee:Expr) {
+		var arguments = new Array<Expr>();
+		if (!check(TokenType.RPAREN)) {
+			do {
+				if (arguments.length >= 255)
+					throw new Exception("Can't have more than 255 arguments");
+
+				arguments.push(expression());
+			} while (match([TokenType.COMMA]));
+		}
+
+		var paren = consume(RPAREN, "Expected ')' after the argumetns.");
+
+		return new ExpFunc(cast(callee, ExpValue).literal, paren, arguments);
 	}
 
 	function primary():Expr {
@@ -184,7 +204,7 @@ class ExpressionParser {
 		if (match([LPAREN])) {
 			var expr = expression();
 			consume(TokenType.RPAREN, "Expected ')' after expression");
-			return new ExpParens(expr);
+			return new Expr.ExpParens(expr);
 		}
 
 		throw new Exception("Expect epxression");

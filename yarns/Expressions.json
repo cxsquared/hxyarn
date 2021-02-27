@@ -1,0 +1,12 @@
+[
+    {
+        "title": "Start",
+        "body": "// Expression testing\n\n<<set $test to 1>>\n<<call assert($test == 1)>>\n\n// Test unary operators\n\n<<call assert(!$test == false)>>\n<<call assert(-$test == -1)>>\n<<call assert(-$test == 0 - 1)>>\n\n// Test more complex expressions\n<<set $math = 5 * 2 - 2 * -1 >>\n<<call assert($math is 12)>>\n\n// Test % operator\n<<set $math = 12 >>\n<<set $math = $math % 5 >>\n<<call assert($math is 2)>>\n\n// Test floating point math\n<<call assert(1 / 2 == 0.5)>>\n<<call assert(0.1 + 0.1 == 0.2)>>\n\n\n==",
+        "tags": "",
+		"position": {
+			"x": 0,
+			"y": 0 
+		},
+		"colorID": 0
+    }
+]
