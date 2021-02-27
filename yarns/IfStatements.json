@@ -1,15 +1,12 @@
-title: Start
-tags: 
-colorID: 0
-position: -145,-246
----
-<<if true>>
-    Player: Hey, Sally. #line:794945
-    Sally: Oh! Hi. #line:2dc39b
-    Sally: You snuck up on me. #line:34de2f
-    Sally: Don't do that. #line:dcc2bc
-<<else>>
-    Player: Hey. #line:a8e70c
-    Sally: Hi. #line:305cde
-<<endif>>
-===
+[
+	{
+		"title": "Start",
+		"tags": "",
+		"body": "<<if true>>\r\n    Player: Hey, Sally. #line:794945\r\n    Sally: Oh! Hi. #line:2dc39b\r\n    Sally: You snuck up on me. #line:34de2f\r\n    Sally: Don't do that. #line:dcc2bc\r\n<<else>>\r\n    Player: Hey. #line:a8e70c\r\n    Sally: Hi. #line:305cde\r\n<<endif>>",
+		"position": {
+			"x": -64,
+			"y": -64
+		},
+		"colorID": 0
+	}
+]

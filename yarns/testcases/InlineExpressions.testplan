@@ -1,35 +1,35 @@
 # lines
-line: Number: 1
-line: Expression: 2
-line: String: string
-line: Bool: True
-line: Null: null
-line: Variable: variable
+Line: Number: 1
+Line: Expression: 2
+Line: String: string
+Line: Bool: True
+Line: Null: null
+Line: Variable: variable
 
-line: variable is great!
+Line: variable is great!
 
 # shortcut options
-option: Shortcut Number: 1
-option: Shortcut Expression: 2
-option: Shortcut String: string
-option: Shortcut Bool: True
-option: Shortcut Null: null
-option: Shortcut Variable: variable
-select: 1
+Option: Shortcut Number: 1
+Option: Shortcut Expression: 2
+Option: Shortcut String: string
+Option: Shortcut Bool: True
+Option: Shortcut Null: null
+Option: Shortcut Variable: variable
+Select: 1
 
 # commands
-command: number 1
-command: expression 2
-command: string string
-command: bool True
-command: null null
-command: variable variable
+Command: number 1
+Command: expression 2
+Command: string string
+Command: bool True
+Command: null null
+Command: variable variable
 
 # regular options
-option: Regular Number: 1
-option: Regular Expression: 2
-option: Regular String: string
-option: Regular Bool: True
-option: Regular Null: null
-option: Regular Variable: variable
-select: 1
+Option: Regular Number: 1
+Option: Regular Expression: 2
+Option: Regular String: string
+Option: Regular Bool: True
+Option: Regular Null: null
+Option: Regular Variable: variable
+Select: 1

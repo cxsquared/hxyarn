@@ -81,7 +81,7 @@ class Compiler {
 			node.tags.push(StringTools.trim(tag));
 		}
 
-		var lines = cast(obj.body, String).split('\n');
+		var lines = cast(obj.body, String).split('\r\n');
 		for (index => line in lines) {
 			parseLine(line, index);
 		}
@@ -133,8 +133,10 @@ class Compiler {
 	static var elseClauseRegex = new EReg('$commandStart$commandElse$commandEnd', 'i');
 	static var endClauseRegex = new EReg('$commandStart$commandEndIf$commandEnd', 'i');
 
+	static var isWhiteSpace = ~/^\s+$/;
+
 	function parseLine(line:String, lineNumber:Int) {
-		if (line.length <= 0 || StringTools.trim(line).substr(0, 2) == "//")
+		if (line.length <= 0 || StringTools.trim(line).substr(0, 2) == "//" || isWhiteSpace.match(line))
 			return;
 
 		if (jumpRegex.match(line)) {
@@ -167,7 +169,7 @@ class Compiler {
 			formattedText.composedString = StringTools.replace(formattedText.composedString, '#$hashtagText', '');
 		}
 
-		var stringId = registerString(formattedText.composedString, currentNode.name, getLineId(hashtagText), lineNumber, [hashtagText]);
+		var stringId = registerString(StringTools.trim(formattedText.composedString), currentNode.name, getLineId(hashtagText), lineNumber, [hashtagText]);
 
 		emit(currentNode, OpCode.RUN_LINE, [Operand.fromString(stringId), Operand.fromFloat(formattedText.expressionCount)]);
 	}
@@ -474,6 +476,8 @@ class ExpresionVisitor implements Expr.Visitor {
 				compiler.emit(compiler.currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(false)]);
 			case src.hxyarn.compiler.Token.TokenType.STRING:
 				compiler.emit(compiler.currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(false)]);
+			case src.hxyarn.compiler.Token.TokenType.KEYWORD_NULL:
+				compiler.emit(compiler.currentNode, OpCode.PUSH_NULL, []);
 			case _:
 				throw new Exception('Expresion value not implemented: ${expr.value.toString()}');
 		}

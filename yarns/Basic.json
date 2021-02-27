@@ -1,12 +1,12 @@
 [
-    {
-        "title": "Start",
-        "body": "whoa what here's some text\n<<if 1 is 1>>\nFirst Level\n<<if 1 is 1>>\nSecond Level\n<<endif>>\n<<endif>>\n<<set $foo to (1+3*3/9)-1>>\n<<if $foo is 1>> // testing a comment\n    this should appear :)\n    <<if 1 is 1>>\n        NESTED IF BLOCK WHAAAT\n        <<set $foo += 47 + 6>>\n    <<endif>>\n<<else>>\n    oh noooo it didn't work :(\n<<endif>>\n<<if $foo is 54>>\n    haha nice now 'set' works even when deeply nested\n<<else>>\n    aaargh :(\n<<endif>>",
-        "tags": "",
+	{
+		"title": "Start",
+		"tags": "",
+		"body": "whoa what here's some text\r\n<<set $foo to (1+3*3/9)-1>>\r\n\r\n<<if $foo is 1>> // testing a comment\r\n    this should appear :)\r\n    <<if 1 is 1>>\r\n        NESTED IF BLOCK WHAAAT\r\n        <<set $foo += 47 + 6>>\r\n    <<endif>>\r\n<<else>>\r\n    oh noooo it didn't work :(\r\n<<endif>>\r\n\r\n<<if $foo is 54>>\r\n    haha nice now 'set' works even when deeply nested\r\n<<else>>\r\n    aaargh :(\r\n<<endif>>",
 		"position": {
-			"x": 0,
-			"y": 0 
+			"x": 829,
+			"y": 428
 		},
 		"colorID": 0
-    }
+	}
 ]

@@ -1,28 +1,28 @@
-line: Select: male
-line: Select: female
-line: Select: other
+Line: Select: male
+Line: Select: female
+Line: Select: other
 
-line: Plural: one
-line: Plural: other
-line: Plural: other
-line: Plural: other
+Line: Plural: one
+Line: Plural: other
+Line: Plural: other
+Line: Plural: other
 
-line: Ordinal: one
-line: Ordinal: two
-line: Ordinal: few
-line: Ordinal: other
+Line: Ordinal: one
+Line: Ordinal: two
+Line: Ordinal: few
+Line: Ordinal: other
 
-line: other: other
+Line: other: other
 
-line: Mae: Wow, I came 3rd!
+Line: Mae: Wow, I came 3rd!
 
-option: other
-option: one
-option: one
-select: 1
+Option: other
+Option: one
+Option: one
+Select: 1
 
-option: other
-option: one
-option: one
-select: 1
+Option: other
+Option: one
+Option: one
+Select: 1
 

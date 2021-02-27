@@ -104,12 +104,11 @@ class Step {
 						stringValue = null;
 					}
 				case Select:
-					intValue = reader.readNext(Int);
+					intValue = reader.readNext(0);
 
 					if (intValue < 1)
 						throw new Exception('Cannot select option $intValue - must be >= 1');
 				case _:
-					throw new Exception('Unexpected plan type: ${type.getName()}');
 			}
 		} catch (e:Exception) {
 			throw new Exception('Failed to parse step line: "$s" (reason: ${e.message})', e);
@@ -136,7 +135,7 @@ class Reader {
 	}
 
 	public function readTillEnd():String {
-		var text = source.substr(start, source.length - start - 1);
+		var text = source.substr(start, source.length - start);
 		start = source.length - 1;
 		return text;
 	}
@@ -147,6 +146,7 @@ class Reader {
 			current++;
 
 			if (isWhiteSpace.match(char)) {
+				start = current;
 				current++;
 				continue;
 			}
