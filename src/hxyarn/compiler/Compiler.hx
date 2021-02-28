@@ -303,7 +303,6 @@ class Compiler {
 				visitExpression(text.substr(start, index - start));
 				finalString += '{$expressionCount}';
 				expressionCount += 1;
-				index++; // consume }
 			} else if (char == "[") {
 				index++; // consume [
 				var start = index;

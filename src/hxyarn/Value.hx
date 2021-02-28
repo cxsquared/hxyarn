@@ -99,7 +99,7 @@ class Value {
 			case StringValue:
 				return this.stringValue;
 			case BoolValue:
-				return Std.string(this.boolValue);
+				return this.boolValue ? "True" : "False";
 			case NullValue:
 				return "null";
 			case _:

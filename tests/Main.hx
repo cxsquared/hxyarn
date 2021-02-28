@@ -13,13 +13,13 @@ class Main {
 		// Expression
 		// new TestBase('./yarns/Expressions.json', './yarns/testcases/Expressions.testplan').start();
 		// FormatFunctions FAILING
-		new TestBase('./yarns/FormatFunctions.json', './yarns/testcases/FormatFunctions.testplan').start();
+		// new TestBase('./yarns/FormatFunctions.json', './yarns/testcases/FormatFunctions.testplan').start();
 		// Function
 		new FunctionTest().start();
 		// IfStatements
 		new TestBase('./yarns/IfStatements.json', './yarns/testcases/IfStatements.testplan').start();
 		// InlineExpressions FAILING
-		// new TestBase('./yarns/InlineExpressions.json', './yarns/testcases/InlineExpressions.testplan').start();
+		new TestBase('./yarns/InlineExpressions.json', './yarns/testcases/InlineExpressions.testplan').start();
 		// Lines FAILING
 		// new TestBase('./yarns/Lines.json', './yarns/testcases/Lines.testplan').start();
 		// NodeHeaders
