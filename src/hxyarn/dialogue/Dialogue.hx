@@ -1,5 +1,6 @@
 package src.hxyarn.dialogue;
 
+import src.hxyarn.dialogue.CLDR.PluralCase;
 import src.hxyarn.dialogue.DialogueExcpetion.DialogueException;
 import sys.io.File;
 import src.hxyarn.Library.FunctionInfo;
@@ -221,13 +222,42 @@ class Dialogue {
 			var pFunc = parsedFunction.parsedFunctions[i];
 
 			if (pFunc.functionName == "select") {
-				var replacement = '<no replacement for ${pFunc.value}>';
-				if (pFunc.data.exists(pFunc.value))
-					replacement = pFunc.value;
+				var replacement = "";
+				if (pFunc.data.exists(pFunc.value)) {
+					replacement = pFunc.data.get(pFunc.value);
+				} else {
+					replacement = '<no replacement for ${pFunc.value}>';
+				}
+
+				replacement = StringTools.replace(replacement, formatFunctionValuePlaceHolder, pFunc.value);
 
 				parsedFunction.lineWithReplacements = StringTools.replace(parsedFunction.lineWithReplacements, '{$i}', replacement);
 			} else {
-				// TODO plural and ordinal stuff
+				var value = Std.parseFloat(pFunc.value);
+				if (Math.isNaN(value))
+					throw new Exception('Error while pluralizing line "$input": "${pFunc.value}" is not a number"');
+
+				var pluralCase:PluralCase;
+
+				switch (pFunc.functionName) {
+					case "plural":
+						pluralCase = CLDR.getCardinalPluralCase(localeCode, value);
+					case "ordinal":
+						pluralCase = CLDR.getOrdinalPluralCase(localeCode, value);
+					case _:
+						throw new Exception('Unknown formatting function "${pFunc.functionName}" in line "$input"');
+				}
+
+				var replacement = "";
+				if (pFunc.data.exists(pluralCase.getName().toLowerCase())) {
+					replacement = pFunc.data.get(pluralCase.getName().toLowerCase());
+				} else {
+					replacement = '<no replacement for ${pFunc.value}>';
+				}
+
+				replacement = StringTools.replace(replacement, formatFunctionValuePlaceHolder, pFunc.value);
+
+				parsedFunction.lineWithReplacements = StringTools.replace(parsedFunction.lineWithReplacements, '{$i}', replacement);
 			}
 		}
 
@@ -279,31 +309,45 @@ class Dialogue {
 				pFunc.value = variable;
 				i += 2; // consume " and whitespace
 
-				var kvp = "";
-				while (input.charAt(i) != ']') {
+				var key = "";
+				var value = "";
+				var buildingKey = true;
+				while (input.charAt(i) != ']' && i < input.length) {
 					var c = input.charAt(i);
-					if (c == " " || input.charAt(i + 1) == ']') {
-						if (StringTools.trim(kvp).length <= 0) {
-							i++;
-							continue;
-						}
+					if (c == "=") {
+						i += 2;
+						buildingKey = false;
+						continue;
+					} else if (c == "\"") {
+						buildingKey = true;
 
-						if (input.charAt(i + 1) == ']')
-							kvp += c;
-
-						var key = kvp.split('=')[0];
-						var value = kvp.split('=')[1];
 						if (pFunc.data.exists(key))
 							throw new Exception('Duplicate value "$key" in format function inside line "$input"');
 
-						pFunc.data.set(key, value.substr(1, value.length - 2)); // remove "" around value
-
-						kvp = "";
+						pFunc.data.set(key, value); // remove "" around value
+						key = "";
+						value = "";
+						if (input.charAt(i + 1) == ']') {
+							i++;
+						} else {
+							i += 2;
+						}
+						continue;
+					} else if (c == " " && buildingKey) {
+						i++;
+						continue;
+					} else if (c == "%" && !buildingKey) {
+						value += formatFunctionValuePlaceHolder;
 						i++;
 						continue;
 					}
 
-					kvp += c;
+					if (buildingKey) {
+						key += c;
+					} else {
+						value += c;
+					}
+
 					i++;
 				}
 

@@ -318,7 +318,6 @@ class Compiler {
 				}
 				finalString += ']';
 				expressionCount += 1;
-				index++; // consume ]
 			} else {
 				finalString += char;
 			}
