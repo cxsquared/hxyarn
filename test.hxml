@@ -1,0 +1,4 @@
+-cp tests
+-main tests.Main
+-hl bin/test.hl
+--debug

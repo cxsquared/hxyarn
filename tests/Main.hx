@@ -1,38 +1,59 @@
 package tests;
 
+import haxe.Exception;
 import tests.TestBase;
 import tests.FunctionTest;
 import tests.ShipTest;
 
 class Main {
 	public static function main() {
-		// Basic
-		// new TestBase('./yarns/Basic.json', './yarns/testcases/Basic.testplan').start();
-		// Commands
-		// new TestBase('./yarns/Commands.json', './yarns/testcases/Commands.testplan').start();
-		// Expression
-		// new TestBase('./yarns/Expressions.json', './yarns/testcases/Expressions.testplan').start();
-		// FormatFunctions FAILING
-		// new TestBase('./yarns/FormatFunctions.json', './yarns/testcases/FormatFunctions.testplan').start();
-		// Function
-		new FunctionTest().start();
-		// IfStatements
-		new TestBase('./yarns/IfStatements.json', './yarns/testcases/IfStatements.testplan').start();
-		// InlineExpressions FAILING
-		new TestBase('./yarns/InlineExpressions.json', './yarns/testcases/InlineExpressions.testplan').start();
-		// Lines FAILING
-		// new TestBase('./yarns/Lines.json', './yarns/testcases/Lines.testplan').start();
-		// NodeHeaders
-		new TestBase('./yarns/NodeHeaders.json', './yarns/testcases/NodeHeaders.testplan').start();
-		// ShortcutOptions FAILING
-		// new TestBase('./yarns/ShortcutOptions.json', './yarns/testcases/ShortcutOptions.testplan').start();
-		// Smileys FAILING
-		// new TestBase('./yarns/Smileys.json', './yarns/testcases/Smileys.testplan').start();
-		// Types
-		new TestBase('./yarns/Types.json', './yarns/testcases/Types.testplan').start();
-		// VariableStorage
-		new TestBase('./yarns/VariableStorage.json', './yarns/testcases/VariableStorage.testplan').start();
-		// Ship
-		new ShipTest().start();
+		runTest('./yarns/Basic.yarn', './yarns/testcases/Basic.testplan');
+		runTest('./yarns/Basic.json', './yarns/testcases/Basic.testplan');
+		runTest('./yarns/Commands.yarn', './yarns/testcases/Commands.testplan');
+		runTest('./yarns/Commands.json', './yarns/testcases/Commands.testplan');
+		runTest('./yarns/Expressions.yarn', './yarns/testcases/Expressions.testplan');
+		runTest('./yarns/Expressions.json', './yarns/testcases/Expressions.testplan');
+		runTest('./yarns/FormatFunctions.yarn', './yarns/testcases/FormatFunctions.testplan');
+		runTest('./yarns/FormatFunctions.json', './yarns/testcases/FormatFunctions.testplan');
+		runFunctionTest('./yarns/Functions.yarn', './yarns/testcases/Functions.testplan');
+		runFunctionTest('./yarns/Functions.json', './yarns/testcases/Functions.testplan');
+		runTest('./yarns/IfStatements.yarn', './yarns/testcases/IfStatements.testplan');
+		runTest('./yarns/IfStatements.json', './yarns/testcases/IfStatements.testplan');
+		runTest('./yarns/InlineExpressions.yarn', './yarns/testcases/InlineExpressions.testplan');
+		runTest('./yarns/InlineExpressions.json', './yarns/testcases/InlineExpressions.testplan');
+		runTest('./yarns/Lines.yarn', './yarns/testcases/Lines.testplan');
+		runTest('./yarns/Lines.json', './yarns/testcases/Lines.testplan');
+		runTest('./yarns/NodeHeaders.yarn', './yarns/testcases/NodeHeaders.testplan');
+		runTest('./yarns/NodeHeaders.json', './yarns/testcases/NodeHeaders.testplan');
+		runTest('./yarns/ShortcutOptions.yarn', './yarns/testcases/ShortcutOptions.testplan');
+		runTest('./yarns/ShortcutOptions.json', './yarns/testcases/ShortcutOptions.testplan');
+		runTest('./yarns/Smileys.yarn', './yarns/testcases/Smileys.testplan');
+		runTest('./yarns/Smileys.json', './yarns/testcases/Smileys.testplan');
+		runTest('./yarns/Types.yarn', './yarns/testcases/Types.testplan');
+		runTest('./yarns/Types.json', './yarns/testcases/Types.testplan');
+		runTest('./yarns/VariableStorage.yarn', './yarns/testcases/VariableStorage.testplan');
+		runTest('./yarns/VariableStorage.json', './yarns/testcases/VariableStorage.testplan');
+	}
+
+	static function runTest(file:String, testPlan:String) {
+		try {
+			var test = new TestBase(file, testPlan);
+			test.start();
+		} catch (e:Exception) {
+			trace('------$file: $testPlan failed----------');
+			trace(e.message);
+			trace(e.stack);
+		}
+	}
+
+	static function runFunctionTest(file:String, testPlan:String) {
+		try {
+			var test = new FunctionTest(file, testPlan);
+			test.start();
+		} catch (e:Exception) {
+			trace('------$file: $testPlan failed----------');
+			trace(e.message);
+			trace(e.stack);
+		}
 	}
 }

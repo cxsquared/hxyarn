@@ -1,5 +1,7 @@
 package src.hxyarn.compiler;
 
+import haxe.macro.Expr.TypeDefKind;
+import haxe.ds.GenericStack;
 import haxe.Exception;
 import src.hxyarn.compiler.Token.TokenType;
 
@@ -12,6 +14,8 @@ class Scanner {
 	var line:Int = 1;
 
 	var keywords = new Map<String, TokenType>();
+
+	var mode = new GenericStack<ScannerMode>();
 
 	public function new(source:String) {
 		this.source = source;
@@ -48,6 +52,19 @@ class Scanner {
 
 	function scanToken() {
 		var c = advance();
+		if (!mode.isEmpty()) {
+			switch (mode.first()) {
+				case BodyMode:
+					bodyMode(c);
+				case HeaderMode:
+					headerMode(c);
+				case _:
+					rootMode(c);
+			}
+		}
+	}
+
+	function rootMode(c:String) {
 		switch (c) {
 			// one char
 			case '(':
@@ -55,26 +72,28 @@ class Scanner {
 			case ')':
 				addToken(RPAREN);
 			case '{':
-				addToken(LBRACE);
+				addToken(FORMAT_FUNCTION_START);
 			case '}':
-				addToken(RBRACE);
+				addToken(FORMAT_FUNCTION_END);
 			case ',':
 				addToken(COMMA);
-			case '.':
-				addToken(DOT);
-			case '%':
-				addToken(MOD);
 			case '^':
 				addToken(OPERATOR_LOGICAL_XOR);
+			case ':':
+				addToken(HEADER_DELIMITER);
+				consumeWhitespace();
+				mode.add(HeaderMode);
 			// two char
+			case '%':
+				addToken(match("=") ? OPERATOR_MATHS_MODULUS_EQUALS : OPERATOR_MATHS_MODULUS);
 			case '-':
-				addToken(match("=") ? OPERATOR_ASSIGNMENT_MINUS : MINUS);
+				addToken(match("=") ? OPERATOR_MATHS_SUBTRACTION_EQUALS : OPERATOR_MATHS_SUBTRACTION);
 			case '*':
-				addToken(match("=") ? OPERATOR_ASSIGNMENT_STAR : STAR);
+				addToken(match("=") ? OPERATOR_MATHS_MULTIPLICATION_EQUALS : OPERATOR_MATHS_MULTIPLICATION);
 			case '/':
-				addToken(match("=") ? OPERATOR_ASSIGNMENT_SLASH : SLASH);
+				addToken(match("=") ? OPERATOR_MATHS_DIVISION_EQUALS : OPERATOR_MATHS_DIVISION);
 			case '+':
-				addToken(match("=") ? OPERATOR_ASSIGNMENT_PLUS : PLUS);
+				addToken(match("=") ? OPERATOR_MATHS_ADDITION_EQUALS : OPERATOR_MATHS_ADDITION);
 			case '!':
 				addToken(match("=") ? OPERATOR_LOGICAL_NOT_EQUALS : OPERATOR_LOGICAL_NOT);
 			case '=':
@@ -87,6 +106,8 @@ class Scanner {
 				match("|") ? addToken(OPERATOR_LOGICAL_OR) : throw new Exception('Unexpected single pipe (|) at line $line');
 			case '&':
 				match("&") ? addToken(OPERATOR_LOGICAL_AND) : throw new Exception('Unexpected single ampersand (&) at line $line');
+			case '\\':
+				match("\\") ? restOfTheLine() : throw new Exception('Unexpected single forward slash (\\) at line $line');
 			// white spaces
 			case ' ':
 			case '\r':
@@ -105,6 +126,54 @@ class Scanner {
 					return;
 				}
 				throw new Exception('Unexpected char at line $line: $c');
+		}
+	}
+
+	function headerMode(c:String) {
+		switch (c) {
+			// whitespace
+			// one char
+			// two char
+			// three char
+			case _:
+				throw new Exception('Unexpected char at line $line: $c');
+		}
+	}
+
+	function bodyMode(c:String) {
+		switch (c) {
+			// whitespace
+			case ' ':
+			case '\r':
+			case '\t':
+			case '\n':
+				line++;
+			// one char
+			case '{':
+				addToken(TEXT_EXPRESSION_START);
+				mode.add(TextMode);
+				mode.add(ExpressionMode);
+			// two char
+			case '-':
+				match(">") ? addToken(SHORTCUT_ARROW) : mode.add(TextMode);
+			case '<':
+				match("<") ? {
+					mode.add(CommandMode);
+					addToken(COMMAND_START);
+				} : mode.add(TextMode);
+			case '[':
+				match("[") ? {mode.add(OptionMode); addToken(OPTION_START);} : {addToken(FORMAT_FUNCTION_START); mode.add(TextMode); mode.add(FormatFunctionMode);};
+			case '#':
+				addToken(BODY_HASHTAG);
+				mode.add(TextCommandOrHashtagMode);
+				mode.add(HashtagMode);
+			// three char
+			case '=': match('=') && match('=') ? {
+					addToken(BODY_END);
+					mode.pop();
+				} : mode.add(TextMode);
+			case _:
+				mode.add(TextMode);
 		}
 	}
 
@@ -155,6 +224,21 @@ class Scanner {
 		addToken(STRING, value);
 	}
 
+	function restOfTheLine() {
+		while (peek() != '\n' && !isAtEnd()) {
+			advance();
+		}
+
+		line++;
+		advance();
+	}
+
+	function consumeWhitespace() {
+		while (!isAtEnd() && match(' ')) {
+			advance();
+		}
+	}
+
 	function number() {
 		while (isDigit(peek()))
 			advance();
@@ -201,4 +285,18 @@ class Scanner {
 	function isAlphaNumeric(c:String):Bool {
 		return isAlpha(c) || isDigit(c);
 	}
+}
+
+enum ScannerMode {
+	BodyMode;
+	HeaderMode;
+	HashtagMode;
+	TextMode;
+	TextCommandOrHashtagMode;
+	FormatFunctionMode;
+	ExpressionMode;
+	CommandMode;
+	CommandTextMode;
+	OptionMode;
+	OptionIDMode;
 }

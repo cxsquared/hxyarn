@@ -32,17 +32,17 @@ class ExpressionParser {
 
 		if (match([
 			OPERATOR_ASSIGNMENT,
-			OPERATOR_ASSIGNMENT_MINUS,
-			OPERATOR_ASSIGNMENT_MOD,
-			OPERATOR_ASSIGNMENT_PLUS,
-			OPERATOR_ASSIGNMENT_SLASH,
-			OPERATOR_ASSIGNMENT_STAR
+			OPERATOR_MATHS_ADDITION_EQUALS,
+			OPERATOR_MATHS_SUBTRACTION_EQUALS,
+			OPERATOR_MATHS_MODULUS_EQUALS,
+			OPERATOR_MATHS_DIVISION_EQUALS,
+			OPERATOR_MATHS_MULTIPLICATION_EQUALS,
 		])) {
 			var op = previous();
 			var value = assignment();
 
 			if (Std.isOfType(expr, Expr.ExpValue)) {
-				if (op.type == OPERATOR_ASSIGNMENT_MINUS || op.type == OPERATOR_ASSIGNMENT_PLUS) {
+				if (op.type == OPERATOR_MATHS_SUBTRACTION_EQUALS || op.type == OPERATOR_MATHS_ADDITION_EQUALS) {
 					return new Expr.ExpPlusMinusEquals(cast(expr, Expr.ExpValue).value, op, value);
 				} else if (op.type != OPERATOR_ASSIGNMENT) {
 					return new Expr.ExpMultDivModEquals(cast(expr, Expr.ExpValue).value, op, value);
@@ -124,7 +124,7 @@ class ExpressionParser {
 	function term():Expr {
 		var expr = factor();
 
-		while (match([TokenType.PLUS, TokenType.MINUS])) {
+		while (match([TokenType.OPERATOR_MATHS_ADDITION, TokenType.OPERATOR_MATHS_SUBTRACTION])) {
 			var op = previous();
 			var right = factor();
 			expr = new Expr.ExpAddSub(expr, op, right);
@@ -136,7 +136,11 @@ class ExpressionParser {
 	function factor():Expr {
 		var expr = unary();
 
-		while (match([TokenType.SLASH, TokenType.STAR, TokenType.MOD])) {
+		while (match([
+			TokenType.OPERATOR_MATHS_DIVISION,
+			TokenType.OPERATOR_MATHS_MULTIPLICATION,
+			TokenType.OPERATOR_MATHS_MODULUS
+		])) {
 			var op = previous();
 			var right = unary();
 			expr = new Expr.ExpMultDivMod(expr, op, right);
@@ -151,7 +155,7 @@ class ExpressionParser {
 			return new Expr.ExpNot(right);
 		}
 
-		if (match([TokenType.MINUS])) {
+		if (match([TokenType.OPERATOR_MATHS_NEGATIVE])) {
 			var right = unary();
 			return new Expr.ExpNegative(right);
 		}

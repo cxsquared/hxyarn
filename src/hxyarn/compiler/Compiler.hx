@@ -31,14 +31,26 @@ class Compiler {
 	}
 
 	public static function compileFile(path:String):{program:Program, stringTable:Map<String, StringInfo>} {
-		var json = Json.parse(File.getContent(path));
-		var directories = FileSystem.absolutePath(path).split('/');
-		var fileName = directories[directories.length - 1];
+		if (path.indexOf('.json') > 0) {
+			var json = Json.parse(File.getContent(path));
+			var directories = FileSystem.absolutePath(path).split('/');
+			var fileName = directories[directories.length - 1];
 
-		return compileJson(json, fileName);
+			return handleJson(json, fileName);
+		}
+
+		if (path.indexOf('.yarn') > 0) {
+			var string = File.read(path).readAll().toString();
+			var directories = FileSystem.absolutePath(path).split('/');
+			var fileName = directories[directories.length - 1];
+
+			return handleYarn(string, fileName);
+		}
+
+		throw new Exception('hxyarn does not support the file $path. Please use .json or .yarn');
 	}
 
-	static function compileJson(json:Dynamic, fileName:String):{
+	static function handleYarn(yarn:String, fileName:String):{
 		program:Program,
 		stringTable:Map<String, StringInfo>
 	} {
@@ -46,10 +58,9 @@ class Compiler {
 		// tokeninze
 		// parse
 		// tree
-
 		var compiler = new Compiler(fileName);
 
-		compiler.compile(json);
+		compiler.compileYarn(yarn);
 
 		return {
 			program: compiler.program,
@@ -57,7 +68,25 @@ class Compiler {
 		};
 	}
 
-	function compile(json:Array<Dynamic>) {
+	static function handleJson(json:Dynamic, fileName:String):{
+		program:Program,
+		stringTable:Map<String, StringInfo>
+	} {
+		var compiler = new Compiler(fileName);
+
+		compiler.compileJson(json);
+
+		return {
+			program: compiler.program,
+			stringTable: compiler.stringTable
+		};
+	}
+
+	function compileYarn(yarn:String) {
+		throw new Exception("compileYarn not implemented");
+	}
+
+	function compileJson(json:Array<Dynamic>) {
 		for (node in json) {
 			var node = parseNode(node);
 			program.nodes.set(node.name, node);
