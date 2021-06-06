@@ -27,7 +27,7 @@ class Stmt {
 }
 
 class StmtDialogue extends Stmt {
-	public function new(hashtag:StmtFileHashtag, nodes:Array<StmtNode>) {
+	public function new(hashtag:Array<StmtFileHashtag>, nodes:Array<StmtNode>) {
 		this.hashtag = hashtag;
 		this.nodes = nodes;
 	}
@@ -36,7 +36,7 @@ class StmtDialogue extends Stmt {
 		return visitor.visitDialogue(this);
 	}
 
-	public var hashtag:StmtFileHashtag;
+	public var hashtag:Array<StmtFileHashtag>;
 	public var nodes:Array<StmtNode>;
 }
 
@@ -93,11 +93,15 @@ class StmtBody extends Stmt {
 }
 
 class StmtLine extends Stmt {
-	public function new() {}
+	public function new(text:Token) {
+		this.text = text;
+	}
 
 	override public function accept(visitor:StmtVisitor) {
 		return visitor.visitLine(this);
 	}
+
+	public var text:Token;
 }
 
 class StmtIf extends Stmt {

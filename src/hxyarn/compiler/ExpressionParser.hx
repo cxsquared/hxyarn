@@ -155,7 +155,7 @@ class ExpressionParser {
 			return new Expr.ExpNot(right);
 		}
 
-		if (match([TokenType.OPERATOR_MATHS_NEGATIVE])) {
+		if (match([TokenType.OPERATOR_MATHS_SUBTRACTION])) {
 			var right = unary();
 			return new Expr.ExpNegative(right);
 		}

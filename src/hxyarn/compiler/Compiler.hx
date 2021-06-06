@@ -83,7 +83,13 @@ class Compiler {
 	}
 
 	function compileYarn(yarn:String) {
-		throw new Exception("compileYarn not implemented");
+		var tokens = Scanner.scan(yarn);
+		var stmts = new StmtParser(tokens).parse();
+		// var visitor = new ExpresionVisitor(this);
+
+		// visitor.resolve(exprs);
+
+		// throw new Exception("compileYarn not implemented");
 	}
 
 	function compileJson(json:Array<Dynamic>) {
