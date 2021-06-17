@@ -73,8 +73,6 @@ class Scanner {
 					commandTextMode(c);
 				case OptionMode:
 				case OptionIDMode:
-				case _:
-					rootMode(c);
 			}
 		} else {
 			rootMode(c);
@@ -82,6 +80,36 @@ class Scanner {
 	}
 
 	function rootMode(c:String) {
+		switch (c) {
+			case ' ':
+			case '\t':
+			case '\r':
+				line++;
+			case '\n':
+				line++;
+			case ':':
+				addToken(HEADER_DELIMITER);
+				consumeWhitespace();
+				mode.add(HeaderMode);
+			case '-':
+				if (match("-") && match("-")) {
+					addToken(BODY_START);
+					mode.add(BodyMode);
+				} else {
+					throw new Exception('Unexpected char at line $line: $c');
+				}
+			// white spaces
+			case _:
+				if (isAlpha(c)) {
+					// todo: Add support for . in node names
+					identifier(ID);
+					return;
+				}
+				throw new Exception('Unexpected char at line $line: $c');
+		}
+	}
+
+	function rootModeBackup(c:String) {
 		switch (c) {
 			// one char
 			case '(':
@@ -152,18 +180,20 @@ class Scanner {
 	function headerMode(c:String) {
 		switch (c) {
 			// whitespace
-			// one char
-			case ':':
-				addToken(HEADER_DELIMITER); // two char
-			// three char
+			case '\r':
+				line++;
+				addToken(HEADER_NEWLINE);
+				mode.pop();
+			case '\n':
+				line++;
+				addToken(HEADER_NEWLINE);
+				mode.pop();
+			case '/':
+				restOfTheLine(match("/"));
+				mode.pop();
 			case _:
-				if (previous().type == HEADER_DELIMITER) {
-					restOfTheLine(true);
-					addToken(HEADER_NEWLINE, '\n');
-					mode.pop();
-				} else {
-					identifier();
-				}
+				restOfTheLine(true);
+				mode.pop();
 		}
 	}
 
@@ -545,7 +575,7 @@ class Scanner {
 		addToken(TokenType.NUMBER, Std.parseFloat(source.substr(start, current - start)));
 	}
 
-	function identifier() {
+	function identifier(tokenType:TokenType = VAR_ID) {
 		while (isAlphaNumeric(peek()))
 			advance();
 
@@ -553,9 +583,9 @@ class Scanner {
 
 		var type = keywords.get(text);
 		if (type == null)
-			type = VAR_ID;
+			type = tokenType;
 
-		addToken(type);
+		addToken(type, text);
 	}
 
 	function addToken(type:TokenType, ?literal:Dynamic = null) {
@@ -571,7 +601,6 @@ class Scanner {
 
 	function isAlpha(c:String):Bool {
 		return alpha.match(c);
-		// return  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 	}
 
 	function isAlphaNumeric(c:String):Bool {
