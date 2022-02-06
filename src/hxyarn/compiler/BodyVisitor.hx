@@ -89,7 +89,7 @@ class BodyVisitor implements StmtVisitor {
 		var lineId = compiler.getLineId(hashtagText);
 		var stringId = compiler.registerString(StringTools.trim(formattedText.composedString), lineId, stmt.text.line, [hashtagText]);
 
-		emit(OpCode.RUN_LINE, [Operand.fromString(stringId), Operand.fromFloat(formattedText.expressionCount)]);
+		compiler.emit(OpCode.RUN_LINE, [Operand.fromString(stringId), Operand.fromFloat(formattedText.expressionCount)]);
 
 		return 0;
 	}
@@ -117,27 +117,19 @@ class BodyVisitor implements StmtVisitor {
 
 		if (condition != null) {
 			expressionVisitor.resolve([condition]);
-			emit(OpCode.JUMP_IF_FALSE, [Operand.fromString(jumpLabel)]);
+			compiler.emit(OpCode.JUMP_IF_FALSE, [Operand.fromString(jumpLabel)]);
 		}
 
 		for (stmt in children) {
 			stmt.accept(this);
 		}
 
-		emit(OpCode.JUMP_TO, [Operand.fromString(jumpLabel)]);
+		compiler.emit(OpCode.JUMP_TO, [Operand.fromString(jumpLabel)]);
 
 		if (condition != null) {
 			compiler.currentNode.labels.set(endOfCluase, compiler.currentNode.instructions.length);
-			emit(OpCode.POP, []);
+			compiler.emit(OpCode.POP, []);
 		}
-	}
-
-	public function emit(opCode:OpCode, operands:Array<Operand>) {
-		var instruction = new Instruction();
-		instruction.opcode = opCode;
-		instruction.operands = operands;
-
-		compiler.currentNode.instructions.push(instruction);
 	}
 
 	public function visitSetExpression(stmt:StmtSetExpression):Dynamic {
@@ -155,8 +147,8 @@ class BodyVisitor implements StmtVisitor {
 		expressionVisitor.resolve([stmt.expression]);
 
 		var variableName = stmt.var_id.lexeme;
-		emit(OpCode.STORE_VARIABLE, [Operand.fromString(variableName)]);
-		emit(OpCode.POP, []);
+		compiler.emit(OpCode.STORE_VARIABLE, [Operand.fromString(variableName)]);
+		compiler.emit(OpCode.POP, []);
 
 		return 0;
 	}
@@ -172,8 +164,20 @@ class BodyVisitor implements StmtVisitor {
 	}
 
 	public function visitCall(stmt:StmtCall):Dynamic {
-		// TODO
-		throw new haxe.exceptions.NotImplementedException();
+		var funcName = stmt.id.lexeme;
+
+		handleFunction(funcName, stmt.epxressions);
+
+		return 0;
+	}
+
+	function handleFunction(funcName:String, parameters:Array<Expr>) {
+		for (parmeter in parameters) {
+			expressionVisitor.resolve([parmeter]);
+		}
+
+		compiler.emit(OpCode.PUSH_FLOAT, [Operand.fromFloat(parameters.length)]);
+		compiler.emit(OpCode.CALL_FUNC, [Operand.fromString(funcName)]);
 	}
 
 	public function visitCommand(stmt:StmtCommand):Dynamic {

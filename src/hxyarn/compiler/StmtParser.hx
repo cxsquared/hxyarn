@@ -1,5 +1,6 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.compiler.Stmt.StmtCall;
 import src.hxyarn.compiler.Stmt.StmtSetVariable;
 import src.hxyarn.compiler.Stmt.StmtSetExpression;
 import src.hxyarn.compiler.Stmt.StmtIf;
@@ -90,6 +91,9 @@ class StmtParser {
 		if (match([COMMAND_SET]))
 			return commandSet();
 
+		if (match([COMMAND_CALL]))
+			return commandCall();
+
 		throw "";
 	}
 
@@ -132,6 +136,24 @@ class StmtParser {
 		expr = expression();
 		consume(EXPRESSION_COMMAND_END, "");
 		return new StmtSetExpression(expr);
+	}
+
+	function commandCall():Stmt {
+		var id = consume(VAR_ID, "Expected Id");
+		consume(LPAREN, "expected (");
+		if (match([LPAREN])) {
+			return new StmtCall(id, new Array<Expr>());
+		}
+
+		var exprs = new Array<Expr>();
+		exprs.push(expression());
+		while (match([COMMA])) {
+			exprs.push(expression());
+		}
+		consume(RPAREN, "expected )");
+		consume(EXPRESSION_COMMAND_END, "expected >>");
+
+		return new StmtCall(id, exprs);
 	}
 
 	function lineStatement():Stmt {

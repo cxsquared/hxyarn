@@ -36,8 +36,8 @@ class StmtDialogue extends Stmt {
 		return visitor.visitDialogue(this);
 	}
 
-	public var hashtags:Array<StmtFileHashtag>;
-	public var nodes:Array<StmtNode>;
+	public var hashtags(default, null):Array<StmtFileHashtag>;
+	public var nodes(default, null):Array<StmtNode>;
 }
 
 class StmtFileHashtag extends Stmt {
@@ -49,7 +49,7 @@ class StmtFileHashtag extends Stmt {
 		return visitor.visitFileHashtag(this);
 	}
 
-	public var text:Token;
+	public var text(default, null):Token;
 }
 
 class StmtNode extends Stmt {
@@ -62,8 +62,8 @@ class StmtNode extends Stmt {
 		return visitor.visitNode(this);
 	}
 
-	public var headers:Array<StmtHeader>;
-	public var body:StmtBody;
+	public var headers(default, null):Array<StmtHeader>;
+	public var body(default, null):StmtBody;
 }
 
 class StmtHeader extends Stmt {
@@ -76,8 +76,8 @@ class StmtHeader extends Stmt {
 		return visitor.visitHeader(this);
 	}
 
-	public var id:Token;
-	public var value:Token;
+	public var id(default, null):Token;
+	public var value(default, null):Token;
 }
 
 class StmtBody extends Stmt {
@@ -89,7 +89,7 @@ class StmtBody extends Stmt {
 		return visitor.visitBody(this);
 	}
 
-	public var statements:Array<Stmt>;
+	public var statements(default, null):Array<Stmt>;
 }
 
 class StmtLine extends Stmt {
@@ -101,7 +101,7 @@ class StmtLine extends Stmt {
 		return visitor.visitLine(this);
 	}
 
-	public var text:Token;
+	public var text(default, null):Token;
 }
 
 class StmtIf extends Stmt {
@@ -129,7 +129,7 @@ class StmtSetExpression extends Stmt {
 		return visitor.visitSetExpression(this);
 	}
 
-	public var expression:Expr;
+	public var expression(default, null):Expr;
 }
 
 class StmtSetVariable extends Stmt {
@@ -142,8 +142,8 @@ class StmtSetVariable extends Stmt {
 		return visitor.visitSetVariable(this);
 	}
 
-	public var var_id:Token;
-	public var expression:Expr;
+	public var var_id(default, null):Token;
+	public var expression(default, null):Expr;
 }
 
 class StmtOption extends Stmt {
@@ -163,11 +163,17 @@ class StmtShortcut extends Stmt {
 }
 
 class StmtCall extends Stmt {
-	public function new() {}
+	public function new(id:Token, expressions:Array<Expr>) {
+		this.id = id;
+		this.epxressions = expressions;
+	}
 
 	override public function accept(visitor:StmtVisitor) {
 		return visitor.visitCall(this);
 	}
+
+	public var id(default, null):Token;
+	public var epxressions(default, null):Array<Expr>;
 }
 
 class StmtCommand extends Stmt {
@@ -195,5 +201,5 @@ class StmtExpression extends Stmt {
 		return visitor.visitExpression(this);
 	}
 
-	public var expression:Expr;
+	public var expression(default, null):Expr;
 }
