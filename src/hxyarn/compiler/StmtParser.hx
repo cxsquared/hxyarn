@@ -1,5 +1,7 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.compiler.Stmt.StmtOptionJump;
+import src.hxyarn.compiler.Stmt.StmtOption;
 import src.hxyarn.compiler.Stmt.StmtCall;
 import src.hxyarn.compiler.Stmt.StmtSetVariable;
 import src.hxyarn.compiler.Stmt.StmtSetExpression;
@@ -81,6 +83,9 @@ class StmtParser {
 		if (match([COMMAND_START]))
 			return commandStart();
 
+		if (match([OPTION_START]))
+			return optionStart();
+
 		throw "Unexpected statement";
 	}
 
@@ -154,6 +159,24 @@ class StmtParser {
 		consume(EXPRESSION_COMMAND_END, "expected >>");
 
 		return new StmtCall(id, exprs);
+	}
+
+	function optionStart():Stmt {
+		// TODO supporting formating
+		// TODO support hashtags
+		if (match([OPTION_ID])) {
+			var destination = previous();
+			consume(OPTION_END, "Expected ]]");
+
+			return new StmtOptionJump(destination);
+		}
+
+		var text = consume(OPTION_TEXT, "Expected text");
+		consume(OPTION_DELIMIT, "Expected |");
+		var id = consume(OPTION_ID, "Expected Id");
+		consume(OPTION_END, "Expected ]]");
+
+		return new StmtOption(text, id);
 	}
 
 	function lineStatement():Stmt {

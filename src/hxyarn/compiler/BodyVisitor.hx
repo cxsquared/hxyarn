@@ -154,8 +154,32 @@ class BodyVisitor implements StmtVisitor {
 	}
 
 	public function visitOption(stmt:StmtOption):Dynamic {
-		// TODO
-		throw new haxe.exceptions.NotImplementedException();
+		// TODO support hashtag
+		// TODO support formating
+		var formatedText = {
+			composedString: StringTools.trim(stmt.text.lexeme),
+			expressionCount: 0
+		};
+		var desitnation = StringTools.trim(stmt.node_id.lexeme);
+		var label = formatedText.composedString;
+
+		var lineId = compiler.getLineId("");
+		var stringId = compiler.registerString(label, lineId, stmt.text.line, []);
+
+		compiler.emit(OpCode.ADD_OPTIONS, [
+			Operand.fromString(stringId),
+			Operand.fromString(desitnation),
+			Operand.fromFloat(0)
+		]);
+
+		return 0;
+	}
+
+	public function visitOptionJump(stmt:StmtOptionJump):Dynamic {
+		var destination = StringTools.trim(stmt.node_id.lexeme);
+		compiler.emit(OpCode.RUN_NODE, [Operand.fromString(destination)]);
+
+		return 0;
 	}
 
 	public function visitShortcut(stmt:StmtShortcut):Dynamic {

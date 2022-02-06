@@ -72,7 +72,9 @@ class Scanner {
 				case CommandTextMode:
 					commandTextMode(c);
 				case OptionMode:
+					optionMode(c);
 				case OptionIDMode:
+					optionIdMode(c);
 			}
 		} else {
 			rootMode(c);
@@ -423,6 +425,43 @@ class Scanner {
 		}
 	}
 
+	function optionMode(c:String) {
+		switch (c) {
+			case ' ':
+			case '\r':
+			case '\t':
+			case ']':
+				if (match(']')) {
+					addToken(OPTION_END);
+					mode.pop();
+					return;
+				}
+				throw 'Unexpected char at line $line: $c';
+			case '|':
+				addToken(OPTION_DELIMIT);
+				mode.add(OptionIDMode);
+			case '{':
+				addToken(OPTION_EXPRESSION_START);
+				mode.add(ExpressionMode);
+			case '[':
+				addToken(OPTION_FORMAT_FUNCTION_START);
+				mode.add(FormatFunctionMode);
+			case _:
+				optionText();
+		}
+	}
+
+	function optionIdMode(c:String) {
+		switch (c) {
+			case ' ':
+			case '\r':
+			case '\t':
+			case _:
+				identifier(OPTION_ID);
+				mode.pop();
+		}
+	}
+
 	function text() {
 		while (continueTextFrag()) {
 			advance();
@@ -460,6 +499,15 @@ class Scanner {
 
 		var value = source.substr(start, current - start);
 		addToken(COMMAND_TEXT, value);
+	}
+
+	function optionText() {
+		while (peek() != ']' && peek() != '{' && peek() != '|' && peek() != '[' && !isAtEnd()) {
+			advance();
+		}
+
+		var value = source.substr(start, current - start);
+		addToken(OPTION_TEXT, value);
 	}
 
 	function command() {
@@ -557,9 +605,7 @@ class Scanner {
 	}
 
 	function consumeWhitespace() {
-		while (!isAtEnd() && match(' ')) {
-			advance();
-		}
+		while (!isAtEnd() && match(' ')) {}
 	}
 
 	function number() {

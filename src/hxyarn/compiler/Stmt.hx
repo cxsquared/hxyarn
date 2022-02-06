@@ -13,6 +13,7 @@ interface StmtVisitor {
 	function visitSetExpression(stmt:StmtSetExpression):Dynamic;
 	function visitSetVariable(stmt:StmtSetVariable):Dynamic;
 	function visitOption(stmt:StmtOption):Dynamic;
+	function visitOptionJump(stmt:StmtOptionJump):Dynamic;
 	function visitShortcut(stmt:StmtShortcut):Dynamic;
 	function visitCall(stmt:StmtCall):Dynamic;
 	function visitCommand(stmt:StmtCommand):Dynamic;
@@ -147,11 +148,29 @@ class StmtSetVariable extends Stmt {
 }
 
 class StmtOption extends Stmt {
-	public function new() {}
+	public function new(text:Token, nodeId:Token) {
+		this.text = text;
+		this.node_id = nodeId;
+	}
 
 	override public function accept(visitor:StmtVisitor) {
 		return visitor.visitOption(this);
 	}
+
+	public var text(default, null):Token;
+	public var node_id(default, null):Token;
+}
+
+class StmtOptionJump extends Stmt {
+	public function new(nodeId:Token) {
+		this.node_id = nodeId;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitOptionJump(this);
+	}
+
+	public var node_id(default, null):Token;
 }
 
 class StmtShortcut extends Stmt {

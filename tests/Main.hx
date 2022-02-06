@@ -11,9 +11,9 @@ class Main {
 	}
 
 	static function runYarn() {
-		runTest('./yarns/Basic.yarn', './yarns/testcases/Basic.testplan');
-		// runTest('./yarns/Options.yarn', './yarns/testcases/Options.testplan');
-		runTest('./yarns/Expressions.yarn', './yarns/testcases/Expressions.testplan');
+		// runTest('./yarns/Basic.yarn', './yarns/testcases/Basic.testplan');
+		runTest('./yarns/Options.yarn', './yarns/testcases/Options.testplan');
+		// runTest('./yarns/Expressions.yarn', './yarns/testcases/Expressions.testplan');
 		// runTest('./yarns/Commands.yarn', './yarns/testcases/Commands.testplan');
 		// runTest('./yarns/FormatFunctions.yarn', './yarns/testcases/FormatFunctions.testplan');
 		// runFunctionTest('./yarns/Functions.yarn', './yarns/testcases/Functions.testplan');

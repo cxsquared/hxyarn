@@ -1,9 +1,7 @@
 package src.hxyarn.compiler;
 
-import hl.BaseType.CoreEnum;
 import src.hxyarn.compiler.ExpressionVisitor.ExpresionVisitor;
 import haxe.Exception;
-import src.hxyarn.program.VirtualMachine.TokenType;
 import src.hxyarn.program.Operand;
 import src.hxyarn.program.Instruction;
 import sys.FileSystem;
@@ -83,7 +81,7 @@ class Compiler {
 			currentNode = new Node();
 			for (header in node.headers) {
 				if (header.id.lexeme == "title") {
-					currentNode.name = header.value.lexeme;
+					currentNode.name = StringTools.trim(header.value.lexeme);
 				}
 				if (header.id.lexeme == "tags") {
 					// todo
