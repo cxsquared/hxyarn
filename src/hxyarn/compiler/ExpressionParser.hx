@@ -1,7 +1,7 @@
 package src.hxyarn.compiler;
 
-import src.hxyarn.compiler.Expr.ExpValue;
-import src.hxyarn.compiler.Expr.ExpFunc;
+import src.hxyarn.compiler.Expr.ExprValue;
+import src.hxyarn.compiler.Expr.ExprFunc;
 import haxe.Exception;
 import src.hxyarn.compiler.Token.TokenType;
 
@@ -41,14 +41,14 @@ class ExpressionParser {
 			var op = previous();
 			var value = assignment();
 
-			if (Std.isOfType(expr, Expr.ExpValue)) {
+			if (Std.isOfType(expr, Expr.ExprValue)) {
 				if (op.type == OPERATOR_MATHS_SUBTRACTION_EQUALS || op.type == OPERATOR_MATHS_ADDITION_EQUALS) {
-					return new Expr.ExpPlusMinusEquals(cast(expr, Expr.ExpValue).value, op, value);
+					return new Expr.ExprPlusMinusEquals(cast(expr, Expr.ExprValue).value, op, value);
 				} else if (op.type != OPERATOR_ASSIGNMENT) {
-					return new Expr.ExpMultDivModEquals(cast(expr, Expr.ExpValue).value, op, value);
+					return new Expr.ExprMultDivModEquals(cast(expr, Expr.ExprValue).value, op, value);
 				}
 
-				return new Expr.ExpAssign(cast(expr, Expr.ExpValue).value, value);
+				return new Expr.ExprAssign(cast(expr, Expr.ExprValue).value, value);
 			}
 
 			throw new Exception("Invalid assignment target.");
@@ -63,7 +63,7 @@ class ExpressionParser {
 		while (match([TokenType.OPERATOR_LOGICAL_OR])) {
 			var op = previous();
 			var right = and();
-			expr = new Expr.ExpAndOrXor(expr, op, right);
+			expr = new Expr.ExprAndOrXor(expr, op, right);
 		}
 		return expr;
 	}
@@ -74,7 +74,7 @@ class ExpressionParser {
 		while (match([TokenType.OPERATOR_LOGICAL_AND])) {
 			var op = previous();
 			var right = xor();
-			expr = new Expr.ExpAndOrXor(expr, op, right);
+			expr = new Expr.ExprAndOrXor(expr, op, right);
 		}
 
 		return expr;
@@ -86,7 +86,7 @@ class ExpressionParser {
 		while (match([TokenType.OPERATOR_LOGICAL_XOR])) {
 			var op = previous();
 			var right = equality();
-			expr = new Expr.ExpAndOrXor(expr, op, right);
+			expr = new Expr.ExprAndOrXor(expr, op, right);
 		}
 
 		return expr;
@@ -98,7 +98,7 @@ class ExpressionParser {
 		while (match([TokenType.OPERATOR_LOGICAL_NOT_EQUALS, TokenType.OPERATOR_LOGICAL_EQUALS])) {
 			var op = previous();
 			var right = comparision();
-			expr = new Expr.ExpEquality(expr, op, right);
+			expr = new Expr.ExprEquality(expr, op, right);
 		}
 
 		return expr;
@@ -115,7 +115,7 @@ class ExpressionParser {
 		])) {
 			var op = previous();
 			var right = term();
-			expr = new Expr.ExpComparision(expr, op, right);
+			expr = new Expr.ExprComparision(expr, op, right);
 		}
 
 		return expr;
@@ -127,7 +127,7 @@ class ExpressionParser {
 		while (match([TokenType.OPERATOR_MATHS_ADDITION, TokenType.OPERATOR_MATHS_SUBTRACTION])) {
 			var op = previous();
 			var right = factor();
-			expr = new Expr.ExpAddSub(expr, op, right);
+			expr = new Expr.ExprAddSub(expr, op, right);
 		}
 
 		return expr;
@@ -143,7 +143,7 @@ class ExpressionParser {
 		])) {
 			var op = previous();
 			var right = unary();
-			expr = new Expr.ExpMultDivMod(expr, op, right);
+			expr = new Expr.ExprMultDivMod(expr, op, right);
 		}
 
 		return expr;
@@ -152,12 +152,12 @@ class ExpressionParser {
 	function unary():Expr {
 		if (match([TokenType.OPERATOR_LOGICAL_NOT])) {
 			var right = unary();
-			return new Expr.ExpNot(right);
+			return new Expr.ExprNot(right);
 		}
 
 		if (match([TokenType.OPERATOR_MATHS_SUBTRACTION])) {
 			var right = unary();
-			return new Expr.ExpNegative(right);
+			return new Expr.ExprNegative(right);
 		}
 
 		return call();
@@ -190,25 +190,25 @@ class ExpressionParser {
 
 		var paren = consume(RPAREN, "Expected ')' after the argumetns.");
 
-		return new ExpFunc(cast(callee, ExpValue).literal, paren, arguments);
+		return new ExprFunc(cast(callee, ExprValue).literal, paren, arguments);
 	}
 
 	function primary():Expr {
 		if (match([TokenType.KEYWORD_FALSE]))
-			return new Expr.ExpValue(previous(), false);
+			return new Expr.ExprValue(previous(), false);
 
 		if (match([TokenType.KEYWORD_TRUE]))
-			return new Expr.ExpValue(previous(), true);
+			return new Expr.ExprValue(previous(), true);
 		if (match([TokenType.KEYWORD_NULL]))
-			return new Expr.ExpValue(previous(), null);
+			return new Expr.ExprValue(previous(), null);
 
 		if (match([TokenType.NUMBER, TokenType.STRING, TokenType.VAR_ID]))
-			return new Expr.ExpValue(previous(), previous().lexeme);
+			return new Expr.ExprValue(previous(), previous().lexeme);
 
 		if (match([LPAREN])) {
 			var expr = expression();
 			consume(TokenType.RPAREN, "Expected ')' after expression");
-			return new Expr.ExpParens(expr);
+			return new Expr.ExprParens(expr);
 		}
 
 		throw new Exception("Expect epxression");

@@ -1,5 +1,7 @@
 package src.hxyarn.compiler;
 
+import hl.BaseType.CoreEnum;
+import src.hxyarn.compiler.ExpressionVisitor.ExpresionVisitor;
 import haxe.Exception;
 import src.hxyarn.program.VirtualMachine.TokenType;
 import src.hxyarn.program.Operand;
@@ -9,6 +11,8 @@ import src.hxyarn.program.Node;
 import sys.io.File;
 import haxe.Json;
 import src.hxyarn.program.Program;
+
+typedef ProgramData = {program:Program, stringTable:Map<String, StringInfo>};
 
 class Compiler {
 	var invalidNodeTilteNameRegex = ~/[\[<>\]{}\|:\s#\$]/i;
@@ -30,7 +34,7 @@ class Compiler {
 		this.fileName = fileName;
 	}
 
-	public static function compileFile(path:String):{program:Program, stringTable:Map<String, StringInfo>} {
+	public static function compileFile(path:String):ProgramData {
 		if (path.indexOf('.json') > 0) {
 			var json = Json.parse(File.getContent(path));
 			var directories = FileSystem.absolutePath(path).split('/');
@@ -50,28 +54,17 @@ class Compiler {
 		throw new Exception('hxyarn does not support the file $path. Please use .json or .yarn');
 	}
 
-	static function handleYarn(yarn:String, fileName:String):{
-		program:Program,
-		stringTable:Map<String, StringInfo>
-	} {
-		// lexer
-		// tokeninze
-		// parse
-		// tree
+	static function handleYarn(yarn:String, fileName:String):ProgramData {
 		var compiler = new Compiler(fileName);
 
 		compiler.compileYarn(yarn);
-
 		return {
 			program: compiler.program,
 			stringTable: compiler.stringTable
 		};
 	}
 
-	static function handleJson(json:Dynamic, fileName:String):{
-		program:Program,
-		stringTable:Map<String, StringInfo>
-	} {
+	static function handleJson(json:Dynamic, fileName:String):ProgramData {
 		var compiler = new Compiler(fileName);
 
 		compiler.compileJson(json);
@@ -84,12 +77,39 @@ class Compiler {
 
 	function compileYarn(yarn:String) {
 		var tokens = Scanner.scan(yarn);
-		var stmts = new StmtParser(tokens).parse();
-		// var visitor = new ExpresionVisitor(this);
+		var dialogue = new StmtParser(tokens).parse();
 
-		// visitor.resolve(exprs);
+		for (node in dialogue.nodes) {
+			currentNode = new Node();
+			for (header in node.headers) {
+				if (header.id.lexeme == "title") {
+					currentNode.name = header.value.lexeme;
+				}
+				if (header.id.lexeme == "tags") {
+					// todo
+				}
+			}
+			currentNode.labels.set(registerLabel(), currentNode.instructions.length);
+			var visitor = new BodyVisitor(this);
+			visitor.resolve(node.body);
+			var hasRemainingOptions = false;
+			for (instruction in currentNode.instructions) {
+				if (instruction.opcode == OpCode.ADD_OPTIONS)
+					hasRemainingOptions = true;
 
-		// throw new Exception("compileYarn not implemented");
+				if (instruction.opcode == OpCode.SHOW_OPTIONS)
+					hasRemainingOptions = false;
+			}
+
+			if (hasRemainingOptions) {
+				emit(OpCode.SHOW_OPTIONS, []);
+				emit(OpCode.RUN_NODE, []);
+			} else {
+				emit(OpCode.STOP, []);
+			}
+
+			program.nodes.set(currentNode.name, currentNode);
+		}
 	}
 
 	function compileJson(json:Array<Dynamic>) {
@@ -131,10 +151,10 @@ class Compiler {
 		}
 
 		if (hasRemainingOptions) {
-			emit(currentNode, OpCode.SHOW_OPTIONS, []);
-			emit(currentNode, OpCode.RUN_NODE, []);
+			emit(OpCode.SHOW_OPTIONS, []);
+			emit(OpCode.RUN_NODE, []);
 		} else {
-			emit(currentNode, OpCode.STOP, []);
+			emit(OpCode.STOP, []);
 		}
 
 		currentNode = null;
@@ -208,14 +228,14 @@ class Compiler {
 			formattedText.composedString = StringTools.replace(formattedText.composedString, '#$hashtagText', '');
 		}
 
-		var stringId = registerString(StringTools.trim(formattedText.composedString), currentNode.name, getLineId(hashtagText), lineNumber, [hashtagText]);
+		var stringId = registerString(StringTools.trim(formattedText.composedString), getLineId(hashtagText), lineNumber, [hashtagText]);
 
-		emit(currentNode, OpCode.RUN_LINE, [Operand.fromString(stringId), Operand.fromFloat(formattedText.expressionCount)]);
+		emit(OpCode.RUN_LINE, [Operand.fromString(stringId), Operand.fromFloat(formattedText.expressionCount)]);
 	}
 
 	function visitOptionJump(line:String, matchedRegex:EReg) {
 		var destination = StringTools.trim(matchedRegex.matched(1));
-		emit(currentNode, OpCode.RUN_NODE, [Operand.fromString(destination)]);
+		emit(OpCode.RUN_NODE, [Operand.fromString(destination)]);
 	}
 
 	function visitOptionLink(line:String, matchedRegex:EReg, lineNumber:Int) {
@@ -227,9 +247,9 @@ class Compiler {
 		var lineId = getLineId(matchedRegex.matched(4));
 		var hashtagText = matchedRegex.matched(4);
 
-		var stringId = registerString(label, currentNode.name, lineId, lineNumber, [hashtagText]);
+		var stringId = registerString(label, lineId, lineNumber, [hashtagText]);
 
-		emit(currentNode, OpCode.ADD_OPTIONS, [
+		emit(OpCode.ADD_OPTIONS, [
 			Operand.fromString(stringId),
 			Operand.fromString(destination),
 			Operand.fromFloat(formattedText.expressionCount)
@@ -252,9 +272,9 @@ class Compiler {
 
 		switch (formattedText.composedString) {
 			case "stop":
-				emit(currentNode, OpCode.STOP, []);
+				emit(OpCode.STOP, []);
 			case _:
-				emit(currentNode, OpCode.RUN_COMMAND, [
+				emit(OpCode.RUN_COMMAND, [
 					Operand.fromString(formattedText.composedString),
 					Operand.fromFloat(formattedText.expressionCount)
 				]);
@@ -269,20 +289,20 @@ class Compiler {
 	}
 
 	function visitIfElseClause(regex:EReg) {
-		emit(currentNode, OpCode.JUMP_TO, [Operand.fromString(ifStatementEndLabels.first())]);
+		emit(OpCode.JUMP_TO, [Operand.fromString(ifStatementEndLabels.first())]);
 		if (!generateClauseLabels.isEmpty()) {
 			currentNode.labels.set(generateClauseLabels.pop(), currentNode.instructions.length);
-			emit(currentNode, OpCode.POP, []);
+			emit(OpCode.POP, []);
 		}
 
 		generateClause(ifStatementEndLabels.first(), regex.matched(1));
 	}
 
 	function visitElseClause() {
-		emit(currentNode, OpCode.JUMP_TO, [Operand.fromString(ifStatementEndLabels.first())]);
+		emit(OpCode.JUMP_TO, [Operand.fromString(ifStatementEndLabels.first())]);
 		if (!generateClauseLabels.isEmpty()) {
 			currentNode.labels.set(generateClauseLabels.pop(), currentNode.instructions.length);
-			emit(currentNode, OpCode.POP, []);
+			emit(OpCode.POP, []);
 		}
 
 		generateClause(ifStatementEndLabels.first(), null);
@@ -291,7 +311,7 @@ class Compiler {
 	function visitEndIfClause() {
 		if (!generateClauseLabels.isEmpty()) {
 			currentNode.labels.set(generateClauseLabels.pop(), currentNode.instructions.length);
-			emit(currentNode, OpCode.POP, []);
+			emit(OpCode.POP, []);
 		}
 
 		currentNode.labels.set(ifStatementEndLabels.pop(), currentNode.instructions.length);
@@ -302,7 +322,7 @@ class Compiler {
 
 		if (expr != null && StringTools.trim(expr).length > 0) {
 			visitExpression(expr);
-			emit(currentNode, OpCode.JUMP_IF_FALSE, [Operand.fromString(endOfCluase)]);
+			emit(OpCode.JUMP_IF_FALSE, [Operand.fromString(endOfCluase)]);
 			generateClauseLabels.push(endOfCluase);
 		}
 	}
@@ -314,12 +334,12 @@ class Compiler {
 		visitor.resolve(exprs);
 	}
 
-	public function emit(node:Node, opCode:OpCode, operands:Array<Operand>) {
+	public function emit(opCode:OpCode, operands:Array<Operand>) {
 		var instruction = new Instruction();
 		instruction.opcode = opCode;
 		instruction.operands = operands;
 
-		node.instructions.push(instruction);
+		currentNode.instructions.push(instruction);
 	}
 
 	function generateFormattedText(text:String):{composedString:String, expressionCount:Int} {
@@ -365,7 +385,7 @@ class Compiler {
 		};
 	}
 
-	function getLineId(hashtagText:String):String {
+	public function getLineId(hashtagText:String):String {
 		if (hashtagText == null || hashtagText.length <= 0)
 			return null;
 
@@ -375,12 +395,12 @@ class Compiler {
 		return null;
 	}
 
-	function registerString(text:String, nodeName:String, lineId:String, lineNumber:Int, tags:Array<String>) {
+	public function registerString(text:String, lineId:String, lineNumber:Int, tags:Array<String>) {
 		var lineIdUsed:String;
 		var isImplicit:Bool;
 
 		if (lineId == null) {
-			lineIdUsed = '$fileName-$nodeName-$stringCount';
+			lineIdUsed = '$fileName-${currentNode.name}-$stringCount';
 
 			stringCount++;
 
@@ -391,188 +411,14 @@ class Compiler {
 			isImplicit = false;
 		}
 
-		var theString = new StringInfo(text, fileName, nodeName, lineNumber, isImplicit, tags);
+		var theString = new StringInfo(text, fileName, currentNode.name, lineNumber, isImplicit, tags);
 
 		stringTable.set(lineIdUsed, theString);
 
 		return lineIdUsed;
 	}
 
-	function registerLabel(?commentary:String = null) {
+	public function registerLabel(?commentary:String = null) {
 		return 'L${labelCount++}$commentary';
-	}
-}
-
-class ExpresionVisitor implements Expr.Visitor {
-	var tokens = new Map<String, TokenType>();
-	var compiler:Compiler;
-
-	public function new(compiler:Compiler) {
-		this.compiler = compiler;
-		loadOperators();
-	}
-
-	function loadOperators() {
-		tokens["is"] = TokenType.EqualTo;
-		tokens["=="] = TokenType.EqualTo;
-		tokens["eq"] = TokenType.EqualTo;
-		tokens["!="] = TokenType.NotEqualTo;
-		tokens["neq"] = TokenType.NotEqualTo;
-		tokens["and"] = TokenType.And;
-		tokens["&&"] = TokenType.And;
-		tokens["or"] = TokenType.Or;
-		tokens["||"] = TokenType.Or;
-		tokens["xor"] = TokenType.Xor;
-		tokens["^"] = TokenType.Xor;
-		tokens["*"] = TokenType.Multiply;
-		tokens["/"] = TokenType.Divide;
-		tokens["%"] = TokenType.Modulo;
-		tokens["+"] = TokenType.Add;
-		tokens["-"] = TokenType.Minus;
-		tokens["*="] = TokenType.Multiply;
-		tokens["/="] = TokenType.Divide;
-		tokens["%="] = TokenType.Modulo;
-		tokens["+="] = TokenType.Add;
-		tokens["-="] = TokenType.Minus;
-		tokens["<="] = TokenType.LessThanOrEqualTo;
-		tokens["lte"] = TokenType.LessThanOrEqualTo;
-		tokens["<"] = TokenType.LessThan;
-		tokens["lt"] = TokenType.LessThan;
-		tokens[">="] = TokenType.GreaterThanOrEqualTo;
-		tokens["gte"] = TokenType.GreaterThanOrEqualTo;
-		tokens[">"] = TokenType.GreaterThan;
-		tokens["gt"] = TokenType.GreaterThan;
-	}
-
-	public function resolve(exprs:Array<Expr>) {
-		for (expr in exprs) {
-			expr.accept(this);
-		}
-	}
-
-	public function visitExpParens(expr:Expr.ExpParens):Dynamic {
-		return expr.expression.accept(this);
-	}
-
-	public function visitExpAssign(expr:Expr.ExpAssign):Dynamic {
-		expr.value.accept(this);
-
-		compiler.emit(compiler.currentNode, OpCode.STORE_VARIABLE, [Operand.fromString(expr.name.lexeme)]);
-		compiler.emit(compiler.currentNode, OpCode.POP, []);
-
-		return 0;
-	};
-
-	public function visitExpNegative(expr:Expr.ExpNegative):Dynamic {
-		expr.expression.accept(this);
-
-		compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(1)]);
-		compiler.emit(compiler.currentNode, OpCode.CALL_FUNC, [Operand.fromString(TokenType.UnaryMinus.getName())]);
-
-		return 0;
-	}
-
-	public function visitExpNot(expr:Expr.ExpNot):Dynamic {
-		expr.expression.accept(this);
-
-		compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(1)]);
-		compiler.emit(compiler.currentNode, OpCode.CALL_FUNC, [Operand.fromString(TokenType.Not.getName())]);
-
-		return 0;
-	}
-
-	public function visitExpMultDivMod(expr:Expr.ExpMultDivMod):Dynamic {
-		genericExpVisitor(expr.left, expr.right, expr.op);
-
-		return 0;
-	}
-
-	public function visitExpAddSub(expr:Expr.ExpAddSub):Dynamic {
-		genericExpVisitor(expr.left, expr.right, expr.op);
-
-		return 0;
-	}
-
-	public function visitExpComparison(expr:Expr.ExpComparision):Dynamic {
-		genericExpVisitor(expr.left, expr.right, expr.op);
-
-		return 0;
-	}
-
-	public function visitExpEquality(expr:Expr.ExpEquality):Dynamic {
-		genericExpVisitor(expr.left, expr.right, expr.op);
-
-		return 0;
-	}
-
-	public function visitExpMultDivModEquals(expr:Expr.ExpMultDivModEquals):Dynamic {
-		opEquals(expr.variableName.lexeme, expr.left, expr.op);
-
-		return 0;
-	}
-
-	public function visitExpPlusMinusEquals(expr:Expr.ExpPlusMinusEquals):Dynamic {
-		opEquals(expr.variableName.lexeme, expr.left, expr.op);
-
-		return 0;
-	}
-
-	public function visitExpAndOrXor(expr:Expr.ExpAndOrXor):Dynamic {
-		genericExpVisitor(expr.left, expr.right, expr.op);
-
-		return 0;
-	}
-
-	public function visitExpValue(expr:Expr.ExpValue):Dynamic {
-		switch (expr.value.type) {
-			case src.hxyarn.compiler.Token.TokenType.VAR_ID:
-				compiler.emit(compiler.currentNode, OpCode.PUSH_VARIABLE, [Operand.fromString(expr.value.lexeme)]);
-			case src.hxyarn.compiler.Token.TokenType.NUMBER:
-				var number = expr.value.literal;
-				compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(number)]);
-			case src.hxyarn.compiler.Token.TokenType.KEYWORD_TRUE:
-				compiler.emit(compiler.currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(true)]);
-			case src.hxyarn.compiler.Token.TokenType.KEYWORD_FALSE:
-				compiler.emit(compiler.currentNode, OpCode.PUSH_BOOL, [Operand.fromBool(false)]);
-			case src.hxyarn.compiler.Token.TokenType.STRING:
-				compiler.emit(compiler.currentNode, OpCode.PUSH_STRING, [Operand.fromString(expr.value.literal)]);
-			case src.hxyarn.compiler.Token.TokenType.KEYWORD_NULL:
-				compiler.emit(compiler.currentNode, OpCode.PUSH_NULL, []);
-			case _:
-				throw new Exception('Expresion value not implemented: ${expr.value.toString()}');
-		}
-
-		return 0;
-	}
-
-	public function visitExpFunc(expr:Expr.ExpFunc):Dynamic {
-		for (arg in expr.arguments) {
-			arg.accept(this);
-		}
-
-		compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(expr.arguments.length)]);
-		compiler.emit(compiler.currentNode, OpCode.CALL_FUNC, [Operand.fromString(expr.callee)]);
-
-		return 0;
-	};
-
-	function opEquals(varName:String, expr:Expr, op:Token) {
-		compiler.emit(compiler.currentNode, OpCode.PUSH_VARIABLE, [Operand.fromString(varName)]);
-
-		expr.accept(this);
-
-		compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(2)]);
-		compiler.emit(compiler.currentNode, OpCode.CALL_FUNC, [Operand.fromString(tokens[op.lexeme].getName())]);
-
-		compiler.emit(compiler.currentNode, OpCode.STORE_VARIABLE, [Operand.fromString(varName)]);
-		compiler.emit(compiler.currentNode, OpCode.POP, []);
-	}
-
-	function genericExpVisitor(left:Expr, right:Expr, op:src.hxyarn.compiler.Token) {
-		left.accept(this);
-		right.accept(this);
-
-		compiler.emit(compiler.currentNode, OpCode.PUSH_FLOAT, [Operand.fromFloat(2)]);
-		compiler.emit(compiler.currentNode, OpCode.CALL_FUNC, [Operand.fromString(tokens[op.lexeme].getName())]);
 	}
 }

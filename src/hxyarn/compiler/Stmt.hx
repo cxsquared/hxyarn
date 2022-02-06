@@ -27,8 +27,8 @@ class Stmt {
 }
 
 class StmtDialogue extends Stmt {
-	public function new(hashtag:Array<StmtFileHashtag>, nodes:Array<StmtNode>) {
-		this.hashtag = hashtag;
+	public function new(hashtags:Array<StmtFileHashtag>, nodes:Array<StmtNode>) {
+		this.hashtags = hashtags;
 		this.nodes = nodes;
 	}
 
@@ -36,7 +36,7 @@ class StmtDialogue extends Stmt {
 		return visitor.visitDialogue(this);
 	}
 
-	public var hashtag:Array<StmtFileHashtag>;
+	public var hashtags:Array<StmtFileHashtag>;
 	public var nodes:Array<StmtNode>;
 }
 
@@ -105,31 +105,38 @@ class StmtLine extends Stmt {
 }
 
 class StmtIf extends Stmt {
-	public function new(condition:Expr, thenStmt:Stmt, elseStmt:Stmt) {
+	public function new(condition:Expr, thenBranch:Array<Stmt>, elseBranch:Array<Stmt>) {
 		this.condition = condition;
-		this.thenStmt = thenStmt;
-		this.elseStmt = elseStmt;
+		this.thenBranch = thenBranch;
+		this.elseBranch = elseBranch;
 	}
 
 	override public function accept(visitor:StmtVisitor) {
 		return visitor.visitIf(this);
 	}
 
-	public var condition:Expr;
-	public var thenStmt:Stmt;
-	public var elseStmt:Stmt;
+	public var condition(default, null):Expr;
+	public var thenBranch(default, null):Array<Stmt>;
+	public var elseBranch(default, null):Array<Stmt>;
 }
 
 class StmtSetExpression extends Stmt {
-	public function new() {}
+	public function new(expression:Expr) {
+		this.expression = expression;
+	}
 
 	override public function accept(visitor:StmtVisitor) {
 		return visitor.visitSetExpression(this);
 	}
+
+	public var expression:Expr;
 }
 
 class StmtSetVariable extends Stmt {
-	public function new(varId:Token) {}
+	public function new(varId:Token, expression:Expr) {
+		this.var_id = varId;
+		this.expression = expression;
+	}
 
 	override public function accept(visitor:StmtVisitor) {
 		return visitor.visitSetVariable(this);

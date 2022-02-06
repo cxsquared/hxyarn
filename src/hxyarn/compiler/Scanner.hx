@@ -548,10 +548,11 @@ class Scanner {
 		}
 
 		line++;
-		advance();
 		if (asToken) {
-			var value = source.substr(start - 1, current - start);
+			start--;
+			var value = source.substr(start, current - start);
 			addToken(token, value);
+			advance();
 		}
 	}
 
