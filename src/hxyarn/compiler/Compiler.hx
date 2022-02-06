@@ -84,7 +84,8 @@ class Compiler {
 					currentNode.name = StringTools.trim(header.value.lexeme);
 				}
 				if (header.id.lexeme == "tags") {
-					// todo
+					var tags = header.value.lexeme.split(',');
+					currentNode.tags.concat(tags);
 				}
 			}
 			currentNode.labels.set(registerLabel(), currentNode.instructions.length);

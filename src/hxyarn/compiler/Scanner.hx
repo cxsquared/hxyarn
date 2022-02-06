@@ -182,6 +182,8 @@ class Scanner {
 	function headerMode(c:String) {
 		switch (c) {
 			// whitespace
+			case ' ':
+			case '\t':
 			case '\r':
 				line++;
 				addToken(HEADER_NEWLINE);
@@ -597,7 +599,6 @@ class Scanner {
 
 		line++;
 		if (asToken) {
-			start--;
 			var value = source.substr(start, current - start);
 			addToken(token, value);
 			advance();

@@ -62,6 +62,9 @@ class StmtParser {
 	function header():StmtHeader {
 		var id = consume(ID, "expected header Id");
 		consume(HEADER_DELIMITER, "expected header delimiter");
+		if (match([HEADER_NEWLINE]))
+			return new StmtHeader(id, previous());
+
 		var value = consume(REST_OF_LINE, "");
 
 		return new StmtHeader(id, value);
