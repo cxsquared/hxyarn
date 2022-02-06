@@ -84,6 +84,10 @@ class Scanner {
 	function rootMode(c:String) {
 		switch (c) {
 			case ' ':
+			case '/':
+				if (match('/')) {
+					restOfTheLine();
+				}
 			case '\t':
 			case '\r':
 				line++;
@@ -193,8 +197,8 @@ class Scanner {
 				addToken(HEADER_NEWLINE);
 				mode.pop();
 			case '/':
-				restOfTheLine(match("/"));
-				mode.pop();
+				match("/");
+				restOfTheLine();
 			case _:
 				restOfTheLine(true);
 				mode.pop();
@@ -404,6 +408,7 @@ class Scanner {
 		switch (c) {
 			case ' ':
 			case '\r':
+			case '\n':
 			case '\t':
 			case '>':
 				if (match('>')) {
@@ -419,6 +424,15 @@ class Scanner {
 
 	function commandTextMode(c:String) {
 		switch (c) {
+			case '>':
+				if (match('>')) {
+					addToken(COMMAND_TEXT_END);
+					mode.pop();
+					mode.pop();
+					return;
+				}
+				throw 'Unexpected char at line $line: $c';
+
 			case '{':
 				addToken(COMMAND_EXPRESSION_START);
 				mode.add(ExpressionMode);

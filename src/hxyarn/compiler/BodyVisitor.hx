@@ -205,8 +205,20 @@ class BodyVisitor implements StmtVisitor {
 	}
 
 	public function visitCommand(stmt:StmtCommand):Dynamic {
-		// TODO
-		throw new haxe.exceptions.NotImplementedException();
+		var composedString = "";
+
+		for (token in stmt.texts) {
+			composedString += token.lexeme;
+		}
+
+		switch (composedString) {
+			case "stop":
+				compiler.emit(OpCode.STOP, []);
+			case _:
+				compiler.emit(OpCode.RUN_COMMAND, [Operand.fromString(composedString), Operand.fromFloat(0)]);
+		}
+
+		return 0;
 	}
 
 	public function visitIndent(stmt:StmtIndent):Dynamic {

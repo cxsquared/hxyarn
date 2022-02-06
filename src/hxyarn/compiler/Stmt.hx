@@ -196,11 +196,16 @@ class StmtCall extends Stmt {
 }
 
 class StmtCommand extends Stmt {
-	public function new() {}
+	// TODO support expressions in here
+	public function new(texts:Array<Token>) {
+		this.texts = texts;
+	}
 
 	override public function accept(visitor:StmtVisitor) {
 		return visitor.visitCommand(this);
 	}
+
+	public var texts(default, null):Array<Token>;
 }
 
 class StmtIndent extends Stmt {

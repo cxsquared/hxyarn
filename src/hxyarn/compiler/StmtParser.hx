@@ -102,7 +102,10 @@ class StmtParser {
 		if (match([COMMAND_CALL]))
 			return commandCall();
 
-		throw "";
+		if (match([COMMAND_TEXT]))
+			return commandText();
+
+		return throw "";
 	}
 
 	function commandIf():Stmt {
@@ -164,6 +167,15 @@ class StmtParser {
 		return new StmtCall(id, exprs);
 	}
 
+	function commandText():Stmt {
+		// TODO handle expressions
+		var texts = [previous()];
+		while (!match([COMMAND_TEXT_END])) {
+			texts.push(consume(COMMAND_TEXT, "Expected Text"));
+		}
+		return new StmtCommand(texts);
+	}
+
 	function optionStart():Stmt {
 		// TODO supporting formating
 		// TODO support hashtags
@@ -184,31 +196,6 @@ class StmtParser {
 
 	function lineStatement():Stmt {
 		return new StmtLine(previous());
-	}
-
-	function ifStatement():Stmt {
-		return setStatement();
-	}
-
-	function setStatement():Stmt {
-		return optionStatement();
-	}
-
-	function optionStatement():Stmt {
-		return shortcutOptionStatement();
-	}
-
-	function shortcutOptionStatement():Stmt {
-		return callStatement();
-	}
-
-	function callStatement():Stmt {
-		return commandStatement();
-	}
-
-	function commandStatement():Stmt {
-		advance();
-		return new StmtCommand();
 	}
 
 	function expression():Expr {
