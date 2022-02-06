@@ -19,18 +19,18 @@ class Main {
 		// runTest('./yarns/yarn/Expressions.yarn', './yarns/testcases/Expressions.testplan');
 		// Passing
 		// runTest('./yarns/yarn/Options.yarn', './yarns/testcases/Options.testplan');
-		// Failing
-		// runTest('./yarns/yarn/FormatFunctions.yarn', './yarns/testcases/FormatFunctions.testplan');
 		// Passing
 		// runFunctionTest('./yarns/yarn/Functions.yarn', './yarns/testcases/Functions.testplan');
+		// Passing
+		// runTest('./yarns/yarn/NodeHeaders.yarn', './yarns/testcases/NodeHeaders.testplan');
+		// Failing
+		// runTest('./yarns/yarn/FormatFunctions.yarn', './yarns/testcases/FormatFunctions.testplan');
 		// Failing
 		// runTest('./yarns/yarn/IfStatements.yarn', './yarns/testcases/IfStatements.testplan');
 		// Failing
 		// runTest('./yarns/yarn/InlineExpressions.yarn', './yarns/testcases/InlineExpressions.testplan');
 		// Failing
 		// runTest('./yarns/yarn/Lines.yarn', './yarns/testcases/Lines.testplan');
-		// Passing
-		// runTest('./yarns/yarn/NodeHeaders.yarn', './yarns/testcases/NodeHeaders.testplan');
 		// Failing
 		// runTest('./yarns/yarn/ShortcutOptions.yarn', './yarns/testcases/ShortcutOptions.testplan');
 		// Failing
