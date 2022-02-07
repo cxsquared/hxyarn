@@ -389,6 +389,8 @@ class Scanner {
 			case '}':
 				addToken(EXPRESSION_END);
 				mode.pop();
+			case "\"":
+				string();
 			case _:
 				if (isDigit(c)) {
 					number();
@@ -607,7 +609,7 @@ class Scanner {
 	}
 
 	function restOfTheLine(asToken:Bool = false, token:TokenType = REST_OF_LINE) {
-		while (peek() != '\n' && !isAtEnd()) {
+		while (peek() != '\n' && peek() != '\r' && !isAtEnd()) {
 			advance();
 		}
 
