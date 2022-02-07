@@ -24,7 +24,7 @@ class Main {
 		// Passing
 		// runTest('./yarns/yarn/NodeHeaders.yarn', './yarns/testcases/NodeHeaders.testplan');
 		// Failing
-		// runTest('./yarns/yarn/FormatFunctions.yarn', './yarns/testcases/FormatFunctions.testplan');
+		runTest('./yarns/yarn/FormatFunctions.yarn', './yarns/testcases/FormatFunctions.testplan');
 		// Failing
 		// runTest('./yarns/yarn/IfStatements.yarn', './yarns/testcases/IfStatements.testplan');
 		// Failing

@@ -16,6 +16,7 @@ class TestPlan {
 		var source = File.getContent(path);
 
 		for (line in source.split('\n')) {
+			line = StringTools.trim(line);
 			if (StringTools.trim(line).indexOf('#') == 0)
 				continue;
 
