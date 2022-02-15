@@ -1,5 +1,7 @@
 package src.hxyarn.dialogue;
 
+import src.hxyarn.program.Value;
+
 interface VariableStorage {
 	public function setValue(variableName:String, value:Dynamic):Void;
 	public function getValue(variableName:String):Value;

@@ -163,12 +163,16 @@ class Reader {
 		start = current;
 
 		if (Std.isOfType(any, StepType))
-			return StepType.createByName(value);
+			return StepType.createByName(uperCaseStart(value));
 
 		if (Std.isOfType(any, Int))
 			return Std.parseInt(value);
 
 		return value;
+	}
+
+	function uperCaseStart(s:String):String {
+		return s.substr(0, 1).toUpperCase() + s.substr(1);
 	}
 }
 

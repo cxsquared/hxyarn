@@ -1,7 +1,7 @@
 package tests;
 
 import src.hxyarn.dialogue.Dialogue.HandlerExecutionType;
-import src.hxyarn.Value;
+import src.hxyarn.program.Value;
 import src.hxyarn.compiler.Compiler;
 import tests.TestBase;
 

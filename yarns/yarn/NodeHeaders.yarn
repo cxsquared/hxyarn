@@ -1,7 +1,4 @@
 title: Start
-tags: 
-colorID: 0
-position: -780,-873
 ---
 // this test is a no-op - the test passes if the file compiles.
 // Start demonstrates a node with a single header, its title (which is mandatory).
@@ -11,22 +8,14 @@ position: -780,-873
 ===
 title: TestNode1
 tags: one two
-colorID: 0
-position: -501,-831
 ---
-Empty Text
 ===
 title: TestNode2
-tags: 
-colorID: 0
-position: -220,-827
+tags:
 ---
-Empty Text
 ===
 title: TestNode3
-tags: 
-colorID: 0
-position: 22,-747
+tags:
+test: example
 ---
-Empty Text
 ===

@@ -1,4 +1,4 @@
-Option: Go to B 
-Option: Go to C 
-Select: 2
-Line: Node C 
+option: Go to B 
+option: Go to C 
+select: 2
+line: Node C 

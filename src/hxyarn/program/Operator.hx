@@ -1,0 +1,21 @@
+package src.hxyarn.program;
+
+enum Operator {
+	NONE;
+	EQUAL_TO;
+	GREATER_THAN;
+	GREATER_THAN_OR_EQUAL_TO;
+	LESS_THAN;
+	LESS_THAN_OR_EQUAL_TO;
+	NOT_EQUAL_TO;
+	OR;
+	AND;
+	XOR;
+	NOT;
+	UNARY_MINUS;
+	ADD;
+	MINUS;
+	MULTIPLY;
+	DIVIDE;
+	MODULO;
+}

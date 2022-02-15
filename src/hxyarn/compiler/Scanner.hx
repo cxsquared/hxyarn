@@ -33,6 +33,7 @@ class Scanner {
 		keywords.set("true", KEYWORD_TRUE);
 		keywords.set("null", KEYWORD_NULL);
 		keywords.set("to", OPERATOR_ASSIGNMENT);
+		keywords.set("as", EXPRESSION_AS);
 	}
 
 	public static function scan(source:String) {
@@ -63,18 +64,18 @@ class Scanner {
 					hashtagMode(c);
 				case TextCommandOrHashtagMode:
 					textCommandOrHashtagMode(c);
-				case FormatFunctionMode:
-					formatFunction(c);
+				case TextEscapedMode:
+					textEscapedMode(c);
 				case ExpressionMode:
 					expressionMode(c);
 				case CommandMode:
 					commandMode(c);
 				case CommandTextMode:
 					commandTextMode(c);
-				case OptionMode:
-					optionMode(c);
-				case OptionIDMode:
-					optionIdMode(c);
+				case CommandIdOrExpressionMode:
+					commandIdOrExpressionMode(c);
+				case CommandIdMode:
+					commandIdMode(c);
 			}
 		} else {
 			rootMode(c);
@@ -84,19 +85,13 @@ class Scanner {
 	function rootMode(c:String) {
 		switch (c) {
 			case ' ':
-			case '/':
-				if (match('/')) {
-					restOfTheLine();
-				}
 			case '\t':
 			case '\r':
+				match('\n'); // consume newlines for windows
 				line++;
 			case '\n':
+				// TODO figure out whitespace channels
 				line++;
-			case ':':
-				addToken(HEADER_DELIMITER);
-				consumeWhitespace();
-				mode.add(HeaderMode);
 			case '-':
 				if (match("-") && match("-")) {
 					addToken(BODY_START);
@@ -104,79 +99,16 @@ class Scanner {
 				} else {
 					throw new Exception('Unexpected char at line $line: $c');
 				}
-			// white spaces
-			case _:
-				if (isAlpha(c)) {
-					// todo: Add support for . in node names
-					identifier(ID);
-					return;
-				}
-				throw new Exception('Unexpected char at line $line: $c');
-		}
-	}
-
-	function rootModeBackup(c:String) {
-		switch (c) {
-			// one char
-			case '(':
-				addToken(LPAREN);
-			case ')':
-				addToken(RPAREN);
-			case '{':
-				addToken(FORMAT_FUNCTION_START);
-			case '}':
-				addToken(FORMAT_FUNCTION_END);
-			case ',':
-				addToken(COMMA);
-			case '^':
-				addToken(OPERATOR_LOGICAL_XOR);
 			case ':':
 				addToken(HEADER_DELIMITER);
 				consumeWhitespace();
 				mode.add(HeaderMode);
-			// two char
-			case '%':
-				addToken(match("=") ? OPERATOR_MATHS_MODULUS_EQUALS : OPERATOR_MATHS_MODULUS);
-			case '-':
-				if (match("-") && match("-")) {
-					addToken(BODY_START);
-					mode.add(BodyMode);
-				} else {
-					addToken(match("=") ? OPERATOR_MATHS_SUBTRACTION_EQUALS : OPERATOR_MATHS_SUBTRACTION);
-				}
-			case '*':
-				addToken(match("=") ? OPERATOR_MATHS_MULTIPLICATION_EQUALS : OPERATOR_MATHS_MULTIPLICATION);
-			case '/':
-				addToken(match("=") ? OPERATOR_MATHS_DIVISION_EQUALS : OPERATOR_MATHS_DIVISION);
-			case '+':
-				addToken(match("=") ? OPERATOR_MATHS_ADDITION_EQUALS : OPERATOR_MATHS_ADDITION);
-			case '!':
-				addToken(match("=") ? OPERATOR_LOGICAL_NOT_EQUALS : OPERATOR_LOGICAL_NOT);
-			case '=':
-				addToken(match("=") ? OPERATOR_LOGICAL_EQUALS : OPERATOR_ASSIGNMENT);
-			case '<':
-				addToken(match("=") ? OPERATOR_LOGICAL_LESS_THAN_EQUALS : OPERATOR_LOGICAL_LESS);
-			case '>':
-				addToken(match("=") ? OPERATOR_LOGICAL_GREATER_THAN_EQUALS : OPERATOR_LOGICAL_EQUALS);
-			case '|':
-				match("|") ? addToken(OPERATOR_LOGICAL_OR) : throw new Exception('Unexpected single pipe (|) at line $line');
-			case '&':
-				match("&") ? addToken(OPERATOR_LOGICAL_AND) : throw new Exception('Unexpected single ampersand (&) at line $line');
-			case '\\':
-				match("\\") ? restOfTheLine() : throw new Exception('Unexpected single forward slash (\\) at line $line');
-			// white spaces
-			case ' ':
-			case '\r':
-			case '\t':
-			case '\n':
-				line++;
+			case '#':
+				addToken(HASHTAG);
+				mode.add(HashtagMode);
 			case _:
-				if (isDigit(c)) {
-					number();
-					return;
-				}
 				if (isAlpha(c)) {
-					identifier();
+					identifier(ID);
 					return;
 				}
 				throw new Exception('Unexpected char at line $line: $c');
@@ -185,20 +117,15 @@ class Scanner {
 
 	function headerMode(c:String) {
 		switch (c) {
-			// whitespace
-			case ' ':
-			case '\t':
 			case '\r':
+				match('\n'); // consume newlines for windows
 				line++;
-				addToken(HEADER_NEWLINE);
+				// addToken(NEWLINE); TODO: figure out newline channel
 				mode.pop();
 			case '\n':
 				line++;
-				addToken(HEADER_NEWLINE);
+				// addToken(NEWLINE); TODO: figure out newline channel
 				mode.pop();
-			case '/':
-				match("/");
-				restOfTheLine();
 			case _:
 				restOfTheLine(true);
 				mode.pop();
@@ -207,69 +134,94 @@ class Scanner {
 
 	function bodyMode(c:String) {
 		switch (c) {
-			// whitespace
-			case ' ':
+			case ' ': // skip
+			case '\t': // skip
 			case '\r':
-			case '\t':
+				match('\n'); // consume newlines for windows
+				line++;
+			// addToken(NEWLINE); TODO: figure out newline channel
 			case '\n':
 				line++;
-			// one char
-			case '{':
-				addToken(TEXT_EXPRESSION_START);
-				mode.add(TextMode);
-				mode.add(ExpressionMode);
-			// two char
-			case '-':
-				match(">") ? addToken(SHORTCUT_ARROW) : mode.add(TextMode);
-			case '<':
-				match("<") ? {
-					mode.add(CommandMode);
-					addToken(COMMAND_START);
-				} : mode.add(TextMode);
-			case '[':
-				match("[") ? {mode.add(OptionMode); addToken(OPTION_START);} : {addToken(FORMAT_FUNCTION_START); mode.add(TextMode); mode.add(FormatFunctionMode);};
-			case '#':
-				addToken(BODY_HASHTAG);
-				mode.add(TextCommandOrHashtagMode);
-				mode.add(HashtagMode);
-			// three char
-			case '=': match('=') && match('=') ? {
+			// addToken(NEWLINE); TODO: figure out newline channel
+			case '/': // commnet
+				if (match('/')) {
+					restOfTheLine(false); // TODO: figure out comment channel
+				}
+			case '=': // Body end
+				if (match('=') && match('=')) {
 					addToken(BODY_END);
 					mode.pop();
-				} : mode.add(TextMode);
-			case _:
+					return;
+				}
+
+				addToken(TEXT, c);
 				mode.add(TextMode);
-				current--; // Rollback the current char so it get's passed to text mode
+			case '-': // Shortcut arrow
+				if (match(">")) {
+					addToken(SHORTCUT_ARROW);
+					return;
+				}
+
+				addToken(TEXT, c);
+				mode.add(TextMode);
+			case '<':
+				if (match("<")) {
+					mode.add(CommandMode);
+					addToken(COMMAND_START);
+					return;
+				}
+
+				addToken(TEXT, c);
+				mode.add(TextMode);
+			case '#':
+				addToken(HASHTAG);
+				mode.add(TextCommandOrHashtagMode);
+				mode.add(HashtagMode);
+			case '{':
+				addToken(EXPRESSION_START);
+				mode.add(TextMode);
+				mode.add(ExpressionMode);
+			case _:
+				addToken(TEXT, c);
+				mode.add(TextMode);
 		}
 	}
 
 	function textMode(c:String) {
 		switch (c) {
-			// whitespace
-			case ' ':
 			case '\r':
-			case '\t':
+				match('\n');
+				line++;
+				addToken(NEWLINE);
+				mode.pop();
 			case '\n':
 				line++;
+				addToken(NEWLINE);
 				mode.pop();
+			case '\\':
+				if (match('\\')) {
+					if (match('[') || match(']')) {
+						addToken(TEXT);
+						return;
+					}
+
+					mode.add(TextEscapedMode);
+				}
 			case '#':
-				addToken(TEXT_HASHTAG);
+				addToken(HASHTAG);
 				mode.add(TextCommandOrHashtagMode);
 				mode.add(HashtagMode);
 			case '{':
-				addToken(TEXT_EXPRESSION_START);
+				addToken(EXPRESSION_START);
 				mode.add(ExpressionMode);
 			case '<':
 				if (match('<')) {
-					addToken(TEXT_COMMAND_START);
+					addToken(COMMAND_START);
 					mode.add(TextCommandOrHashtagMode);
 					mode.add(CommandMode);
 				} else {
 					restOfTheLine(true);
 				}
-			case '[':
-				addToken(TEXT_FORMAT_FUNCTION_START);
-				mode.add(FormatFunctionMode); // one char
 			case '/':
 				match('/') ? restOfTheLine() : text();
 			case _:
@@ -277,25 +229,59 @@ class Scanner {
 		}
 	}
 
+	function textEscapedMode(c:String) {
+		switch (c) {
+			case '\\':
+				addToken(TEXT, c);
+				mode.pop();
+			case '<':
+				addToken(TEXT, c);
+				mode.pop();
+			case '>':
+				addToken(TEXT, c);
+				mode.pop();
+			case '{':
+				addToken(TEXT, c);
+				mode.pop();
+			case '}':
+				addToken(TEXT, c);
+				mode.pop();
+			case '#':
+				addToken(TEXT, c);
+				mode.pop();
+			case '/':
+				addToken(TEXT, c);
+				mode.pop();
+			case _:
+				throw 'Unexpected char at line $line: $c';
+		}
+	}
+
 	function textCommandOrHashtagMode(c:String) {
 		switch (c) {
 			// whitespace
 			case ' ':
-			case '\r':
 			case '\t':
+			case '\r':
+				match('\n'); // consume newlines for windows
+				line++;
+				// addToken(NEWLINE); TODO: figure out newline channel
+				mode.pop();
 			case '\n':
 				line++;
+				// addToken(NEWLINE); TODO: figure out newline channel
 				mode.pop();
-			case '#':
-				addToken(TEXT_COMMANDHASHTAG_HASHTAG);
-				mode.add(HashtagMode);
-			case '\\':
-				match("\\") ? restOfTheLine() : throw new Exception('Unexpected single forward slash (\\) at line $line');
+			case '/':
+				if (match('/'))
+					restOfTheLine(); // TODO figure out comment channel
 			case '<':
 				if (match('<')) {
-					addToken(TEXT_COMMANDHASHTAG_COMMAND_START);
+					addToken(COMMAND_START);
 					mode.add(CommandMode);
 				}
+			case '#':
+				addToken(HASHTAG);
+				mode.add(HashtagMode);
 			case _:
 				throw new Exception('Unexpected char at line $line: $c');
 		}
@@ -304,47 +290,18 @@ class Scanner {
 	function hashtagMode(c:String) {
 		switch (c) {
 			case ' ':
-			case '\r':
 			case '\t':
+			case '#':
+				addToken(HASHTAG);
 			case _:
 				restOfTheLine(true, HASHTAG_TEXT);
 				mode.pop();
 		}
 	}
 
-	function formatFunction(c:String) {
-		switch (c) {
-			case ' ':
-			case '\r':
-			case '\t':
-			case '"':
-				string();
-			case '{':
-				addToken(FORMAT_FUNCTION_EXPRESSION_START);
-				mode.add(ExpressionMode);
-			case '=':
-				addToken(FORMAT_FUNCTION_EQUALS);
-			case ']':
-				addToken(FORMAT_FUNCTION_END);
-				mode.pop();
-			case _:
-				if (isDigit(c)) {
-					number();
-					return;
-				}
-				if (isAlpha(c)) {
-					identifier();
-					return;
-				}
-
-				throw new Exception('Unexpected char at line $line: $c');
-		}
-	}
-
 	function expressionMode(c:String) {
 		switch (c) {
 			case ' ':
-			case '\r':
 			case '\t':
 			case '=':
 				match('=') ? addToken(OPERATOR_LOGICAL_EQUALS) : addToken(OPERATOR_ASSIGNMENT);
@@ -356,7 +313,7 @@ class Scanner {
 				if (match('=')) {
 					addToken(OPERATOR_LOGICAL_GREATER_THAN_EQUALS);
 				} else if (match('>')) {
-					addToken(EXPRESSION_COMMAND_END);
+					addToken(COMMAND_END);
 					mode.pop();
 					mode.pop();
 				} else {
@@ -389,6 +346,8 @@ class Scanner {
 			case '}':
 				addToken(EXPRESSION_END);
 				mode.pop();
+			case '.':
+				addToken(DOT);
 			case "\"":
 				string();
 			case _:
@@ -443,39 +402,35 @@ class Scanner {
 		}
 	}
 
-	function optionMode(c:String) {
+	function commandIdOrExpressionMode(c:String) {
 		switch (c) {
-			case ' ':
-			case '\r':
-			case '\t':
-			case ']':
-				if (match(']')) {
-					addToken(OPTION_END);
+			case '>':
+				if (match('>')) {
+					addToken(COMMAND_END);
 					mode.pop();
 					return;
 				}
 				throw 'Unexpected char at line $line: $c';
-			case '|':
-				addToken(OPTION_DELIMIT);
-				mode.add(OptionIDMode);
 			case '{':
-				addToken(OPTION_EXPRESSION_START);
+				addToken(COMMAND_EXPRESSION_START);
 				mode.add(ExpressionMode);
-			case '[':
-				addToken(OPTION_FORMAT_FUNCTION_START);
-				mode.add(FormatFunctionMode);
 			case _:
-				optionText();
+				identifier(ID);
+				mode.pop();
 		}
 	}
 
-	function optionIdMode(c:String) {
+	function commandIdMode(c:String) {
 		switch (c) {
-			case ' ':
-			case '\r':
-			case '\t':
+			case '>':
+				if (match('>')) {
+					addToken(COMMAND_END);
+					mode.pop();
+					return;
+				}
+				throw 'Unexpected char at line $line: $c';
 			case _:
-				identifier(OPTION_ID);
+				identifier(ID);
 				mode.pop();
 		}
 	}
@@ -519,15 +474,6 @@ class Scanner {
 		addToken(COMMAND_TEXT, value);
 	}
 
-	function optionText() {
-		while (peek() != ']' && peek() != '{' && peek() != '|' && peek() != '[' && !isAtEnd()) {
-			advance();
-		}
-
-		var value = source.substr(start, current - start);
-		addToken(OPTION_TEXT, value);
-	}
-
 	function command() {
 		while (peek() != ' ' && peek() != '>' && !isAtEnd()) {
 			advance();
@@ -551,6 +497,22 @@ class Scanner {
 			case "call":
 				addToken(COMMAND_CALL);
 				mode.add(ExpressionMode);
+			case "declare":
+				addToken(COMMAND_DECLARE);
+				mode.add(ExpressionMode);
+			case "jump":
+				addToken(COMMAND_JUMP);
+				mode.add(CommandIdOrExpressionMode);
+			case "case":
+				addToken(COMMAND_CASE);
+				mode.add(CommandIdMode);
+			case "enum":
+				addToken(COMMAND_ENUM);
+				mode.add(CommandIdMode);
+			case "endenum":
+				addToken(COMMAND_ENDENUM);
+			case "local":
+				addToken(COMMAND_LOCAL);
 			case _:
 				addToken(COMMAND_TEXT);
 				mode.add(CommandTextMode);
@@ -678,10 +640,10 @@ enum ScannerMode {
 	HashtagMode;
 	TextMode;
 	TextCommandOrHashtagMode;
-	FormatFunctionMode;
+	TextEscapedMode;
 	ExpressionMode;
 	CommandMode;
 	CommandTextMode;
-	OptionMode;
-	OptionIDMode;
+	CommandIdOrExpressionMode;
+	CommandIdMode;
 }

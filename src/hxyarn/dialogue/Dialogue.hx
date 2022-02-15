@@ -1,9 +1,11 @@
 package src.hxyarn.dialogue;
 
+import src.hxyarn.program.StandardLibrary;
+import src.hxyarn.program.Library;
 import src.hxyarn.dialogue.CLDR.PluralCase;
 import src.hxyarn.dialogue.DialogueExcpetion.DialogueException;
 import sys.io.File;
-import src.hxyarn.Library.FunctionInfo;
+import src.hxyarn.program.Library.FunctionInfo;
 import haxe.Exception;
 import src.hxyarn.program.VirtualMachine;
 import src.hxyarn.dialogue.OptionSet;

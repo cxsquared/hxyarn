@@ -1,12 +1,12 @@
-Command: flip Harley3 +1
-Command: toggle
-Command: settings
-Command: iffy
-Command: nulled
-Command: orion
-Command: andorian
-Command: note
-Command: isActive
-Command: p
-#Command: !@#$%^&*()⁄€‹›ﬁﬂ‡°·‚‘-=_+
-Command: hide Collision:GermOnPorch
+command: flip Harley3 +1
+command: toggle
+command: settings
+command: iffy
+command: nulled
+command: orion
+command: andorian
+command: note
+command: isActive
+command: p
+#command: !@#$%^&*()⁄€‹›ﬁﬂ‡°·‚‘-=_+
+command: hide Collision:GermOnPorch

@@ -1,13 +1,27 @@
 package src.hxyarn.compiler;
 
-import src.hxyarn.compiler.Stmt.StmtOptionJump;
-import src.hxyarn.compiler.Stmt.StmtOption;
+import src.hxyarn.compiler.Value.ValueFunctionCall;
+import src.hxyarn.compiler.Value.ValueVariable;
+import src.hxyarn.compiler.Value.ValueNumber;
+import src.hxyarn.compiler.Value.ValueString;
+import src.hxyarn.compiler.Value.ValueNull;
+import src.hxyarn.compiler.Value.ValueTrue;
+import src.hxyarn.compiler.Value.ValueFalse;
+import src.hxyarn.compiler.Stmt.StmtSet;
+import src.hxyarn.compiler.Stmt.StmtCommandFormattedText;
+import src.hxyarn.compiler.Stmt.StmtHashtag;
+import src.hxyarn.compiler.Stmt.StmtLineCondition;
+import src.hxyarn.compiler.Stmt.StmtElseClause;
+import src.hxyarn.compiler.Stmt.StmtElseIfClause;
+import src.hxyarn.compiler.Stmt.StmtIfClause;
+import src.hxyarn.compiler.Stmt.StmtDeclare;
+import src.hxyarn.compiler.Stmt.StmtJump;
+import src.hxyarn.compiler.Stmt.StmtShortcutOption;
+import src.hxyarn.compiler.Stmt.StmtShortcutOptionStatement;
+import src.hxyarn.compiler.Stmt.StmtLineFormattedText;
 import src.hxyarn.compiler.Stmt.StmtCall;
-import src.hxyarn.compiler.Stmt.StmtSetVariable;
-import src.hxyarn.compiler.Stmt.StmtSetExpression;
 import src.hxyarn.compiler.Stmt.StmtIf;
 import src.hxyarn.compiler.Stmt.StmtLine;
-import src.hxyarn.compiler.Stmt.StmtCommand;
 import src.hxyarn.compiler.Stmt.StmtBody;
 import src.hxyarn.compiler.Stmt.StmtHeader;
 import src.hxyarn.compiler.Stmt.StmtNode;
@@ -44,7 +58,7 @@ class StmtParser {
 
 	function fileHashtag():StmtFileHashtag {
 		var value = previous();
-		consume(TEXT_COMMANDHASHTAG_NEWLINE, "Expected newline");
+		consume(NEWLINE, "Expected newline");
 		return new StmtFileHashtag(value);
 	}
 
@@ -62,7 +76,7 @@ class StmtParser {
 	function header():StmtHeader {
 		var id = consume(ID, "expected header Id");
 		consume(HEADER_DELIMITER, "expected header delimiter");
-		if (match([HEADER_NEWLINE]))
+		if (match([NEWLINE]))
 			return new StmtHeader(id, previous());
 
 		var value = consume(REST_OF_LINE, "");
@@ -80,80 +94,140 @@ class StmtParser {
 	}
 
 	function statement():Stmt {
-		if (match([TEXT]))
-			return lineStatement();
+		// shortcut
+		if (match([SHORTCUT_ARROW]))
+			return shortcutOptionStatement();
 
-		if (match([COMMAND_START]))
-			return commandStart();
+		// command
+		if (match([COMMAND_START])) {
+			// if
+			if (match([COMMAND_IF]))
+				return ifStatement();
 
-		if (match([OPTION_START]))
-			return optionStart();
+			// set
+			if (match([COMMAND_SET]))
+				return setStatement();
 
-		throw "Unexpected statement";
-	}
+			// call
+			if (match([COMMAND_CALL]))
+				return callStatement();
 
-	function commandStart():Stmt {
-		if (match([COMMAND_IF]))
-			return commandIf();
+			// declare
+			if (match([COMMAND_DECLARE]))
+				return declareStatement();
 
-		if (match([COMMAND_SET]))
-			return commandSet();
+			// jump
+			if (match([COMMAND_JUMP]))
+				return jumpStatement();
 
-		if (match([COMMAND_CALL]))
-			return commandCall();
-
-		if (match([COMMAND_TEXT]))
-			return commandText();
-
-		return throw "";
-	}
-
-	function commandIf():Stmt {
-		var condition = expression();
-
-		consume(EXPRESSION_COMMAND_END, "Expected Expression End");
-
-		var thenBranch = new Array<Stmt>();
-		while (peekForward(1).type != COMMAND_ELSE && peekForward(1).type != COMMAND_ENDIF) {
-			thenBranch.push(statement());
+			if (match([COMMAND_TEXT, COMMAND_EXPRESSION_START]))
+				return commandFormattedText();
 		}
 
-		var elseBranch = new Array<Stmt>();
-		if (match([COMMAND_START]) && match([COMMAND_ELSE])) {
-			consume(COMMAND_END, "Expected >>");
-			while (peek().type != COMMAND_START && peekForward(1).type != COMMAND_ENDIF) {
-				elseBranch.push(statement());
-			}
-			consume(COMMAND_START, "Expected <<");
+		// TODO indent/dedent
+		// line
+		return lineStatement();
+	}
+
+	function shortcutOptionStatement():StmtShortcutOptionStatement {
+		var options = [shortcutOption()];
+		while (match([SHORTCUT_ARROW])) {
+			options.push(shortcutOption());
 		}
 
-		consume(COMMAND_ENDIF, "Expected endif");
+		return new StmtShortcutOptionStatement(options);
+	}
+
+	function shortcutOption():StmtShortcutOption {
+		var line = lineStatement();
+		// TODO indent/dedent
+		return new StmtShortcutOption(line);
+	}
+
+	function ifStatement():StmtIf {
+		var ifClause = ifClauseStatement();
+		var elseIfClauses = new Array<StmtElseIfClause>();
+		var elseClause:StmtElseClause = null;
+		while (match([COMMAND_START])) {
+			if (match([COMMAND_ELSEIF]))
+				elseIfClauses.push(elseIfClauseStatement());
+
+			if (match([COMMAND_ELSE]))
+				elseClause = elseClauseStatement();
+		}
+		consume(COMMAND_ENDIF, "expected end of if statement");
+		consume(COMMAND_END, "expected end of if statement");
+
+		return new StmtIf(ifClause, elseIfClauses, elseClause);
+	}
+
+	function ifClauseStatement():StmtIfClause {
+		var expression = expression();
+		consume(COMMAND_END, "expected end of if clause");
+
+		var statements = new Array<Stmt>();
+		while (peekForward(1).type != COMMAND_ELSEIF && peekForward(1).type != COMMAND_ELSE && peekForward(1).type != COMMAND_ENDIF) {
+			statements.push(statement());
+		}
+
+		return new StmtIfClause(expression, statements);
+	}
+
+	function elseIfClauseStatement():StmtElseIfClause {
+		var expression = expression();
 		consume(COMMAND_END, "Expected >>");
-
-		return new StmtIf(condition, thenBranch, elseBranch);
-	}
-
-	function commandSet():Stmt {
-		var expr:Expr;
-		if (peek().type == VAR_ID) {
-			var varId = consume(VAR_ID, "");
-			consume(OPERATOR_ASSIGNMENT, "");
-			expr = expression();
-			consume(EXPRESSION_COMMAND_END, "");
-
-			return new StmtSetVariable(varId, expr);
+		var statements = new Array<Stmt>();
+		while (peekForward(1).type != COMMAND_ELSEIF && peekForward(1).type != COMMAND_ELSE && peekForward(1).type != COMMAND_ENDIF) {
+			statements.push(statement());
 		}
 
-		expr = expression();
-		consume(EXPRESSION_COMMAND_END, "");
-		return new StmtSetExpression(expr);
+		return new StmtElseIfClause(expression, statements);
 	}
 
-	function commandCall():Stmt {
-		var id = consume(VAR_ID, "Expected Id");
+	function elseClauseStatement():StmtElseClause {
+		consume(COMMAND_END, "Expected >>");
+		var statements = new Array<Stmt>();
+		while (peekForward(1).type != COMMAND_ENDIF) {
+			statements.push(statement());
+		}
+
+		return new StmtElseClause(statements);
+	}
+
+	function variable():ValueVariable {
+		var id = consume(VAR_ID, "expected variable");
+		return new ValueVariable(id, id.lexeme);
+	}
+
+	function setStatement():Stmt {
+		var variable = variable();
+		var op:Token;
+		if (match([
+			OPERATOR_ASSIGNMENT,
+			OPERATOR_MATHS_MULTIPLICATION_EQUALS,
+			OPERATOR_MATHS_DIVISION_EQUALS,
+			OPERATOR_MATHS_MODULUS_EQUALS,
+			OPERATOR_MATHS_ADDITION_EQUALS,
+			OPERATOR_MATHS_SUBTRACTION_EQUALS
+		])) {
+			op = previous();
+		} else {
+			throw "Expected operator";
+		}
+		var expr = expression();
+		consume(COMMAND_END, "expected >>");
+		return new StmtSet(variable, op, expr);
+	}
+
+	function callStatement():StmtCall {
+		return new StmtCall(functionCall());
+	}
+
+	function functionCall():ValueFunctionCall {
+		var id = consume(FUNC_ID, "Expected Id");
 		consume(LPAREN, "expected (");
 		if (match([LPAREN])) {
-			return new StmtCall(id, new Array<Expr>());
+			return new ValueFunctionCall(id, new Array<Expr>());
 		}
 
 		var exprs = new Array<Expr>();
@@ -162,47 +236,94 @@ class StmtParser {
 			exprs.push(expression());
 		}
 		consume(RPAREN, "expected )");
-		consume(EXPRESSION_COMMAND_END, "expected >>");
+		consume(COMMAND_END, "expected >>");
 
-		return new StmtCall(id, exprs);
+		return new ValueFunctionCall(id, exprs);
 	}
 
-	function commandText():Stmt {
+	function jumpStatement():StmtJump {
+		if (match([EXPRESSION_START])) {
+			var expression = expression();
+			consume(EXPRESSION_END, "expected }");
+			consume(COMMAND_END, "expected >>");
+			return new StmtJump(null, expression);
+		}
+
+		var destination = consume(ID, "Expected Id");
+		consume(COMMAND_END, "expected >>");
+		return new StmtJump(destination);
+	}
+
+	function declareStatement():StmtDeclare {
+		var variable = variable();
+		consume(OPERATOR_ASSIGNMENT, "expected =");
+		var value = value();
+		var as:Token = null;
+		if (match([EXPRESSION_AS])) {
+			as = consume(EXPRESSION_AS, "Expected as");
+		}
+
+		return new StmtDeclare(variable, value, as);
+	}
+
+	function commandFormattedText():Stmt {
 		// TODO handle expressions
-		var texts = [previous()];
+		var texts = new Array<Dynamic>();
+		texts.push(previous());
 		while (!match([COMMAND_TEXT_END])) {
 			texts.push(consume(COMMAND_TEXT, "Expected Text"));
 		}
-		return new StmtCommand(texts);
+		return new StmtCommandFormattedText(texts);
 	}
 
-	function optionStart():Stmt {
-		// TODO supporting formating
-		// TODO support hashtags
-		if (match([OPTION_ID])) {
-			var destination = previous();
-			consume(OPTION_END, "Expected ]]");
+	function lineStatement():StmtLine {
+		var lineFormattedText = lineFormatedText();
+		var condition:StmtLineCondition = null;
+		if (match([COMMAND_START]))
+			condition = lineCondition();
 
-			return new StmtOptionJump(destination);
+		var hashTags = new Array<StmtHashtag>();
+		while (match([HASHTAG])) {
+			hashTags.push(hashtag());
 		}
 
-		var text = consume(OPTION_TEXT, "Expected text");
-		consume(OPTION_DELIMIT, "Expected |");
-		var id = consume(OPTION_ID, "Expected Id");
-		consume(OPTION_END, "Expected ]]");
+		consume(NEWLINE, "Expected newline");
 
-		return new StmtOption(text, id);
+		return new StmtLine(lineFormattedText, condition, hashTags);
 	}
 
-	function lineStatement():Stmt {
-		return new StmtLine(previous());
+	function lineFormatedText():StmtLineFormattedText {
+		var text = new Array<Dynamic>();
+		while (peek().type == TEXT || peek().type == EXPRESSION_START) {
+			if (peek().type == TEXT) {
+				text.push(consume(TEXT, "Expected Text"));
+			} else {
+				consume(EXPRESSION_START, "Expected Expression Start");
+				text.push(expression());
+				consume(EXPRESSION_END, "Expected Expression End");
+			}
+		}
+
+		return new StmtLineFormattedText(text);
+	}
+
+	function lineCondition():StmtLineCondition {
+		consume(COMMAND_IF, "Expected if");
+		var expression = expression();
+		consume(COMMAND_END, "Expected >>");
+
+		return new StmtLineCondition(expression);
+	}
+
+	function hashtag():StmtHashtag {
+		return new StmtHashtag(consume(HASHTAG_TEXT, "Expected Hashtag"));
 	}
 
 	function expression():Expr {
 		return assignment();
 	}
 
-	function assignment() {
+	function assignment():Expr {
 		var expr = or();
 
 		if (match([
@@ -217,13 +338,15 @@ class StmtParser {
 			var value = assignment();
 
 			if (Std.isOfType(expr, Expr.ExprValue)) {
+				var variableToken = cast(expr, Expr.ExprValue).value;
+				var variable = new ValueVariable(variableToken.value, variableToken.literal);
 				if (op.type == OPERATOR_MATHS_SUBTRACTION_EQUALS || op.type == OPERATOR_MATHS_ADDITION_EQUALS) {
-					return new Expr.ExprPlusMinusEquals(cast(expr, Expr.ExprValue).value, op, value);
+					return new Expr.ExprPlusMinusEquals(variable, op, value);
 				} else if (op.type != OPERATOR_ASSIGNMENT) {
-					return new Expr.ExprMultDivModEquals(cast(expr, Expr.ExprValue).value, op, value);
+					return new Expr.ExprMultDivModEquals(variable, op, value);
 				}
 
-				return new Expr.ExprAssign(cast(expr, Expr.ExprValue).value, value);
+				return new Expr.ExprAssign(variable, value);
 			}
 
 			throw new Exception("Invalid assignment target.");
@@ -335,50 +458,30 @@ class StmtParser {
 			return new Expr.ExprNegative(right);
 		}
 
-		return call();
+		return value();
 	}
 
-	function call() {
-		var expr = primary();
-
-		while (true) {
-			if (match([TokenType.LPAREN])) {
-				expr = finishCall(expr);
-			} else {
-				break;
-			}
-		}
-
-		return expr;
-	}
-
-	function finishCall(callee:Expr) {
-		var arguments = new Array<Expr>();
-		if (!check(TokenType.RPAREN)) {
-			do {
-				if (arguments.length >= 255)
-					throw new Exception("Can't have more than 255 arguments");
-
-				arguments.push(expression());
-			} while (match([TokenType.COMMA]));
-		}
-
-		var paren = consume(RPAREN, "Expected ')' after the argumetns.");
-
-		return new Expr.ExprFunc(cast(callee, Expr.ExprValue).literal, paren, arguments);
-	}
-
-	function primary():Expr {
+	function value():Expr {
 		if (match([TokenType.KEYWORD_FALSE]))
-			return new Expr.ExprValue(previous(), false);
+			return new Expr.ExprValue(new ValueFalse(previous()));
 
 		if (match([TokenType.KEYWORD_TRUE]))
-			return new Expr.ExprValue(previous(), true);
-		if (match([TokenType.KEYWORD_NULL]))
-			return new Expr.ExprValue(previous(), null);
+			return new Expr.ExprValue(new ValueTrue(previous()));
 
-		if (match([TokenType.NUMBER, TokenType.STRING, TokenType.VAR_ID]))
-			return new Expr.ExprValue(previous(), previous().lexeme);
+		if (match([TokenType.KEYWORD_NULL]))
+			return new Expr.ExprValue(new ValueNull(previous()));
+
+		if (match([TokenType.NUMBER]))
+			return new Expr.ExprValue(new ValueNumber(previous(), previous().lexeme));
+
+		if (match([TokenType.STRING]))
+			return new Expr.ExprValue(new ValueString(previous(), previous().lexeme));
+
+		if (peek().type == TokenType.VAR_ID)
+			return new Expr.ExprValue(variable());
+
+		if (peek().type == TokenType.FUNC_ID)
+			return new Expr.ExprValue(functionCall());
 
 		if (match([LPAREN])) {
 			var expr = expression();

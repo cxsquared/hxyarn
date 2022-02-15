@@ -1,5 +1,7 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.compiler.Value.ValueVariable;
+import src.hxyarn.compiler.Value.ValueFunctionCall;
 import haxe.Exception;
 
 interface StmtVisitor {
@@ -9,16 +11,22 @@ interface StmtVisitor {
 	function visitHeader(stmt:StmtHeader):Dynamic;
 	function visitBody(stmt:StmtBody):Dynamic;
 	function visitLine(stmt:StmtLine):Dynamic;
+	function visitLineFormattedText(stmt:StmtLineFormattedText):Dynamic;
+	function visitHashTag(stmt:StmtHashtag):Dynamic;
+	function visitLineCondition(stmt:StmtLineCondition):Dynamic;
+	function visitExpression(stmt:StmtExpression):Dynamic;
 	function visitIf(stmt:StmtIf):Dynamic;
-	function visitSetExpression(stmt:StmtSetExpression):Dynamic;
-	function visitSetVariable(stmt:StmtSetVariable):Dynamic;
-	function visitOption(stmt:StmtOption):Dynamic;
-	function visitOptionJump(stmt:StmtOptionJump):Dynamic;
-	function visitShortcut(stmt:StmtShortcut):Dynamic;
+	function visitIfClause(stmt:StmtIfClause):Dynamic;
+	function visitElseIfClause(stmt:StmtElseIfClause):Dynamic;
+	function visitElseClause(stmt:StmtElseClause):Dynamic;
+	function visitSet(stmt:StmtSet):Dynamic;
 	function visitCall(stmt:StmtCall):Dynamic;
 	function visitCommand(stmt:StmtCommand):Dynamic;
-	function visitIndent(stmt:StmtIndent):Dynamic;
-	function visitExpression(stmt:StmtExpression):Dynamic;
+	function visitCommandFormattedText(stmt:StmtCommandFormattedText):Dynamic;
+	function visitShortcutOptionStatement(stmt:StmtShortcutOptionStatement):Dynamic;
+	function visitShortcutOption(stmt:StmtShortcutOption):Dynamic;
+	function visitDeclare(stmt:StmtDeclare):Dynamic;
+	function visitJump(stmt:StmtJump):Dynamic;
 }
 
 class Stmt {
@@ -43,6 +51,9 @@ class StmtDialogue extends Stmt {
 
 class StmtFileHashtag extends Stmt {
 	public function new(text:Token) {
+		if (text.type != HASHTAG_TEXT)
+			throw "Expected hashtag text";
+
 		this.text = text;
 	}
 
@@ -68,8 +79,15 @@ class StmtNode extends Stmt {
 }
 
 class StmtHeader extends Stmt {
-	public function new(id:Token, value:Token) {
+	public function new(id:Token, ?value:Token) {
+		if (id.type != ID)
+			throw "Expected id";
+
 		this.id = id;
+
+		if (value != null && value.type != REST_OF_LINE)
+			throw "Expected REST_OF_LINE";
+
 		this.value = value;
 	}
 
@@ -94,126 +112,79 @@ class StmtBody extends Stmt {
 }
 
 class StmtLine extends Stmt {
-	public function new(text:Token) {
-		this.text = text;
+	public function new(formattedText:StmtLineFormattedText, ?condition:StmtLineCondition, ?hashtags:Array<StmtHashtag>) {
+		this.formattedText = formattedText;
+		this.condition = condition;
+		this.hashtags = hashtags;
 	}
 
 	override public function accept(visitor:StmtVisitor) {
 		return visitor.visitLine(this);
 	}
 
-	public var text(default, null):Token;
+	public var formattedText(default, null):StmtLineFormattedText;
+	public var condition(default, null):StmtLineCondition;
+	public var hashtags(default, null):Array<StmtHashtag>;
 }
 
-class StmtIf extends Stmt {
-	public function new(condition:Expr, thenBranch:Array<Stmt>, elseBranch:Array<Stmt>) {
-		this.condition = condition;
-		this.thenBranch = thenBranch;
-		this.elseBranch = elseBranch;
+class StmtLineFormattedText extends Stmt {
+	public function new(children:Array<Dynamic>) {
+		if (children.length < 1)
+			throw "Expected at least one text or expression";
+
+		var nonValidChildren = children.filter(function(child:Dynamic):Bool {
+			if (Std.isOfType(child, Token)) {
+				return cast(child, Token).type != TEXT;
+			}
+			return Std.isOfType(child, Expr);
+		});
+
+		if (nonValidChildren.length > 0)
+			throw "Expected only text or expression";
+
+		this.children = children;
+	}
+
+	public function expressions():Array<Expr> {
+		return this.children.filter(function(child:Dynamic):Bool {
+			return Std.isOfType(child, Expr);
+		}).map(function(child:Dynamic):Expr {
+			return cast(child, Expr);
+		});
 	}
 
 	override public function accept(visitor:StmtVisitor) {
-		return visitor.visitIf(this);
+		return visitor.visitLineFormattedText(this);
 	}
 
-	public var condition(default, null):Expr;
-	public var thenBranch(default, null):Array<Stmt>;
-	public var elseBranch(default, null):Array<Stmt>;
+	public var children(default, null):Array<Dynamic>;
 }
 
-class StmtSetExpression extends Stmt {
+class StmtHashtag extends Stmt {
+	public function new(text:Token) {
+		if (text.type != HASHTAG_TEXT)
+			throw "Expected hashtag text";
+
+		this.text = text;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitHashTag(this);
+	}
+
+	public var text(default, null):Token;
+}
+
+class StmtLineCondition extends Stmt {
 	public function new(expression:Expr) {
 		this.expression = expression;
 	}
 
 	override public function accept(visitor:StmtVisitor) {
-		return visitor.visitSetExpression(this);
+		return visitor.visitLineCondition(this);
 	}
 
 	public var expression(default, null):Expr;
-}
-
-class StmtSetVariable extends Stmt {
-	public function new(varId:Token, expression:Expr) {
-		this.var_id = varId;
-		this.expression = expression;
-	}
-
-	override public function accept(visitor:StmtVisitor) {
-		return visitor.visitSetVariable(this);
-	}
-
-	public var var_id(default, null):Token;
-	public var expression(default, null):Expr;
-}
-
-class StmtOption extends Stmt {
-	public function new(text:Token, nodeId:Token) {
-		this.text = text;
-		this.node_id = nodeId;
-	}
-
-	override public function accept(visitor:StmtVisitor) {
-		return visitor.visitOption(this);
-	}
-
-	public var text(default, null):Token;
-	public var node_id(default, null):Token;
-}
-
-class StmtOptionJump extends Stmt {
-	public function new(nodeId:Token) {
-		this.node_id = nodeId;
-	}
-
-	override public function accept(visitor:StmtVisitor) {
-		return visitor.visitOptionJump(this);
-	}
-
-	public var node_id(default, null):Token;
-}
-
-class StmtShortcut extends Stmt {
-	public function new() {}
-
-	override public function accept(visitor:StmtVisitor) {
-		return visitor.visitShortcut(this);
-	}
-}
-
-class StmtCall extends Stmt {
-	public function new(id:Token, expressions:Array<Expr>) {
-		this.id = id;
-		this.epxressions = expressions;
-	}
-
-	override public function accept(visitor:StmtVisitor) {
-		return visitor.visitCall(this);
-	}
-
-	public var id(default, null):Token;
-	public var epxressions(default, null):Array<Expr>;
-}
-
-class StmtCommand extends Stmt {
-	// TODO support expressions in here
-	public function new(texts:Array<Token>) {
-		this.texts = texts;
-	}
-
-	override public function accept(visitor:StmtVisitor) {
-		return visitor.visitCommand(this);
-	}
-
-	public var texts(default, null):Array<Token>;
-}
-
-class StmtIndent extends Stmt {
-	public function new() {}
-
-	override public function accept(visitor:StmtVisitor) {
-		return visitor.visitIndent(this);
-	}
 }
 
 class StmtExpression extends Stmt {
@@ -225,5 +196,196 @@ class StmtExpression extends Stmt {
 		return visitor.visitExpression(this);
 	}
 
+	public var expression(default, null):Expr;
+}
+
+class StmtIf extends Stmt {
+	public function new(ifClause:StmtIfClause, ?elseIfClauses:Array<StmtElseIfClause>, ?elseClause:StmtElseClause) {
+		this.ifClause = ifClause;
+		this.elseIfClauses = elseIfClauses;
+		this.elseClause = elseClause;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitIf(this);
+	}
+
+	public var ifClause(default, null):StmtIfClause;
+	public var elseIfClauses(default, null):Array<StmtElseIfClause>;
+	public var elseClause(default, null):StmtElseClause;
+}
+
+class StmtIfClause extends Stmt {
+	public function new(expression:Expr, statements:Array<Stmt>) {
+		this.expression = expression;
+		this.statements = statements;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitIfClause(this);
+	}
+
+	public var expression(default, null):Expr;
+	public var statements(default, null):Array<Stmt>;
+}
+
+class StmtElseIfClause extends Stmt {
+	public function new(expression:Expr, statements:Array<Stmt>) {
+		this.expression = expression;
+		this.statements = statements;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitElseIfClause(this);
+	}
+
+	public var expression(default, null):Expr;
+	public var statements(default, null):Array<Stmt>;
+}
+
+class StmtElseClause extends Stmt {
+	public function new(statements:Array<Stmt>) {
+		this.statements = statements;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitElseClause(this);
+	}
+
+	public var statements(default, null):Array<Stmt>;
+}
+
+class StmtSet extends Stmt {
+	public function new(variable:ValueVariable, op:Token, expression:Expr) {
+		this.variable = variable;
+		this.op = op;
+		this.expression = expression;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitSet(this);
+	}
+
+	public var variable(default, null):ValueVariable;
+	public var op(default, null):Token;
+	public var expression(default, null):Expr;
+}
+
+class StmtCall extends Stmt {
+	public function new(functionCall:ValueFunctionCall) {
+		this.functionCall = functionCall;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitCall(this);
+	}
+
+	public var functionCall(default, null):ValueFunctionCall;
+}
+
+class StmtCommand extends Stmt {
+	public function new(texts:Array<StmtCommandFormattedText>, ?hashtags:Array<StmtHashtag>) {
+		this.texts = texts;
+		this.hashtags = hashtags;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitCommand(this);
+	}
+
+	public var texts(default, null):Array<StmtCommandFormattedText>;
+	public var hashtags(default, null):Array<StmtHashtag>;
+}
+
+class StmtCommandFormattedText extends Stmt {
+	public function new(children:Array<Dynamic>) {
+		if (children.length < 1)
+			throw "Expected at least one text or expression";
+
+		var nonValidChildren = children.filter(function(child:Dynamic):Bool {
+			if (Std.isOfType(child, Token)) {
+				return cast(child.type, Token).type != TEXT;
+			}
+			return Std.isOfType(child, Expr);
+		});
+
+		if (nonValidChildren.length > 0)
+			throw "Expected only text or expression";
+
+		this.children = children;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitCommandFormattedText(this);
+	}
+
+	public var children(default, null):Array<Dynamic>;
+}
+
+class StmtShortcutOptionStatement extends Stmt {
+	public function new(options:Array<StmtShortcutOption>) {
+		if (options.length < 1)
+			throw "Expected at least one option";
+
+		this.options = options;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitShortcutOptionStatement(this);
+	}
+
+	public var options(default, null):Array<StmtShortcutOption>;
+}
+
+class StmtShortcutOption extends Stmt {
+	public function new(lineStatement:StmtLine, ?statement:Stmt) {
+		this.lineStatement = lineStatement;
+		this.statement = statement;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitShortcutOption(this);
+	}
+
+	public var lineStatement(default, null):StmtLine;
+	public var statement(default, null):Stmt;
+}
+
+class StmtDeclare extends Stmt {
+	public function new(variable:ValueVariable, value:Expr, ?as:Token) {
+		this.variable = variable;
+		this.value = value;
+		this.as = as;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitDeclare(this);
+	}
+
+	public var variable(default, null):ValueVariable;
+	public var value(default, null):Expr;
+	public var as(default, null):Token;
+}
+
+class StmtJump extends Stmt {
+	public function new(?destination:Token, ?expression:Expr) {
+		if (destination == null && expression == null)
+			throw "Expected destination or expression";
+
+		if (destination != null && expression == null)
+			throw "Expected destination or expression";
+
+		if (destination == null && expression != null)
+			throw "Expected destination or expression";
+
+		this.destination = destination;
+		this.expression = expression;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitJump(this);
+	}
+
+	public var destination(default, null):Token;
 	public var expression(default, null):Expr;
 }

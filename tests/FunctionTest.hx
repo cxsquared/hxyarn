@@ -1,6 +1,6 @@
 package tests;
 
-import src.hxyarn.Value;
+import src.hxyarn.program.Value;
 import tests.TestBase;
 
 class FunctionTest extends TestBase {

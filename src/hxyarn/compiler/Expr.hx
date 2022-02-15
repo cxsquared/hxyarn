@@ -1,5 +1,7 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.program.types.IType;
+import src.hxyarn.compiler.Value.ValueVariable;
 import haxe.Exception;
 
 interface ExprVisitor {
@@ -15,32 +17,50 @@ interface ExprVisitor {
 	function visitExprPlusMinusEquals(expr:ExprPlusMinusEquals):Dynamic;
 	function visitExprAndOrXor(expr:ExprAndOrXor):Dynamic;
 	function visitExprValue(expr:ExprValue):Dynamic;
-	function visitExprFunc(expr:ExprFunc):Dynamic;
 }
 
 class Expr {
 	public function accept(visitor:ExprVisitor):Dynamic {
 		throw new Exception("This should be overriden");
 	};
+
+	public var children:Array<Dynamic>;
+	public var type:IType;
+
+	public function getChild<T>(c:Class<T>):T {
+		if (children == null || children.length == 0)
+			return null;
+
+		for (child in children) {
+			if (Std.isOfType(child, c))
+				return child;
+		}
+
+		return null;
+	}
 }
 
 class ExprAssign extends Expr {
-	public function new(name:Token, value:Expr) {
-		this.name = name;
+	public function new(variable:ValueVariable, value:Expr) {
+		this.variable = variable;
 		this.value = value;
+
+		children = [variable, value];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
 		return visitor.visitExprAssign(this);
 	}
 
-	public var name:Token;
+	public var variable:ValueVariable;
 	public var value:Expr;
 }
 
 class ExprParens extends Expr {
 	public function new(expression:Expr) {
 		this.expression = expression;
+
+		children = [expression];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
@@ -53,6 +73,8 @@ class ExprParens extends Expr {
 class ExprNegative extends Expr {
 	public function new(expression:Expr) {
 		this.expression = expression;
+
+		children = [expression];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
@@ -65,6 +87,8 @@ class ExprNegative extends Expr {
 class ExprNot extends Expr {
 	public function new(expression:Expr) {
 		this.expression = expression;
+
+		children = [expression];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
@@ -79,6 +103,8 @@ class ExprMultDivMod extends Expr {
 		this.right = right;
 		this.op = op;
 		this.left = left;
+
+		children = [left, right, op];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
@@ -95,6 +121,8 @@ class ExprAddSub extends Expr {
 		this.right = right;
 		this.op = op;
 		this.left = left;
+
+		children = [left, right, op];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
@@ -111,6 +139,8 @@ class ExprComparision extends Expr {
 		this.right = right;
 		this.op = op;
 		this.left = left;
+
+		children = [left, right, op];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
@@ -127,6 +157,8 @@ class ExprEquality extends Expr {
 		this.right = right;
 		this.op = op;
 		this.left = left;
+
+		children = [left, right, op];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
@@ -139,33 +171,37 @@ class ExprEquality extends Expr {
 }
 
 class ExprMultDivModEquals extends Expr {
-	public function new(variableName:Token, op:Token, left:Expr) {
-		this.variableName = variableName;
+	public function new(variable:ValueVariable, op:Token, left:Expr) {
+		this.variable = variable;
 		this.op = op;
 		this.left = left;
+
+		children = [variable, left, op];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
 		return visitor.visitExprMultDivModEquals(this);
 	}
 
-	public var variableName:Token;
+	public var variable:ValueVariable;
 	public var op:Token;
 	public var left:Expr;
 }
 
 class ExprPlusMinusEquals extends Expr {
-	public function new(variableName:Token, op:Token, left:Expr) {
-		this.variableName = variableName;
+	public function new(variable:ValueVariable, op:Token, left:Expr) {
+		this.variable = variable;
 		this.op = op;
 		this.left = left;
+
+		children = [variable, left, op];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
 		return visitor.visitExprPlusMinusEquals(this);
 	}
 
-	public var variableName:Token;
+	public var variable:ValueVariable;
 	public var op:Token;
 	public var left:Expr;
 }
@@ -175,6 +211,8 @@ class ExprAndOrXor extends Expr {
 		this.right = right;
 		this.op = op;
 		this.left = left;
+
+		children = [left, right, op];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
@@ -187,31 +225,16 @@ class ExprAndOrXor extends Expr {
 }
 
 class ExprValue extends Expr {
-	public function new(value:Token, literal:Dynamic) {
+	public function new(value:Value) {
 		this.value = value;
-		this.literal = literal;
+
+		children = [value];
 	}
 
 	override public function accept(visitor:ExprVisitor) {
 		return visitor.visitExprValue(this);
 	}
 
-	public var value:Token;
+	public var value:Value;
 	public var literal:Dynamic;
-}
-
-class ExprFunc extends Expr {
-	public function new(callee:String, paren:Token, arguments:Array<Expr>) {
-		this.callee = callee;
-		this.paren = paren;
-		this.arguments = arguments;
-	}
-
-	override public function accept(visitor:ExprVisitor) {
-		return visitor.visitExprFunc(this);
-	}
-
-	public var callee:String;
-	public var paren:Token;
-	public var arguments:Array<Expr>;
 }

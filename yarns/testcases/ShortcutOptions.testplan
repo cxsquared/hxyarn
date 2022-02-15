@@ -1,40 +1,48 @@
-Option: Option 1
-Option: Option 3
-Select: 1
-Line: This line should appear.
-Option: Sub Option 1
-Option: Sub Option 2
-Select: 1
-Line: This line should also appear.
+option: Option 1
+option: Option 2 [disabled]
+option: Option 3
+select: 1
+line: This line should appear.
+option: Sub Option 1
+option: Sub Option 2
+option: Sub Option 3 [disabled]
+select: 1
+line: This line should also appear.
 
-Line: Bea: line text
-Option: option1
-Option: option2
-Select: 1
-Line: Bea: line text2
+line: Bea: line text
+option: option1
+option: option2
+select: 1
+line: Bea: line text2
 
-Line: Bea: indented line text
-Option: indented option1
-Option: indented option2
-Select: 1
-Line: Bea: indented line text2
+line: Bea: indented line text
+option: indented option1
+option: indented option2
+select: 1
+line: Bea: indented line text2
 
-Line: Bea: line text
-Option: indented option1 following unindented line
-Option: indented option2 following unindented line
-Select: 1
+line: Bea: line text
+option: indented option1 following unindented line
+option: indented option2 following unindented line
+select: 1
 
-Option: Option A
-Option: Option B
-Select: 1
+option: A
+select: 1
+line: B
 
-Line: (Break up the commands)
+line: (Break up the options)
 
-Option: Option A
-Option: Option B
-Select: 1
+option: Option A
+option: Option B
+select: 1
 
-Line: (Break up the commands)
+line: (Break up the options)
 
-Option: Option1
-Select: 1
+option: Option A
+option: Option B
+select: 1
+
+line: (Break up the options)
+
+option: Option1
+select: 1

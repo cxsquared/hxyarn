@@ -1,6 +1,8 @@
 package src.hxyarn.compiler;
 
-import src.hxyarn.compiler.ExpressionVisitor.ExpresionVisitor;
+import haxe.rtti.CType.Typedef;
+import src.hxyarn.program.types.BuiltInTypes;
+import src.hxyarn.compiler.Stmt.StmtDialogue;
 import haxe.Exception;
 import src.hxyarn.program.Operand;
 import src.hxyarn.program.Instruction;
@@ -77,6 +79,14 @@ class Compiler {
 		var tokens = Scanner.scan(yarn);
 		var dialogue = new StmtParser(tokens).parse();
 
+		var stringTableManager = new StringTableManager();
+
+		var derivedVariableDeclarations = new Array<Declaration>();
+		var knownVariableDeclarations = new Array<Declaration>();
+		var typeDelaractions = BuiltInTypes.all;
+
+		registerStrings(fileName, stringTableManager, dialogue);
+
 		for (node in dialogue.nodes) {
 			currentNode = new Node();
 			for (header in node.headers) {
@@ -89,8 +99,11 @@ class Compiler {
 				}
 			}
 			currentNode.labels.set(registerLabel(), currentNode.instructions.length);
-			var visitor = new BodyVisitor(this);
-			visitor.resolve(node.body);
+			// TODO Declaration Visitor
+			var checker = new TypeCheckVisitor(fileName, knownVariableDeclarations, typeDelaractions);
+			checker.visitNode(node);
+			var visitor = new CodeGenerationVisitor(this);
+			visitor.visitNode(node);
 			var hasRemainingOptions = false;
 			for (instruction in currentNode.instructions) {
 				if (instruction.opcode == OpCode.ADD_OPTIONS)
@@ -109,6 +122,11 @@ class Compiler {
 
 			program.nodes.set(currentNode.name, currentNode);
 		}
+	}
+
+	function registerStrings(fileName:String, stringTableManager:StringTableManager, dialogue:StmtDialogue) {
+		var visitor = new StringTableGeneratorVisitor(fileName, stringTableManager, this);
+		visitor.visitDialogue(dialogue);
 	}
 
 	function compileJson(json:Array<Dynamic>) {
@@ -227,7 +245,9 @@ class Compiler {
 			formattedText.composedString = StringTools.replace(formattedText.composedString, '#$hashtagText', '');
 		}
 
-		var stringId = registerString(StringTools.trim(formattedText.composedString), getLineId(hashtagText), lineNumber, [hashtagText]);
+		var lineId = ""; // getLineId(hashtagText);
+
+		var stringId = registerString(StringTools.trim(formattedText.composedString), lineId, lineNumber, [hashtagText]);
 
 		emit(OpCode.RUN_LINE, [Operand.fromString(stringId), Operand.fromFloat(formattedText.expressionCount)]);
 	}
@@ -243,7 +263,7 @@ class Compiler {
 		var destination = matchedRegex.matched(2);
 		var label = formattedText.composedString;
 
-		var lineId = getLineId(matchedRegex.matched(4));
+		var lineId = ""; // getLineId(matchedRegex.matched(4));
 		var hashtagText = matchedRegex.matched(4);
 
 		var stringId = registerString(label, lineId, lineNumber, [hashtagText]);
@@ -327,10 +347,10 @@ class Compiler {
 	}
 
 	function visitExpression(expression:String) {
-		var exprs = new ExpressionParser(Scanner.scan(expression)).parse();
-		var visitor = new ExpresionVisitor(this);
+		// var exprs = new ExpressionParser(Scanner.scan(expression)).parse();
+		// var visitor = new ExpresionVisitor(this);
 
-		visitor.resolve(exprs);
+		// visitor.resolve(exprs);
 	}
 
 	public function emit(opCode:OpCode, operands:Array<Operand>) {
@@ -384,14 +404,20 @@ class Compiler {
 		};
 	}
 
-	public function getLineId(hashtagText:String):String {
-		if (hashtagText == null || hashtagText.length <= 0)
+	public function getLineIdTag(hashtags:Array<String>):String {
+		if (hashtags == null)
 			return null;
 
-		if (StringTools.startsWith(hashtagText, "line:"))
-			return hashtagText;
+		for (hashtag in hashtags) {
+			if (StringTools.startsWith(hashtag, "line:"))
+				return hashtag;
+		}
 
 		return null;
+	}
+
+	public function getLineIdForNode(name:String) {
+		return "line:" + name;
 	}
 
 	public function registerString(text:String, lineId:String, lineNumber:Int, tags:Array<String>) {

@@ -1,7 +1,4 @@
 title: Start
-tags: 
-colorID: 0
-position: -64,-64
 ---
 <<if true>>
     Player: Hey, Sally. #line:794945

@@ -7,7 +7,7 @@ whoa what here's some text
     this should appear :)
     <<if 1 is 1>>
         NESTED IF BLOCK WHAAAT
-        <<set $foo = $foo + 47 + 6>>
+        <<set $foo += 47 + 6>>
     <<endif>>
 <<else>>
     oh noooo it didn't work :(

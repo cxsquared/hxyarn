@@ -9,7 +9,7 @@ Only supports .json yarn files.
 ## TODO
 
 - Shortcut option support
-- Formated lines
+- Formatted lines
 - More Tests
-- Stop using regex for laguage parsing ¯\\_(ツ)_/¯
-- Probably a lot more but I haven't actaully started using this in a project
+- Stop using regex for language parsing ¯\\_(ツ)_/¯
+- Probably a lot more but I haven't actually started using this in a project

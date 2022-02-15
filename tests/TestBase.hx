@@ -3,7 +3,7 @@ package tests;
 import src.hxyarn.compiler.Compiler;
 import haxe.Exception;
 import tests.TestPlan;
-import src.hxyarn.Value;
+import src.hxyarn.program.Value;
 import src.hxyarn.compiler.StringInfo;
 import src.hxyarn.dialogue.Command;
 import src.hxyarn.dialogue.OptionSet;
