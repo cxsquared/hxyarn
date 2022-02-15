@@ -27,4 +27,8 @@ class FunctionType implements IType {
 	public var returnType:IType;
 
 	public function new() {}
+
+	public function defaultMethods():MethodCollection {
+		return [];
+	}
 }

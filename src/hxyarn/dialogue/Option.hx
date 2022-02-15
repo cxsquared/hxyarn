@@ -3,10 +3,11 @@ package src.hxyarn.dialogue;
 import src.hxyarn.dialogue.Line;
 
 class Option {
-	public function new(line:Line, id:Int, destinationNode:String) {
+	public function new(line:Line, id:Int, destinationNode:String, enabled:Bool) {
 		this.line = line;
 		this.id = id;
 		this.destinationNode = destinationNode;
+		this.enabled = enabled;
 	}
 
 	public var line(default, set):Line;
@@ -26,4 +27,6 @@ class Option {
 	function set_destinationNode(newDestinationNode) {
 		return destinationNode = newDestinationNode;
 	}
+
+	public var enabled:Bool;
 }

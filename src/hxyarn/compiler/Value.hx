@@ -1,5 +1,7 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.program.types.BuiltInTypes;
+import src.hxyarn.program.types.IType;
 import haxe.Exception;
 
 interface ValueVisitor {
@@ -19,12 +21,14 @@ class Value {
 
 	public var value(default, null):Token;
 	public var literal(default, null):Dynamic;
+	public var type:IType;
 }
 
 class ValueNumber extends Value {
 	public function new(value:Token, literal:Dynamic) {
 		this.value = value;
 		this.literal = literal;
+		type = BuiltInTypes.number;
 	}
 
 	override public function accept(visitor:ValueVisitor):Dynamic {
@@ -36,6 +40,7 @@ class ValueTrue extends Value {
 	public function new(value:Token) {
 		this.value = value;
 		this.literal = true;
+		type = BuiltInTypes.boolean;
 	}
 
 	override public function accept(visitor:ValueVisitor):Dynamic {
@@ -47,6 +52,7 @@ class ValueFalse extends Value {
 	public function new(value:Token) {
 		this.value = value;
 		this.literal = false;
+		type = BuiltInTypes.boolean;
 	}
 
 	override public function accept(visitor:ValueVisitor):Dynamic {
@@ -61,6 +67,7 @@ class ValueVariable extends Value {
 
 		this.varId = varId;
 		this.literal = literal;
+		type = BuiltInTypes.any;
 	}
 
 	override public function accept(visitor:ValueVisitor):Dynamic {
@@ -74,6 +81,7 @@ class ValueString extends Value {
 	public function new(value:Token, literal:Dynamic) {
 		this.value = value;
 		this.literal = literal;
+		type = BuiltInTypes.string;
 	}
 
 	override public function accept(visitor:ValueVisitor):Dynamic {
@@ -85,6 +93,7 @@ class ValueNull extends Value {
 	public function new(value:Token) {
 		this.value = value;
 		this.literal = null;
+		type = BuiltInTypes.undefined;
 	}
 
 	override public function accept(visitor:ValueVisitor):Dynamic {
@@ -99,6 +108,7 @@ class ValueFunctionCall extends Value {
 
 		this.functionId = functionId;
 		this.expressions = expressions;
+		type = BuiltInTypes.any;
 	}
 
 	override public function accept(visitor:ValueVisitor):Dynamic {

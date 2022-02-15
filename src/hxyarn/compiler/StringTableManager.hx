@@ -1,7 +1,7 @@
 package src.hxyarn.compiler;
 
 class StringTableManager {
-	var stringTable = new Map<String, StringInfo>();
+	public var stringTable = new Map<String, StringInfo>();
 
 	public function new() {}
 

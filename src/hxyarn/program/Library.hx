@@ -1,9 +1,11 @@
 package src.hxyarn.program;
 
+import src.hxyarn.program.types.TypeUtils;
+import src.hxyarn.program.types.IType;
+import src.hxyarn.program.types.BuiltInTypes;
 import haxe.Exception;
 
-typedef ReturingFunction = Array<Value>->Dynamic;
-typedef Function = Array<Value>->Void;
+typedef ValueFunction = Array<Value>->Dynamic;
 
 class Library {
 	var functions = new Map<String, FunctionInfo>();
@@ -28,13 +30,8 @@ class Library {
 		functions.set(func.name, func);
 	}
 
-	public function registerFunction(name:String, parameterCount:Int, implementation:Function) {
-		var info = new FunctionInfo(name, parameterCount).forFunction(implementation);
-		registerFunctionInfo(info);
-	}
-
-	public function registerReturningFunction(name:String, parameterCount:Int, implementation:ReturingFunction) {
-		var info = new FunctionInfo(name, parameterCount).forReturningFunction(implementation);
+	public function registerFunction(name:String, parameterCount:Int, implementation:ValueFunction, ?returnType:IType = null) {
+		var info = new FunctionInfo(name, parameterCount, implementation, returnType);
 		registerFunctionInfo(info);
 	}
 
@@ -46,43 +43,41 @@ class Library {
 		if (functions.exists(name))
 			functions.remove(name);
 	}
+
+	public function registerMethods(type:IType) {
+		var methods = type.defaultMethods();
+
+		if (methods == null)
+			return;
+
+		for (methodName => methodInfo in methods) {
+			var methodName = methodName;
+
+			var canonicalName = TypeUtils.getCanonicalNameforMethod(type, methodName);
+
+			this.registerFunction(canonicalName, methodInfo.numberOfArgs, methodInfo.func, methodInfo.returnType);
+		}
+	}
 }
 
 class FunctionInfo {
-	public function new(name:String, paramCount:Int) {
+	public var name:String;
+
+	var func:ValueFunction;
+
+	public var paramCount:Int;
+
+	var returnType:IType;
+
+	public function new(name:String, paramCount:Int, func:ValueFunction, ?returnType:IType = null) {
 		this.name = name;
+		this.func = func;
 		this.paramCount = paramCount;
+		this.returnType = returnType;
 	}
-
-	public function forFunction(f:Function):FunctionInfo {
-		this.noreturnFunction = f;
-		this.returningFuncation = null;
-		return this;
-	}
-
-	public function forReturningFunction(f:ReturingFunction):FunctionInfo {
-		this.noreturnFunction = null;
-		this.returningFuncation = f;
-		return this;
-	}
-
-	public var name(default, set):String;
-
-	function set_name(newName) {
-		return name = newName;
-	}
-
-	public var paramCount(default, set):Int;
-
-	function set_paramCount(newParamCount) {
-		return paramCount = newParamCount;
-	}
-
-	var noreturnFunction:Function;
-	var returningFuncation:ReturingFunction;
 
 	public function returnsValue():Bool {
-		return returningFuncation != null;
+		return returnType != null;
 	}
 
 	public function invoke(parameters:Array<Value>):Value {
@@ -94,9 +89,9 @@ class FunctionInfo {
 
 		if (paramCount == numberOfParameters || paramCount == -1) {
 			if (returnsValue()) {
-				return new Value(returningFuncation(parameters));
+				return new Value(func(parameters), this.returnType); // TODO fix return type
 			} else {
-				noreturnFunction(parameters);
+				func(parameters);
 				return Value.NULL;
 			}
 		} else {

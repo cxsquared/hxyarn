@@ -12,11 +12,11 @@ import src.hxyarn.dialogue.OptionSet;
 import src.hxyarn.program.Program;
 
 typedef Logger = String->Void;
-typedef LineHandler = Line->HandlerExecutionType;
-typedef OptionsHandler = OptionSet->HandlerExecutionType;
-typedef CommandHandler = Command->HandlerExecutionType;
-typedef NodeCompleteHandler = String->HandlerExecutionType;
-typedef NodeStartHanlder = String->HandlerExecutionType;
+typedef LineHandler = Line->Void;
+typedef OptionsHandler = OptionSet->Void;
+typedef CommandHandler = Command->Void;
+typedef NodeCompleteHandler = String->Void;
+typedef NodeStartHanlder = String->Void;
 typedef DialogueCompleteHandler = Void->Void;
 
 enum HandlerExecutionType {

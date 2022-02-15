@@ -11,8 +11,10 @@ class TestPlan {
 	public var nextExpectedOptions = new Array<String>();
 	public var nextOptionToSelect = -1;
 	public var nextExpectedValue:String = null;
+	public var path:String;
 
 	public function new(path:String) {
+		this.path = path;
 		var source = File.getContent(path);
 
 		for (line in source.split('\n')) {

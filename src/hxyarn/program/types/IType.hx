@@ -1,12 +1,19 @@
 package src.hxyarn.program.types;
 
-import haxe.Constraints.Function;
+import src.hxyarn.program.Library.ValueFunction;
 
-typedef MethodCollection = Map<String, Function>;
+typedef Method = {
+	func:ValueFunction,
+	numberOfArgs:Int,
+	returnType:IType
+};
+
+typedef MethodCollection = Map<String, Method>;
 
 interface IType {
 	public var name:String;
 	public var parent:IType;
 	public var description(get, null):String;
 	public var methods:MethodCollection;
+	public function defaultMethods():MethodCollection;
 }

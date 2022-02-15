@@ -1,5 +1,14 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.compiler.Value.ValueString;
+import src.hxyarn.compiler.Value.ValueFalse;
+import src.hxyarn.compiler.Value.ValueTrue;
+import src.hxyarn.compiler.Value.ValueNumber;
+import src.hxyarn.compiler.Value.ValueNull;
+import sys.ssl.Context;
+import haxe.display.Display.EnumFieldOrigin;
+import src.hxyarn.compiler.Value.ValueFunctionCall;
+import src.hxyarn.dialogue.Command;
 import src.hxyarn.program.types.TypeUtils;
 import src.hxyarn.program.types.IType;
 import src.hxyarn.program.Operator;
@@ -82,6 +91,223 @@ class CodeGenerationVisitor extends BaseVisitor {
 
 	public override function visitCall(stmt:StmtCall):Dynamic {
 		stmt.functionCall.accept(this);
+
+		return 0;
+	}
+
+	public override function visitCommand(stmt:StmtCommand):Dynamic {
+		var expressionCount = 0;
+		var sb = new StringBuf();
+
+		for (node in stmt.formattedText.children) {
+			if (Std.isOfType(node, Token)) {
+				sb.add(cast(node, Token).lexeme);
+			} else if (Std.isOfType(node, Expr)) {
+				var expression = cast(node, Expr);
+				expression.accept(this);
+				// TODO check if this includes the {} correctly
+				sb.add(expressionCount);
+				expressionCount++;
+			}
+		}
+
+		var composedString = sb.toString();
+
+		switch (composedString) {
+			case "stop":
+				compiler.emit(OpCode.STOP, []);
+			case _:
+				compiler.emit(OpCode.RUN_COMMAND, [Operand.fromString(composedString), Operand.fromFloat(expressionCount)]);
+		}
+
+		return 0;
+	}
+
+	public override function visitFunctionCall(stmt:ValueFunctionCall):Dynamic {
+		var name = stmt.functionId.lexeme;
+		handleFunction(name, stmt.expressions);
+
+		return 0;
+	}
+
+	public override function visitIf(stmt:StmtIf):Dynamic {
+		// TODO: AddErrorNode?
+		var endOfIfStatementLabel = compiler.registerLabel("endif");
+
+		var ifClause = stmt.ifClause;
+		generateClause(endOfIfStatementLabel, ifClause.statements, ifClause.expression);
+
+		for (elseIfClause in stmt.elseIfClauses) {
+			generateClause(endOfIfStatementLabel, elseIfClause.statements, elseIfClause.expression);
+		}
+
+		if (stmt.elseClause != null) {
+			generateClause(endOfIfStatementLabel, stmt.elseClause.statements, null);
+		}
+
+		compiler.currentNode.labels.set(endOfIfStatementLabel, compiler.currentNode.instructions.length);
+
+		return 0;
+	}
+
+	public override function visitShortcutOptionStatement(stmt:StmtShortcutOptionStatement):Dynamic {
+		var endOfGroupLabel = compiler.registerLabel("group_end");
+
+		var labels = new Array<String>();
+
+		var optionCount = 0;
+
+		for (shortcut in stmt.options) {
+			var nodeName = "node";
+			if (compiler.currentNode != null && compiler.currentNode.name != null && compiler.currentNode.name != "")
+				nodeName = compiler.currentNode.name;
+
+			var optionDestinationLabel = compiler.registerLabel('shortcutoption_${nodeName}_${optionCount + 1}');
+			labels.push(optionDestinationLabel);
+
+			var hasLineCondition = false;
+			if (shortcut.lineStatement.condition != null) {
+				shortcut.lineStatement.condition.accept(this);
+
+				hasLineCondition = true;
+			}
+
+			var expressionCount = generateCodeForExpressionsInFormattedText(shortcut.lineStatement.formattedText.children);
+
+			var lineIdTag = compiler.getLineIdTag(shortcut.lineStatement.hashtags.map(function(h:StmtHashtag) {
+				return h.text.lexeme;
+			}));
+
+			if (lineIdTag == null)
+				throw "Internal error: no line id provided";
+
+			compiler.emit(OpCode.ADD_OPTIONS, [
+				Operand.fromString(lineIdTag),
+				Operand.fromString(optionDestinationLabel),
+				Operand.fromFloat(expressionCount),
+				Operand.fromBool(hasLineCondition)
+			]);
+
+			optionCount++;
+		}
+
+		compiler.emit(OpCode.SHOW_OPTIONS, []);
+		compiler.emit(OpCode.JUMP, []);
+
+		optionCount = 0;
+		for (shortcut in stmt.options) {
+			compiler.currentNode.labels.set(labels[optionCount], compiler.currentNode.instructions.length);
+
+			for (child in shortcut.statements) {
+				child.accept(this);
+			}
+
+			compiler.emit(OpCode.JUMP, [Operand.fromString(endOfGroupLabel)]);
+
+			optionCount++;
+		}
+
+		compiler.currentNode.labels.set(endOfGroupLabel, compiler.currentNode.instructions.length);
+		compiler.emit(OpCode.POP, []);
+
+		return 0;
+	}
+
+	public override function visitExprParens(expr:ExprParens):Dynamic {
+		return expr.expression.accept(this);
+	}
+
+	public override function visitExprNegative(expr:ExprNegative):Dynamic {
+		generateCodeForOperations(Operator.UNARY_MINUS, expr.type, [expr.expression]);
+
+		return 0;
+	}
+
+	public override function visitExprValue(expr:ExprValue):Dynamic {
+		return expr.value.accept(this);
+	}
+
+	public override function visitExprMultDivMod(expr:ExprMultDivMod):Dynamic {
+		generateCodeForOperations(OperatorUtils.tokensToOperators[expr.op.type], expr.type, [expr.left, expr.right]);
+
+		return 0;
+	}
+
+	public override function visitExprAddSub(expr:ExprAddSub):Dynamic {
+		generateCodeForOperations(OperatorUtils.tokensToOperators[expr.op.type], expr.type, [expr.left, expr.right]);
+
+		return 0;
+	}
+
+	public override function visitExprComparison(expr:ExprComparision):Dynamic {
+		generateCodeForOperations(OperatorUtils.tokensToOperators[expr.op.type], expr.type, [expr.left, expr.right]);
+
+		return 0;
+	}
+
+	public override function visitExprEquality(expr:ExprEquality):Dynamic {
+		generateCodeForOperations(OperatorUtils.tokensToOperators[expr.op.type], expr.type, [expr.left, expr.right]);
+
+		return 0;
+	}
+
+	public override function visitExprAndOrXor(expr:ExprAndOrXor):Dynamic {
+		generateCodeForOperations(OperatorUtils.tokensToOperators[expr.op.type], expr.type, [expr.left, expr.right]);
+
+		return 0;
+	}
+
+	public override function visitValueNumber(value:ValueNumber):Dynamic {
+		var number = Std.parseFloat(value.literal);
+		compiler.emit(OpCode.PUSH_FLOAT, [Operand.fromFloat(number)]);
+
+		return 0;
+	}
+
+	public override function visitValueTrue(value:ValueTrue):Dynamic {
+		compiler.emit(OpCode.PUSH_BOOL, [Operand.fromBool(true)]);
+
+		return 0;
+	}
+
+	public override function visitValueFalse(value:ValueFalse):Dynamic {
+		compiler.emit(OpCode.PUSH_BOOL, [Operand.fromBool(false)]);
+
+		return 0;
+	}
+
+	public override function visitValueVariable(value:ValueVariable):Dynamic {
+		var name = value.varId.lexeme;
+		compiler.emit(OpCode.PUSH_VARIABLE, [Operand.fromString(name)]);
+
+		return 0;
+	}
+
+	public override function visitValueString(value:ValueString):Dynamic {
+		var stringVal = StringTools.trim(value.literal);
+
+		compiler.emit(OpCode.PUSH_STRING, [Operand.fromString(stringVal)]);
+
+		return 0;
+	}
+
+	public override function visitValueNull(value:ValueNull):Dynamic {
+		compiler.emit(OpCode.PUSH_NULL, []);
+
+		return 0;
+	}
+
+	public override function visitJumpToNodeName(stmt:StmtJumpToNodeName):Dynamic {
+		// TODO figure out why I need to trim here
+		compiler.emit(OpCode.PUSH_STRING, [Operand.fromString(StringTools.trim(stmt.destination.lexeme))]);
+		compiler.emit(OpCode.RUN_NODE, []);
+
+		return 0;
+	}
+
+	public override function visitJumpToExpression(stmt:StmtJumpToExpression):Dynamic {
+		stmt.expr.accept(this);
+		compiler.emit(OpCode.RUN_NODE, []);
 
 		return 0;
 	}

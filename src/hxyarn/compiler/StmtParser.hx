@@ -1,5 +1,8 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.compiler.Stmt.StmtJumpToExpression;
+import src.hxyarn.compiler.Stmt.StmtJumpToNodeName;
+import src.hxyarn.compiler.Stmt.StmtCommand;
 import src.hxyarn.compiler.Value.ValueFunctionCall;
 import src.hxyarn.compiler.Value.ValueVariable;
 import src.hxyarn.compiler.Value.ValueNumber;
@@ -120,8 +123,15 @@ class StmtParser {
 			if (match([COMMAND_JUMP]))
 				return jumpStatement();
 
-			if (match([COMMAND_TEXT, COMMAND_EXPRESSION_START]))
-				return commandFormattedText();
+			if (match([COMMAND_TEXT, COMMAND_EXPRESSION_START])) {
+				var text = commandFormattedText();
+				var hashtags:Array<StmtHashtag> = [];
+				while (match([HASHTAG])) {
+					hashtags.push(hashtag());
+				}
+
+				return new StmtCommand(text, hashtags);
+			}
 		}
 
 		// TODO indent/dedent
@@ -141,7 +151,11 @@ class StmtParser {
 	function shortcutOption():StmtShortcutOption {
 		var line = lineStatement();
 		// TODO indent/dedent
-		return new StmtShortcutOption(line);
+		var statements = new Array<Stmt>();
+		while (peek().type != TokenType.SHORTCUT_ARROW && peek().type != TokenType.DEDENT && peek().type != TokenType.BODY_END) {
+			statements.push(statement());
+		}
+		return new StmtShortcutOption(line, statements);
 	}
 
 	function ifStatement():StmtIf {
@@ -243,15 +257,23 @@ class StmtParser {
 
 	function jumpStatement():StmtJump {
 		if (match([EXPRESSION_START])) {
-			var expression = expression();
-			consume(EXPRESSION_END, "expected }");
-			consume(COMMAND_END, "expected >>");
-			return new StmtJump(null, expression);
+			return new StmtJump(jumpToExpression());
 		}
 
+		return new StmtJump(jumpToNodeName());
+	}
+
+	function jumpToExpression():StmtJumpToExpression {
+		var expression = expression();
+		consume(EXPRESSION_END, "expected }");
+		consume(COMMAND_END, "expected >>");
+		return new StmtJumpToExpression(expression);
+	}
+
+	function jumpToNodeName():StmtJumpToNodeName {
 		var destination = consume(ID, "Expected Id");
 		consume(COMMAND_END, "expected >>");
-		return new StmtJump(destination);
+		return new StmtJumpToNodeName(destination);
 	}
 
 	function declareStatement():StmtDeclare {
@@ -262,11 +284,21 @@ class StmtParser {
 		if (match([EXPRESSION_AS])) {
 			as = consume(EXPRESSION_AS, "Expected as");
 		}
+		consume(COMMAND_END, "expected >>");
 
 		return new StmtDeclare(variable, value, as);
 	}
 
-	function commandFormattedText():Stmt {
+	function commandStatement():StmtCommand {
+		var formattedText = commandFormattedText();
+		var hashtags = new Array<StmtHashtag>();
+		while (match([HASHTAG])) {
+			hashtags.push(hashtag());
+		}
+		return new StmtCommand(formattedText, hashtags);
+	}
+
+	function commandFormattedText():StmtCommandFormattedText {
 		// TODO handle expressions
 		var texts = new Array<Dynamic>();
 		texts.push(previous());

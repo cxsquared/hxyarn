@@ -1,6 +1,6 @@
 package src.hxyarn.compiler;
 
-import haxe.rtti.CType.Typedef;
+import src.hxyarn.compiler.DeclarationVisitor.DeclaractionVisitor;
 import src.hxyarn.program.types.BuiltInTypes;
 import src.hxyarn.compiler.Stmt.StmtDialogue;
 import haxe.Exception;
@@ -11,8 +11,6 @@ import src.hxyarn.program.Node;
 import sys.io.File;
 import haxe.Json;
 import src.hxyarn.program.Program;
-
-typedef ProgramData = {program:Program, stringTable:Map<String, StringInfo>};
 
 class Compiler {
 	var invalidNodeTilteNameRegex = ~/[\[<>\]{}\|:\s#\$]/i;
@@ -34,48 +32,21 @@ class Compiler {
 		this.fileName = fileName;
 	}
 
-	public static function compileFile(path:String):ProgramData {
-		if (path.indexOf('.json') > 0) {
-			var json = Json.parse(File.getContent(path));
-			var directories = FileSystem.absolutePath(path).split('/');
-			var fileName = directories[directories.length - 1];
+	public static function compileFile(path:String):CompilationResult {
+		var string = File.read(path).readAll().toString();
+		var directories = FileSystem.absolutePath(path).split('/');
+		var fileName = directories[directories.length - 1];
 
-			return handleJson(json, fileName);
-		}
-
-		if (path.indexOf('.yarn') > 0) {
-			var string = File.read(path).readAll().toString();
-			var directories = FileSystem.absolutePath(path).split('/');
-			var fileName = directories[directories.length - 1];
-
-			return handleYarn(string, fileName);
-		}
-
-		throw new Exception('hxyarn does not support the file $path. Please use .json or .yarn');
+		return handleYarn(string, fileName);
 	}
 
-	static function handleYarn(yarn:String, fileName:String):ProgramData {
+	static function handleYarn(yarn:String, fileName:String):CompilationResult {
 		var compiler = new Compiler(fileName);
 
-		compiler.compileYarn(yarn);
-		return {
-			program: compiler.program,
-			stringTable: compiler.stringTable
-		};
+		return compiler.compileYarn(yarn);
 	}
 
-	static function handleJson(json:Dynamic, fileName:String):ProgramData {
-		var compiler = new Compiler(fileName);
-
-		compiler.compileJson(json);
-
-		return {
-			program: compiler.program,
-			stringTable: compiler.stringTable
-		};
-	}
-
-	function compileYarn(yarn:String) {
+	function compileYarn(yarn:String):CompilationResult {
 		var tokens = Scanner.scan(yarn);
 		var dialogue = new StmtParser(tokens).parse();
 
@@ -99,7 +70,10 @@ class Compiler {
 				}
 			}
 			currentNode.labels.set(registerLabel(), currentNode.instructions.length);
-			// TODO Declaration Visitor
+			var declaractionVisitor = new DeclaractionVisitor(fileName, knownVariableDeclarations, typeDelaractions);
+			declaractionVisitor.visitNode(node);
+			derivedVariableDeclarations.concat(declaractionVisitor.newDeclarations);
+			knownVariableDeclarations.concat(declaractionVisitor.newDeclarations);
 			var checker = new TypeCheckVisitor(fileName, knownVariableDeclarations, typeDelaractions);
 			checker.visitNode(node);
 			var visitor = new CodeGenerationVisitor(this);
@@ -122,18 +96,18 @@ class Compiler {
 
 			program.nodes.set(currentNode.name, currentNode);
 		}
+
+		var results = new CompilationResult();
+		results.program = program;
+		results.stringTable = stringTableManager.stringTable;
+		results.declarations = derivedVariableDeclarations;
+
+		return results;
 	}
 
 	function registerStrings(fileName:String, stringTableManager:StringTableManager, dialogue:StmtDialogue) {
 		var visitor = new StringTableGeneratorVisitor(fileName, stringTableManager, this);
 		visitor.visitDialogue(dialogue);
-	}
-
-	function compileJson(json:Array<Dynamic>) {
-		for (node in json) {
-			var node = parseNode(node);
-			program.nodes.set(node.name, node);
-		}
 	}
 
 	function parseNode(obj:Dynamic):Node {

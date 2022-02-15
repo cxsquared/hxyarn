@@ -27,6 +27,8 @@ interface StmtVisitor {
 	function visitShortcutOption(stmt:StmtShortcutOption):Dynamic;
 	function visitDeclare(stmt:StmtDeclare):Dynamic;
 	function visitJump(stmt:StmtJump):Dynamic;
+	function visitJumpToNodeName(stmt:StmtJumpToNodeName):Dynamic;
+	function visitJumpToExpression(stmt:StmtJumpToExpression):Dynamic;
 }
 
 class Stmt {
@@ -284,8 +286,8 @@ class StmtCall extends Stmt {
 }
 
 class StmtCommand extends Stmt {
-	public function new(texts:Array<StmtCommandFormattedText>, ?hashtags:Array<StmtHashtag>) {
-		this.texts = texts;
+	public function new(formattedText:StmtCommandFormattedText, ?hashtags:Array<StmtHashtag>) {
+		this.formattedText = formattedText;
 		this.hashtags = hashtags;
 	}
 
@@ -293,7 +295,7 @@ class StmtCommand extends Stmt {
 		return visitor.visitCommand(this);
 	}
 
-	public var texts(default, null):Array<StmtCommandFormattedText>;
+	public var formattedText(default, null):StmtCommandFormattedText;
 	public var hashtags(default, null):Array<StmtHashtag>;
 }
 
@@ -304,7 +306,7 @@ class StmtCommandFormattedText extends Stmt {
 
 		var nonValidChildren = children.filter(function(child:Dynamic):Bool {
 			if (Std.isOfType(child, Token)) {
-				return cast(child.type, Token).type != TEXT;
+				return cast(child, Token).type != COMMAND_TEXT;
 			}
 			return Std.isOfType(child, Expr);
 		});
@@ -338,9 +340,9 @@ class StmtShortcutOptionStatement extends Stmt {
 }
 
 class StmtShortcutOption extends Stmt {
-	public function new(lineStatement:StmtLine, ?statement:Stmt) {
+	public function new(lineStatement:StmtLine, ?statements:Array<Stmt>) {
 		this.lineStatement = lineStatement;
-		this.statement = statement;
+		this.statements = statements;
 	}
 
 	override public function accept(visitor:StmtVisitor) {
@@ -348,7 +350,7 @@ class StmtShortcutOption extends Stmt {
 	}
 
 	public var lineStatement(default, null):StmtLine;
-	public var statement(default, null):Stmt;
+	public var statements(default, null):Array<Stmt>;
 }
 
 class StmtDeclare extends Stmt {
@@ -368,24 +370,40 @@ class StmtDeclare extends Stmt {
 }
 
 class StmtJump extends Stmt {
-	public function new(?destination:Token, ?expression:Expr) {
-		if (destination == null && expression == null)
-			throw "Expected destination or expression";
+	public function new(stmt:Stmt) {
+		if (!Std.isOfType(stmt, StmtJumpToNodeName) && !Std.isOfType(stmt, StmtJumpToExpression))
+			throw "Jump statement needs to be either jump to node or jump to expression";
 
-		if (destination != null && expression == null)
-			throw "Expected destination or expression";
-
-		if (destination == null && expression != null)
-			throw "Expected destination or expression";
-
-		this.destination = destination;
-		this.expression = expression;
+		this.stmt = stmt;
 	}
 
 	override public function accept(visitor:StmtVisitor) {
 		return visitor.visitJump(this);
 	}
 
+	public var stmt(default, null):Stmt;
+}
+
+class StmtJumpToNodeName extends Stmt {
+	public function new(destination:Token) {
+		this.destination = destination;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitJumpToNodeName(this);
+	}
+
 	public var destination(default, null):Token;
-	public var expression(default, null):Expr;
+}
+
+class StmtJumpToExpression extends Stmt {
+	public function new(expr:Expr) {
+		this.expr = expr;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitJumpToExpression(this);
+	}
+
+	public var expr(default, null):Expr;
 }

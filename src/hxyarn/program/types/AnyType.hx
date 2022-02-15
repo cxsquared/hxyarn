@@ -16,4 +16,8 @@ class AnyType implements IType {
 	}
 
 	public var description(get, null):String;
+
+	public function defaultMethods():MethodCollection {
+		return [];
+	}
 }

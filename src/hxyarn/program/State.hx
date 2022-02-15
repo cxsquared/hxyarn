@@ -1,9 +1,10 @@
 package src.hxyarn.program;
 
+import src.hxyarn.program.types.BuiltInTypes;
 import haxe.ds.GenericStack;
 import src.hxyarn.dialogue.Line;
 
-typedef LineKeyValuePair = {line:Line, value:String}
+typedef LineKeyValuePair = {line:Line, value:String, enabled:Bool};
 
 class State {
 	public var currentNodeName:String;
@@ -17,8 +18,16 @@ class State {
 	public function PushValue(value:Dynamic) {
 		if (Std.isOfType(value, Value)) {
 			stack.add(cast(value, Value));
+		} else if (Std.isOfType(value, String)) {
+			stack.add(new Value(value, BuiltInTypes.string));
+		} else if (Std.isOfType(value, Float)) {
+			stack.add(new Value(value, BuiltInTypes.number));
+		} else if (Std.isOfType(value, Int)) {
+			stack.add(new Value(value, BuiltInTypes.number));
+		} else if (Std.isOfType(value, Bool)) {
+			stack.add(new Value(value, BuiltInTypes.boolean));
 		} else {
-			stack.add(new Value(value));
+			stack.add(new Value(value, BuiltInTypes.any));
 		}
 	}
 

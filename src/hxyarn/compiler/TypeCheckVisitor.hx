@@ -1,5 +1,6 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.compiler.Stmt.StmtJumpToExpression;
 import src.hxyarn.program.types.TypeUtils;
 import src.hxyarn.compiler.Stmt.StmtElseIfClause;
 import src.hxyarn.compiler.Stmt.StmtIfClause;
@@ -17,7 +18,6 @@ import src.hxyarn.program.types.BuiltInTypes;
 import src.hxyarn.program.types.IType;
 import src.hxyarn.compiler.Value.ValueVariable;
 import src.hxyarn.program.Operator;
-import src.hxyarn.compiler.Token.TokenType;
 import src.hxyarn.compiler.Expr.ExprAndOrXor;
 import src.hxyarn.compiler.Expr.ExprParens;
 import src.hxyarn.compiler.Value.ValueFunctionCall;
@@ -36,17 +36,6 @@ class TypeCheckVisitor extends BaseVisitor {
 	var newDeclarations:Array<Declaration>;
 	var types:Array<IType>;
 	var currentNodeContext:StmtNode;
-
-	static var tokensToOperators = [
-		TokenType.OPERATOR_LOGICAL_LESS_THAN_EQUALS => Operator.LESS_THAN_OR_EQUAL_TO,
-		TokenType.OPERATOR_LOGICAL_GREATER_THAN_EQUALS => Operator.GREATER_THAN_OR_EQUAL_TO, TokenType.OPERATOR_LOGICAL_GREATER => Operator.GREATER_THAN,
-		TokenType.OPERATOR_LOGICAL_LESS => Operator.LESS_THAN, TokenType.OPERATOR_LOGICAL_EQUALS => Operator.EQUAL_TO,
-		TokenType.OPERATOR_LOGICAL_NOT_EQUALS => Operator.NOT_EQUAL_TO, TokenType.OPERATOR_LOGICAL_AND => Operator.AND,
-		TokenType.OPERATOR_LOGICAL_OR => Operator.OR, TokenType.OPERATOR_LOGICAL_XOR => Operator.XOR, TokenType.OPERATOR_LOGICAL_NOT => Operator.NOT,
-		TokenType.OPERATOR_MATHS_ADDITION => Operator.ADD, TokenType.OPERATOR_MATHS_SUBTRACTION => Operator.MINUS,
-		TokenType.OPERATOR_MATHS_MULTIPLICATION => Operator.MULTIPLY, TokenType.OPERATOR_MATHS_DIVISION => Operator.DIVIDE,
-		TokenType.OPERATOR_MATHS_MODULUS => Operator.MODULO
-	];
 
 	public function declarations():Array<Declaration> {
 		return this.existingDeclarations.concat(this.newDeclarations);
@@ -139,12 +128,43 @@ class TypeCheckVisitor extends BaseVisitor {
 			functionDeclaration.sourceFileLine = value.functionId.line;
 			functionDeclaration.sourceNodeName = currentNodeName;
 
-			var parameterTypes = new Array<IType>();
-			for (expr in 0...value.expressions.length) {
-				parameterTypes.push(BuiltInTypes.undefined);
+			var parameterTypes = value.expressions.map(function(e:Expr) {
+				return BuiltInTypes.undefined;
+			});
+
+			for (parameterType in parameterTypes) {
+				functionType.parameters.push(parameterType);
 			}
 
 			newDeclarations.push(functionDeclaration);
+		} else {
+			functionType = cast(functionDeclaration.type, FunctionType);
+		}
+
+		// TODO type check parameters of function
+		var suppliedParameters = value.expressions;
+		var expectedParameters = functionType.parameters;
+
+		if (suppliedParameters.length != expectedParameters.length) {
+			// TODO diagnostics
+			return functionType.returnType;
+		}
+
+		for (i in 0...expectedParameters.length) {
+			var suppliedParameter = suppliedParameters[i];
+			var expectedType = expectedParameters[i];
+
+			var suppliedtype = suppliedParameter.accept(this);
+
+			if (expectedType == BuiltInTypes.undefined) {
+				expectedParameters[i] = suppliedtype;
+				expectedType = suppliedtype;
+			}
+
+			if (TypeUtils.isSubType(expectedType, suppliedtype) == false) {
+				// TODO diagnostics
+				return functionType.returnType;
+			}
 		}
 
 		return functionType.returnType;
@@ -163,32 +183,32 @@ class TypeCheckVisitor extends BaseVisitor {
 	}
 
 	public override function visitExprAndOrXor(expr:ExprAndOrXor):Dynamic {
-		var type = checkOperation(expr, [expr.left, expr.right], tokensToOperators[expr.op.type], expr.op.lexeme);
+		var type = checkOperation(expr, [expr.left, expr.right], OperatorUtils.tokensToOperators[expr.op.type], expr.op.lexeme);
 		expr.type = type;
 		return type;
 	}
 
 	public override function visitExprAddSub(expr:ExprAddSub):Dynamic {
-		var type = checkOperation(expr, [expr.left, expr.right], tokensToOperators[expr.op.type], expr.op.lexeme);
+		var type = checkOperation(expr, [expr.left, expr.right], OperatorUtils.tokensToOperators[expr.op.type], expr.op.lexeme);
 		expr.type = type;
 		return type;
 	}
 
 	public override function visitExprMultDivMod(expr:ExprMultDivMod):Dynamic {
-		var type = checkOperation(expr, [expr.left, expr.right], tokensToOperators[expr.op.type], expr.op.lexeme);
+		var type = checkOperation(expr, [expr.left, expr.right], OperatorUtils.tokensToOperators[expr.op.type], expr.op.lexeme);
 		expr.type = type;
 		return type;
 	}
 
 	public override function visitExprComparison(expr:ExprComparision):Dynamic {
-		var type = checkOperation(expr, [expr.left, expr.right], tokensToOperators[expr.op.type], expr.op.lexeme);
+		var type = checkOperation(expr, [expr.left, expr.right], OperatorUtils.tokensToOperators[expr.op.type], expr.op.lexeme);
 		expr.type = type;
 
 		return BuiltInTypes.boolean;
 	}
 
 	public override function visitExprEquality(expr:ExprEquality):Dynamic {
-		var type = checkOperation(expr, [expr.left, expr.right], tokensToOperators[expr.op.type], expr.op.lexeme);
+		var type = checkOperation(expr, [expr.left, expr.right], OperatorUtils.tokensToOperators[expr.op.type], expr.op.lexeme);
 		expr.type = type;
 
 		return BuiltInTypes.boolean;
@@ -217,8 +237,8 @@ class TypeCheckVisitor extends BaseVisitor {
 		return BuiltInTypes.string;
 	}
 
-	public override function visitJump(stmt:StmtJump):Dynamic {
-		return checkOperation(stmt, [stmt.expression], Operator.NONE, "jump statement", [BuiltInTypes.string]);
+	public override function visitJumpToExpression(stmt:StmtJumpToExpression):Dynamic {
+		return checkOperation(stmt, [stmt.expr], Operator.NONE, "jump statement", [BuiltInTypes.string]);
 	}
 
 	public override function visitIfClause(stmt:StmtIfClause):Dynamic {
@@ -340,7 +360,7 @@ class TypeCheckVisitor extends BaseVisitor {
 
 		if (permittedTypes.length > 0) {
 			var isPermittedType = permittedTypes.filter(function(t:IType) {
-				return TypeUtils.isSubtype(t, expressionType);
+				return TypeUtils.isSubType(t, expressionType);
 			}).length > 0;
 
 			if (isPermittedType)

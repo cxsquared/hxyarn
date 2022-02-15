@@ -21,7 +21,7 @@ class TypeUtils {
 		return null;
 	}
 
-	public static function isSubtype(parentType:IType, subType:IType) {
+	public static function isSubType(parentType:IType, subType:IType) {
 		if (subType == BuiltInTypes.undefined && parentType == BuiltInTypes.undefined)
 			return true;
 

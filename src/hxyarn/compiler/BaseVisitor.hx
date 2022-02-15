@@ -1,5 +1,7 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.compiler.Stmt.StmtJumpToNodeName;
+import src.hxyarn.compiler.Stmt.StmtJumpToExpression;
 import src.hxyarn.compiler.Value.ValueVariable;
 import src.hxyarn.compiler.Value.ValueFunctionCall;
 import src.hxyarn.compiler.Value.ValueNumber;
@@ -173,9 +175,7 @@ class BaseVisitor implements StmtVisitor implements ExprVisitor implements Value
 	}
 
 	public function visitCommand(stmt:StmtCommand):Dynamic {
-		for (text in stmt.texts) {
-			text.accept(this);
-		}
+		stmt.formattedText.accept(this);
 		for (hashtag in stmt.hashtags) {
 			hashtag.accept(this);
 		}
@@ -200,19 +200,19 @@ class BaseVisitor implements StmtVisitor implements ExprVisitor implements Value
 
 	public function visitShortcutOption(stmt:StmtShortcutOption):Dynamic {
 		stmt.lineStatement.accept(this);
-		stmt.statement.accept(this);
+		for (statement in stmt.statements) {
+			statement.accept(this);
+		}
 
 		return 0;
 	}
 
 	public function visitDeclare(stmt:StmtDeclare):Dynamic {
-		stmt.value.accept(this);
-		return 0;
+		return stmt.value.accept(this);
 	}
 
 	public function visitJump(stmt:StmtJump):Dynamic {
-		stmt.expression.accept(this);
-		return 0;
+		return stmt.stmt.accept(this);
 	}
 
 	public function visitExprParens(expr:ExprParens):Dynamic {
@@ -233,26 +233,22 @@ class BaseVisitor implements StmtVisitor implements ExprVisitor implements Value
 
 	public function visitExprMultDivMod(expr:ExprMultDivMod):Dynamic {
 		expr.left.accept(this);
-		expr.right.accept(this);
-		return 0;
+		return expr.right.accept(this);
 	}
 
 	public function visitExprAddSub(expr:ExprAddSub):Dynamic {
 		expr.left.accept(this);
-		expr.right.accept(this);
-		return 0;
+		return expr.right.accept(this);
 	}
 
 	public function visitExprComparison(expr:ExprComparision):Dynamic {
 		expr.left.accept(this);
-		expr.right.accept(this);
-		return 0;
+		return expr.right.accept(this);
 	}
 
 	public function visitExprEquality(expr:ExprEquality):Dynamic {
 		expr.left.accept(this);
-		expr.right.accept(this);
-		return 0;
+		return expr.right.accept(this);
 	}
 
 	public function visitExprMultDivModEquals(expr:ExprMultDivModEquals):Dynamic {
@@ -261,19 +257,16 @@ class BaseVisitor implements StmtVisitor implements ExprVisitor implements Value
 	}
 
 	public function visitExprPlusMinusEquals(expr:ExprPlusMinusEquals):Dynamic {
-		expr.left.accept(this);
-		return 0;
+		return expr.left.accept(this);
 	}
 
 	public function visitExprAndOrXor(expr:ExprAndOrXor):Dynamic {
 		expr.left.accept(this);
-		expr.right.accept(this);
-		return 0;
+		return expr.right.accept(this);
 	}
 
 	public function visitExprValue(expr:ExprValue):Dynamic {
-		expr.value.accept(this);
-		return 0;
+		return expr.value.accept(this);
 	}
 
 	public function visitValueNumber(value:ValueNumber):Dynamic {
@@ -305,5 +298,13 @@ class BaseVisitor implements StmtVisitor implements ExprVisitor implements Value
 			expr.accept(this);
 		}
 		return 0;
+	}
+
+	public function visitJumpToNodeName(stmt:StmtJumpToNodeName):Dynamic {
+		return 0;
+	}
+
+	public function visitJumpToExpression(stmt:StmtJumpToExpression):Dynamic {
+		return stmt.expr.accept(this);
 	}
 }

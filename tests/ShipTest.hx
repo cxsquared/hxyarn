@@ -1,5 +1,6 @@
 package tests;
 
+import src.hxyarn.program.types.BuiltInTypes;
 import src.hxyarn.dialogue.Dialogue.HandlerExecutionType;
 import src.hxyarn.program.Value;
 import src.hxyarn.compiler.Compiler;
@@ -13,14 +14,14 @@ class ShipTest extends TestBase {
 
 		visited = new Map<String, Bool>();
 
-		dialogue.library.registerReturningFunction("visited", 1, function(nodeName:Array<Value>):Bool {
+		dialogue.library.registerFunction("visited", 1, function(nodeName:Array<Value>):Bool {
 			if (visited.exists(nodeName[0].asString()))
 				return visited[nodeName[0].asString()];
 
 			visited.set(nodeName[0].asString(), false);
 
 			return false;
-		});
+		}, BuiltInTypes.string);
 	}
 
 	override public function start() {
@@ -37,9 +38,7 @@ class ShipTest extends TestBase {
 		dialogue.setSelectedOption(0);
 	}
 
-	override public function nodeCompleteHandler(nodeName:String):HandlerExecutionType {
+	override public function nodeCompleteHandler(nodeName:String) {
 		visited.set(nodeName, true);
-
-		return super.nodeCompleteHandler(nodeName);
 	}
 }

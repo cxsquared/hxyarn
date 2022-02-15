@@ -117,6 +117,7 @@ class Scanner {
 
 	function headerMode(c:String) {
 		switch (c) {
+			case ' ':
 			case '\r':
 				match('\n'); // consume newlines for windows
 				line++;
@@ -357,7 +358,7 @@ class Scanner {
 				}
 
 				if (isAlpha(c)) {
-					identifier();
+					identifier(FUNC_ID);
 					return;
 				}
 

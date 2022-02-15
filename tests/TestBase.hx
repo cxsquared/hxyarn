@@ -31,8 +31,10 @@ class TestBase {
 
 		dialogue.library.registerFunction("assert", 1, function(parameters:Array<Value>) {
 			if (parameters[0].asBool() == false) {
-				trace("--------ASSERT FAILED------");
+				logErrorMessage("--------ASSERT FAILED------");
 			}
+
+			return null;
 		});
 
 		if (testPlanFile != null && StringTools.trim(testPlanFile).length > 0)
@@ -46,7 +48,10 @@ class TestBase {
 
 	public function start() {
 		dialogue.setNode("Start");
-		dialogue.resume();
+
+		do {
+			dialogue.resume();
+		} while (dialogue.isActive());
 	}
 
 	public function getComposedTextForLine(line:Line):String {
@@ -86,7 +91,7 @@ class TestBase {
 		return HandlerExecutionType.ContinueExecution;
 	}
 
-	public function optionsHandler(options:OptionSet):HandlerExecutionType {
+	public function optionsHandler(options:OptionSet) {
 		var optionCount = options.options.length;
 		var optionText = new Array<String>();
 
@@ -116,11 +121,9 @@ class TestBase {
 				dialogue.setSelectedOption(0);
 			}
 		}
-
-		return HandlerExecutionType.ContinueExecution;
 	}
 
-	public function commandHanlder(command:Command):HandlerExecutionType {
+	public function commandHanlder(command:Command) {
 		trace('Command: ${command.text}');
 
 		if (testPlan != null) {
@@ -131,17 +134,11 @@ class TestBase {
 				assertString(testPlan.nextExpectedValue, command.text);
 			}
 		}
-
-		return HandlerExecutionType.ContinueExecution;
 	}
 
-	public function nodeCompleteHandler(nodeName:String):HandlerExecutionType {
-		return HandlerExecutionType.ContinueExecution;
-	}
+	public function nodeCompleteHandler(nodeName:String) {}
 
-	public function nodeStartHandler(nodeName:String):HandlerExecutionType {
-		return HandlerExecutionType.ContinueExecution;
-	}
+	public function nodeStartHandler(nodeName:String) {}
 
 	public function dialogueCompleteHandler() {
 		if (testPlan != null) {
@@ -150,6 +147,8 @@ class TestBase {
 			if (testPlan.nextExpectedType != StepType.Stop) {
 				throw new Exception('Stopped dialogue,  but wasn\'t expecting to select one (was expecting ${testPlan.nextExpectedType.getName()})');
 			}
+
+			logDebugMessage('${testPlan.path} test passed!');
 		}
 	}
 

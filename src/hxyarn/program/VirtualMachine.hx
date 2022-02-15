@@ -81,10 +81,36 @@ class VirtualMachine {
 
 		state.clearOptions();
 
-		executionState = Suspended;
+		executionState = WaitingForContinue;
 	}
 
 	public function contiune() {
+		checkCanContinue();
+
+		if (executionState == DeliveringContent) {
+			executionState = Running;
+			return;
+		}
+
+		executionState = Running;
+
+		while (executionState == Running) {
+			var currentInstruction = currentNode.instructions[state.programCounter];
+
+			runInstruction(currentInstruction);
+
+			state.programCounter++;
+
+			if (state.programCounter >= currentNode.instructions.length) {
+				nodeCompleteHandler(currentNode.name);
+				executionState = Stopped;
+				dialogueCompleteHandler();
+				dialogue.logDebugMessage("Run complete");
+			}
+		}
+	}
+
+	function checkCanContinue() {
 		if (currentNode == null) {
 			throw new DialogueException("Cannot continue running dialogue. No node has been selected.");
 		}
@@ -112,23 +138,6 @@ class VirtualMachine {
 		if (dialogueCompleteHandler == null) {
 			throw new DialogueException("Cannot continue running dialogue. dialougeCompleteHandler has not been set.");
 		}
-
-		executionState = Running;
-
-		while (executionState == Running) {
-			var currentInstruction = currentNode.instructions[state.programCounter];
-
-			runInstruction(currentInstruction);
-
-			state.programCounter++;
-
-			if (state.programCounter >= currentNode.instructions.length) {
-				nodeCompleteHandler(currentNode.name);
-				executionState = Stopped;
-				dialogueCompleteHandler();
-				dialogue.logDebugMessage("Run complete");
-			}
-		}
 	}
 
 	function findInstructionPointForLabel(labelName:String):Int {
@@ -152,16 +161,21 @@ class VirtualMachine {
 
 					var strings = [];
 
-					for (expressionIndex in 0...expressionCount)
-						strings[expressionIndex] = state.PopValue().asString();
+					if (expressionCount > 0) {
+						for (expressionIndex in expressionCount - 1...0)
+							strings[expressionIndex] = state.PopValue().asString();
+					}
 
 					line.substitutions = strings;
 				}
 
-				var pause = lineHandler(line);
+				executionState = DeliveringContent;
 
-				if (pause == PauseExecution)
-					executionState = Suspended;
+				lineHandler(line);
+
+				if (executionState == DeliveringContent) {
+					executionState = WaitingForContinue;
+				}
 			case RUN_COMMAND:
 				var commandText = i.operands[0].stringValue;
 
@@ -175,11 +189,15 @@ class VirtualMachine {
 					}
 				}
 
+				executionState = DeliveringContent;
+
 				var command = new Command(commandText);
 
-				var pause = commandHandler(command);
-				if (pause == PauseExecution)
-					executionState = Suspended;
+				commandHandler(command);
+
+				if (executionState == DeliveringContent) {
+					executionState = WaitingForContinue;
+				}
 			case PUSH_STRING:
 				state.PushValue(i.operands[0].stringValue);
 			case PUSH_FLOAT:
@@ -242,52 +260,60 @@ class VirtualMachine {
 				dialogueCompleteHandler();
 				executionState = Stopped;
 			case RUN_NODE:
-				var nodeName:String;
-				if (i.operands.length == 0 || i.operands[0].stringValue == null || i.operands[0].stringValue.length == 0) {
-					nodeName = state.PeekValue().asString();
-				} else {
-					nodeName = i.operands[0].stringValue;
-				}
+				var nodeName = state.PopValue().asString();
 
-				var pause = nodeCompleteHandler(currentNode.name);
+				nodeCompleteHandler(currentNode.name);
 
 				setNode(nodeName);
 
 				state.programCounter -= 1;
-
-				if (pause == PauseExecution)
-					executionState = Suspended;
 			case ADD_OPTIONS:
 				var stringKey = i.operands[0].stringValue;
 				var line = new Line(stringKey);
 
 				if (i.operands.length > 2) {
-					var expressionCount = Std.int(i.operands[1].floatValue);
+					var expressionCount = Std.int(i.operands[2].floatValue);
 
 					var strings = [];
 
-					for (expressionIndex in 0...expressionCount)
-						strings[expressionIndex] = state.PopValue().asString();
+					if (expressionCount > 0) {
+						for (expressionIndex in expressionCount - 1...0)
+							strings[expressionIndex] = state.PopValue().asString();
+					}
 
 					line.substitutions = strings;
 				}
 
+				var lineConditionPassed = true;
+				if (i.operands.length > 3) {
+					var hasLineCondition = i.operands[3].boolValue;
+
+					if (hasLineCondition) {
+						lineConditionPassed = state.PopValue().asBool();
+					}
+				}
+
 				var destination = i.operands[1].stringValue;
 
-				state.currentOptions.push({line: line, value: destination});
+				state.currentOptions.push({line: line, value: destination, enabled: lineConditionPassed});
 			case SHOW_OPTIONS:
 				if (state.currentOptions.length == 0) {
 					executionState = Stopped;
 					dialogueCompleteHandler();
-				} else {
-					var optionChoices = new Array<Option>();
+					return;
+				}
 
-					for (optionIndex => option in state.currentOptions) {
-						optionChoices.push(new Option(option.line, optionIndex, option.value));
-					}
+				var optionChoices = new Array<Option>();
 
-					executionState = WaitingOnOptionSelection;
-					optionsHandler(new OptionSet(optionChoices));
+				for (optionIndex => option in state.currentOptions) {
+					optionChoices.push(new Option(option.line, optionIndex, option.value, option.enabled));
+				}
+
+				executionState = WaitingOnOptionSelection;
+				optionsHandler(new OptionSet(optionChoices));
+
+				if (executionState == WaitingOnOptionSelection) {
+					executionState = Running;
 				}
 			case _:
 				executionState = Stopped;
@@ -303,7 +329,8 @@ class VirtualMachine {
 enum ExecutionState {
 	Stopped;
 	WaitingOnOptionSelection;
-	Suspended;
+	WaitingForContinue;
+	DeliveringContent;
 	Running;
 }
 

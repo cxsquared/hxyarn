@@ -19,6 +19,10 @@ class TypeBase implements IType {
 		}
 	}
 
+	public function defaultMethods():MethodCollection {
+		return this.methods;
+	}
+
 	public function get_description():String {
 		return "";
 	}
