@@ -17,10 +17,10 @@ class Main {
 		// runTest('./yarns/yarn/Commands.yarn', './yarns/testcases/Commands.testplan');
 		// Passing
 		// runTest('./yarns/yarn/Expressions.yarn', './yarns/testcases/Expressions.testplan');
+		// Passing
+		// runTest('./yarns/yarn/Options.yarn', './yarns/testcases/Options.testplan');
 		// Failing
-		runTest('./yarns/yarn/Options.yarn', './yarns/testcases/Options.testplan');
-		// Failing
-		// runFunctionTest('./yarns/yarn/Functions.yarn', './yarns/testcases/Functions.testplan');
+		runFunctionTest('./yarns/yarn/Functions.yarn', './yarns/testcases/Functions.testplan');
 		// Failing
 		// runTest('./yarns/yarn/NodeHeaders.yarn', './yarns/testcases/NodeHeaders.testplan');
 		// Failing

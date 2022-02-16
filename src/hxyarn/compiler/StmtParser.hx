@@ -234,7 +234,10 @@ class StmtParser {
 	}
 
 	function callStatement():StmtCall {
-		return new StmtCall(functionCall());
+		var func = functionCall();
+
+		consume(COMMAND_END, "expected >>");
+		return new StmtCall(func);
 	}
 
 	function functionCall():ValueFunctionCall {
@@ -245,12 +248,13 @@ class StmtParser {
 		}
 
 		var exprs = new Array<Expr>();
-		exprs.push(expression());
-		while (match([COMMA])) {
+		if (peek().type != RPAREN) {
 			exprs.push(expression());
+			while (match([COMMA])) {
+				exprs.push(expression());
+			}
 		}
 		consume(RPAREN, "expected )");
-		consume(COMMAND_END, "expected >>");
 
 		return new ValueFunctionCall(id, exprs);
 	}
