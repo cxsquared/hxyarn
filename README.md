@@ -4,9 +4,27 @@ A Haxe port of [Yarn Spinner](https://github.com/YarnSpinnerTool/YarnSpinner)
 
 This is currently a work in progress though the major functionality has been implemented.
 
+## Install
+
+### Standard
+
+```sh
+haxelib git https://github.com/cxsquared/hxyarn.git
+```
+
 ## Usage
 
 ```haxe
+
+import hxyarn.dialogue.Dialogue;
+import hxyarn.dialogue.VariableStorage.MemoryVariableStore;
+import hxyarn.dialogue.StringInfo;
+import hxyarn.dialogue.Line;
+import hxyarn.dialogue.Command;
+import hxyarn.dialogue.Option;
+import hxyarn.dialogue.OptionSet;
+import hxyarn.compiler.Compiler;
+
 class DialogueExample {
     var storage = new MemoryVariableStore();
     var dialogue:Dialogue;

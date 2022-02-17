@@ -1,6 +1,7 @@
 package src.hxyarn.compiler;
 
 import src.hxyarn.program.Program;
+import src.hxyarn.dialogue.StringInfo;
 
 class CompilationResult {
 	public var program:Program;

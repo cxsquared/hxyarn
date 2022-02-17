@@ -1,5 +1,7 @@
 package src.hxyarn.compiler;
 
+import src.hxyarn.dialogue.StringInfo;
+
 class StringTableManager {
 	public var stringTable = new Map<String, StringInfo>();
 
