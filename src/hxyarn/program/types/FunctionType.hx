@@ -4,8 +4,11 @@ import src.hxyarn.program.types.IType.MethodCollection;
 
 class FunctionType implements IType {
 	public var name = "Function";
-	public var parent = BuiltInTypes.any;
 	public var description(get, null):String;
+
+	public function parent():IType {
+		return BuiltInTypes.any;
+	}
 
 	function get_description() {
 		var parameterNames = new Array<String>();

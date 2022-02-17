@@ -15,14 +15,14 @@ class TypeUtils {
 				return currentType;
 			}
 
-			currentType = currentType.parent;
+			currentType = currentType.parent();
 		}
 
 		return null;
 	}
 
 	public static function isSubType(parentType:IType, subType:IType) {
-		if (subType == BuiltInTypes.undefined && parentType == BuiltInTypes.undefined)
+		if (subType == BuiltInTypes.undefined && parentType == BuiltInTypes.any)
 			return true;
 
 		if (subType == BuiltInTypes.undefined)
@@ -34,7 +34,7 @@ class TypeUtils {
 			if (currentType == parentType)
 				return true;
 
-			currentType = currentType.parent;
+			currentType = currentType.parent();
 		}
 
 		return false;

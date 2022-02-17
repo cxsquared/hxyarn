@@ -23,7 +23,10 @@ class StringTableGeneratorVisitor extends BaseVisitor {
 
 		for (header in stmt.headers) {
 			var headerKey = header.id.lexeme;
-			var value = header.value.lexeme;
+			var value = "";
+			if (header.value != null) {
+				value = header.value.lexeme;
+			}
 
 			if (headerKey == "title") {
 				currentNodeName = value;
@@ -89,13 +92,13 @@ class StringTableGeneratorVisitor extends BaseVisitor {
 				// {} from the text tokens
 				// we might need to add those
 				// depending on how I'm scanning stuff
-				sb.add(expressionCount);
+				sb.add('{$expressionCount}');
 				expressionCount++;
 			}
 		}
 
 		return {
-			outputString: sb.toString(),
+			outputString: StringTools.trim(sb.toString()),
 			expressionCount: expressionCount
 		};
 	}

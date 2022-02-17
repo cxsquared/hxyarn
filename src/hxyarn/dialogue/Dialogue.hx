@@ -1,12 +1,12 @@
 package src.hxyarn.dialogue;
 
+import src.hxyarn.dialogue.markup.MarkupAttributeMarker;
+import src.hxyarn.dialogue.markup.IAttributeMarkerProcessor;
+import src.hxyarn.dialogue.markup.MarkupParseResult;
 import src.hxyarn.program.StandardLibrary;
 import src.hxyarn.program.Library;
 import src.hxyarn.dialogue.CLDR.PluralCase;
 import src.hxyarn.dialogue.DialogueExcpetion.DialogueException;
-import sys.io.File;
-import src.hxyarn.program.Library.FunctionInfo;
-import haxe.Exception;
 import src.hxyarn.program.VirtualMachine;
 import src.hxyarn.dialogue.OptionSet;
 import src.hxyarn.program.Program;
@@ -18,13 +18,14 @@ typedef CommandHandler = Command->Void;
 typedef NodeCompleteHandler = String->Void;
 typedef NodeStartHanlder = String->Void;
 typedef DialogueCompleteHandler = Void->Void;
+typedef PrepareForLinesHandler = Array<String>->Void;
 
 enum HandlerExecutionType {
 	PauseExecution;
 	ContinueExecution;
 }
 
-class Dialogue {
+class Dialogue implements IAttributeMarkerProcessor {
 	public var variableStorage:VariableStorage;
 
 	public var logDebugMessage:Logger;
@@ -55,6 +56,7 @@ class Dialogue {
 	public var nodeStartHandler(get, set):NodeStartHanlder;
 	public var nodeCompleteHandler(get, set):NodeCompleteHandler;
 	public var dialogueCompleteHandler(get, set):DialogueCompleteHandler;
+	public var prepareForLinesHandler(get, set):PrepareForLinesHandler;
 
 	public function get_lineHandler() {
 		return vm.lineHandler;
@@ -104,11 +106,21 @@ class Dialogue {
 		return vm.dialogueCompleteHandler = newDialogueCopmleteHandler;
 	}
 
+	public function get_prepareForLinesHandler() {
+		return vm.prepareForLinesHandler;
+	}
+
+	public function set_prepareForLinesHandler(newPrepareForLinesHandler) {
+		return vm.prepareForLinesHandler = newPrepareForLinesHandler;
+	}
+
 	public var library(default, set):Library;
 
 	function set_library(newLibrary) {
 		return library = newLibrary;
 	}
+
+	var lineParser:LineParser;
 
 	public function new(variableStorage:VariableStorage) {
 		if (variableStorage == null)
@@ -120,6 +132,12 @@ class Dialogue {
 		this.vm = new VirtualMachine(this);
 
 		library.importLibrary(new StandardLibrary());
+
+		lineParser = new LineParser();
+
+		lineParser.registerMarkerProcessor("select", this);
+		lineParser.registerMarkerProcessor("plural", this);
+		lineParser.registerMarkerProcessor("ordinal", this);
 	}
 
 	public function setProgram(program:Program) {
@@ -217,148 +235,62 @@ class Dialogue {
 	// TODO
 	public function analyse() {}
 
-	public static function expandFormatFunctions(input:String, localeCode:String) {
-		var parsedFunction = parseFormatFunctions(input, localeCode);
-
-		for (i in 0...parsedFunction.parsedFunctions.length) {
-			var pFunc = parsedFunction.parsedFunctions[i];
-
-			if (pFunc.functionName == "select") {
-				var replacement = "";
-				if (pFunc.data.exists(pFunc.value)) {
-					replacement = pFunc.data.get(pFunc.value);
-				} else {
-					replacement = '<no replacement for ${pFunc.value}>';
-				}
-
-				replacement = StringTools.replace(replacement, formatFunctionValuePlaceHolder, pFunc.value);
-
-				parsedFunction.lineWithReplacements = StringTools.replace(parsedFunction.lineWithReplacements, '{$i}', replacement);
-			} else {
-				var value = Std.parseFloat(pFunc.value);
-				if (Math.isNaN(value))
-					throw new Exception('Error while pluralizing line "$input": "${pFunc.value}" is not a number"');
-
-				var pluralCase:PluralCase;
-
-				switch (pFunc.functionName) {
-					case "plural":
-						pluralCase = CLDR.getCardinalPluralCase(localeCode, value);
-					case "ordinal":
-						pluralCase = CLDR.getOrdinalPluralCase(localeCode, value);
-					case _:
-						throw new Exception('Unknown formatting function "${pFunc.functionName}" in line "$input"');
-				}
-
-				var replacement = "";
-				if (pFunc.data.exists(pluralCase.getName().toLowerCase())) {
-					replacement = pFunc.data.get(pluralCase.getName().toLowerCase());
-				} else {
-					replacement = '<no replacement for ${pFunc.value}>';
-				}
-
-				replacement = StringTools.replace(replacement, formatFunctionValuePlaceHolder, pFunc.value);
-
-				parsedFunction.lineWithReplacements = StringTools.replace(parsedFunction.lineWithReplacements, '{$i}', replacement);
-			}
-		}
-
-		return parsedFunction.lineWithReplacements;
+	public function parseMarkup(line:String):MarkupParseResult {
+		return lineParser.parseMarkup(line);
 	}
 
-	static function parseFormatFunctions(input:String, localeCode:String):{lineWithReplacements:String, parsedFunctions:Array<ParsedFormatFunction>} {
-		var returnedLine = "";
-		var returnedFunctions = new Array<ParsedFormatFunction>();
-
-		var i = 0;
-		while (i < input.length) {
-			var c = input.charAt(i);
-
-			if (c != '[') {
-				if (c != ']')
-					returnedLine += c;
-				i++;
-			} else {
-				var pFunc = new ParsedFormatFunction();
-				i += 1; // consume [
-
-				var name = "";
-				while (input.charAt(i) != " ") {
-					name += input.charAt(i);
-					i++;
-				}
-				pFunc.functionName = name;
-
-				switch (pFunc.functionName) {
-					case "select":
-					case "plural":
-					case "ordinal":
-					case _:
-						throw new Exception('Invalid formatting function ${pFunc.functionName} in line "$input"');
-				}
-				i += 1; // consume whitespace
-
-				if (input.charAt(i) != "\"")
-					throw new Exception('Expecting variable start in line "$input"');
-
-				i += 1; // consume "
-
-				var variable = "";
-				while (input.charAt(i) != "\"") {
-					variable += input.charAt(i);
-					i++;
-				}
-				pFunc.value = variable;
-				i += 2; // consume " and whitespace
-
-				var key = "";
-				var value = "";
-				var buildingKey = true;
-				while (input.charAt(i) != ']' && i < input.length) {
-					var c = input.charAt(i);
-					if (c == "=") {
-						i += 2;
-						buildingKey = false;
-						continue;
-					} else if (c == "\"") {
-						buildingKey = true;
-
-						if (pFunc.data.exists(key))
-							throw new Exception('Duplicate value "$key" in format function inside line "$input"');
-
-						pFunc.data.set(key, value); // remove "" around value
-						key = "";
-						value = "";
-						if (input.charAt(i + 1) == ']') {
-							i++;
-						} else {
-							i += 2;
-						}
-						continue;
-					} else if (c == " " && buildingKey) {
-						i++;
-						continue;
-					} else if (c == "%" && !buildingKey) {
-						value += formatFunctionValuePlaceHolder;
-						i++;
-						continue;
-					}
-
-					if (buildingKey) {
-						key += c;
-					} else {
-						value += c;
-					}
-
-					i++;
-				}
-
-				returnedFunctions.push(pFunc);
-
-				returnedLine += '{${returnedFunctions.length - 1}}';
-			}
+	public static function expandSubstitutions(text:String, substitutions:Array<String>) {
+		for (i => substitution in substitutions) {
+			text = StringTools.replace(text, '{$i}', substitution);
 		}
 
-		return {lineWithReplacements: returnedLine, parsedFunctions: returnedFunctions};
+		return text;
+	}
+
+	private static final ValuePlaceholderRegex = new EReg("(?<!\\\\)%", "i");
+
+	public function replacementTextForMarker(marker:MarkupAttributeMarker):String {
+		var valueProp = marker.tryGetProperty("value");
+		if (valueProp == null)
+			throw 'Expected a property "value"';
+
+		var value = valueProp.toString();
+
+		if (marker.name == "select") {
+			var replacementProp = marker.tryGetProperty(value);
+			if (replacementProp == null)
+				throw 'error: no replacment for $value';
+
+			var replacement = replacementProp.toString();
+			replacement = ValuePlaceholderRegex.replace(replacement, value);
+			return replacement;
+		}
+
+		// TODO: Language code
+		var languageCode = "en";
+
+		var doubleValue = Std.parseInt(value);
+		if (doubleValue == null)
+			throw 'error: $value is not a number';
+
+		var pluralCase:PluralCase;
+
+		switch (marker.name) {
+			case "plural":
+				pluralCase = CLDR.getCardinalPluralCase(languageCode, doubleValue);
+			case "ordinal":
+				pluralCase = CLDR.getOrdinalPluralCase(languageCode, doubleValue);
+			case _:
+				throw 'Invalid marker ${marker.name}';
+		}
+
+		var pluralCaseName = pluralCase.getName().toLowerCase();
+
+		var replacementValue = marker.tryGetProperty(pluralCaseName);
+		if (replacementValue == null)
+			throw 'error: no replacment for $pluralCaseName';
+
+		var input = replacementValue.toString();
+		return ValuePlaceholderRegex.replace(input, value);
 	}
 }

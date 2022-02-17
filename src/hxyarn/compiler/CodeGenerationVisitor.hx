@@ -5,10 +5,7 @@ import src.hxyarn.compiler.Value.ValueFalse;
 import src.hxyarn.compiler.Value.ValueTrue;
 import src.hxyarn.compiler.Value.ValueNumber;
 import src.hxyarn.compiler.Value.ValueNull;
-import sys.ssl.Context;
-import haxe.display.Display.EnumFieldOrigin;
 import src.hxyarn.compiler.Value.ValueFunctionCall;
-import src.hxyarn.dialogue.Command;
 import src.hxyarn.program.types.TypeUtils;
 import src.hxyarn.program.types.IType;
 import src.hxyarn.program.Operator;
@@ -19,7 +16,6 @@ import src.hxyarn.compiler.Stmt;
 import src.hxyarn.program.Instruction.OpCode;
 import src.hxyarn.compiler.Expr;
 import src.hxyarn.compiler.Compiler;
-import src.hxyarn.compiler.Stmt.StmtBody;
 import src.hxyarn.compiler.Stmt.StmtLine;
 import src.hxyarn.compiler.Stmt.StmtSet;
 
@@ -105,8 +101,7 @@ class CodeGenerationVisitor extends BaseVisitor {
 			} else if (Std.isOfType(node, Expr)) {
 				var expression = cast(node, Expr);
 				expression.accept(this);
-				// TODO check if this includes the {} correctly
-				sb.add(expressionCount);
+				sb.add('{$expressionCount}');
 				expressionCount++;
 			}
 		}
@@ -202,7 +197,7 @@ class CodeGenerationVisitor extends BaseVisitor {
 				child.accept(this);
 			}
 
-			compiler.emit(OpCode.JUMP, [Operand.fromString(endOfGroupLabel)]);
+			compiler.emit(OpCode.JUMP_TO, [Operand.fromString(endOfGroupLabel)]);
 
 			optionCount++;
 		}
@@ -362,8 +357,6 @@ class CodeGenerationVisitor extends BaseVisitor {
 	}
 
 	public override function visitVariable(stmt:ValueVariable):Dynamic {
-		// stmt.expression.accept(this);
-
 		var variableName = stmt.varId.lexeme;
 		compiler.emit(OpCode.STORE_VARIABLE, [Operand.fromString(variableName)]);
 		compiler.emit(OpCode.POP, []);

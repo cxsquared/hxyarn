@@ -8,8 +8,11 @@ class BooleanType extends TypeBase implements IBridgeableType<Bool> {
 	public function new() {
 		super(defaultMethods());
 		name = "Bool";
-		parent = BuiltInTypes.any;
 		description = "bool";
+	}
+
+	public override function parent():IType {
+		return BuiltInTypes.any;
 	}
 
 	public function toBridgedType(value:Value):Bool {

@@ -12,8 +12,8 @@ typedef MethodCollection = Map<String, Method>;
 
 interface IType {
 	public var name:String;
-	public var parent:IType;
 	public var description(get, null):String;
 	public var methods:MethodCollection;
 	public function defaultMethods():MethodCollection;
+	public function parent():IType;
 }

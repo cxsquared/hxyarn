@@ -9,7 +9,10 @@ class StringType extends TypeBase implements IBridgeableType<String> {
 	public function new() {
 		super(defaultMethods());
 		name = "String";
-		parent = BuiltInTypes.any;
+	}
+
+	public override function parent():IType {
+		return BuiltInTypes.any;
 	}
 
 	public function toBridgedType(value:Value):String {

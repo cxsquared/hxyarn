@@ -20,6 +20,7 @@ class VirtualMachine {
 	public var nodeStartHandler:NodeStartHanlder;
 	public var nodeCompleteHandler:NodeCompleteHandler;
 	public var dialogueCompleteHandler:DialogueCompleteHandler;
+	public var prepareForLinesHandler:PrepareForLinesHandler;
 
 	public var executionState(default, set):ExecutionState;
 
@@ -162,8 +163,11 @@ class VirtualMachine {
 					var strings = [];
 
 					if (expressionCount > 0) {
-						for (expressionIndex in expressionCount - 1...0)
+						var expressionIndex = expressionCount - 1;
+						while (expressionIndex >= 0) {
 							strings[expressionIndex] = state.PopValue().asString();
+							expressionIndex--;
+						}
 					}
 
 					line.substitutions = strings;
@@ -277,8 +281,11 @@ class VirtualMachine {
 					var strings = [];
 
 					if (expressionCount > 0) {
-						for (expressionIndex in expressionCount - 1...0)
+						var expressionIndex = expressionCount - 1;
+						while (expressionIndex >= 0) {
 							strings[expressionIndex] = state.PopValue().asString();
+							expressionIndex--;
+						}
 					}
 
 					line.substitutions = strings;

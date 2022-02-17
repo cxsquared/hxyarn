@@ -1,10 +1,10 @@
 package src.hxyarn.program.types;
 
+import haxe.exceptions.NotImplementedException;
 import src.hxyarn.program.types.IType.MethodCollection;
 
 class TypeBase implements IType {
 	public var name:String;
-	public var parent:IType;
 	public var methods:MethodCollection;
 	public var description(get, null):String;
 
@@ -17,6 +17,10 @@ class TypeBase implements IType {
 		for (key => method in methods) {
 			this.methods.set(key, method);
 		}
+	}
+
+	public function parent():IType {
+		throw new NotImplementedException();
 	}
 
 	public function defaultMethods():MethodCollection {

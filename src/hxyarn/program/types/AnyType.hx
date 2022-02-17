@@ -5,14 +5,16 @@ import src.hxyarn.program.types.IType.MethodCollection;
 class AnyType implements IType {
 	public var name = "Any";
 
-	public var parent:IType = null;
-
 	public var methods:MethodCollection = null;
 
 	public function new() {}
 
 	public function get_description():String {
 		return "Any type.";
+	}
+
+	public function parent():IType {
+		return null;
 	}
 
 	public var description(get, null):String;

@@ -78,9 +78,9 @@ class ValueVariable extends Value {
 }
 
 class ValueString extends Value {
-	public function new(value:Token, literal:Dynamic) {
+	public function new(value:Token) {
 		this.value = value;
-		this.literal = literal;
+		this.literal = value.literal;
 		type = BuiltInTypes.string;
 	}
 

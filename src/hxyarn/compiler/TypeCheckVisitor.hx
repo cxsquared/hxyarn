@@ -4,7 +4,6 @@ import src.hxyarn.compiler.Stmt.StmtJumpToExpression;
 import src.hxyarn.program.types.TypeUtils;
 import src.hxyarn.compiler.Stmt.StmtElseIfClause;
 import src.hxyarn.compiler.Stmt.StmtIfClause;
-import src.hxyarn.compiler.Stmt.StmtJump;
 import src.hxyarn.compiler.Stmt.StmtLineFormattedText;
 import src.hxyarn.compiler.Expr.ExprNot;
 import src.hxyarn.compiler.Expr.ExprNegative;
@@ -86,7 +85,7 @@ class TypeCheckVisitor extends BaseVisitor {
 	public override function visitValueVariable(stmt:ValueVariable):Dynamic {
 		var name = stmt.varId.lexeme;
 
-		if (name == null || name == "")
+		if (name == null)
 			return BuiltInTypes.undefined;
 
 		for (declaration in declarations()) {
@@ -266,8 +265,8 @@ class TypeCheckVisitor extends BaseVisitor {
 
 		var expressionType = BuiltInTypes.undefined;
 
-		for (term in terms) {
-			var type = term.accept(this);
+		for (expression in terms) {
+			var type = expression.accept(this);
 
 			if (type != BuiltInTypes.undefined) {
 				termTypes.push(type);

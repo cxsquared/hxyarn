@@ -24,7 +24,7 @@ class TestBase {
 		dialogue.logErrorMessage = this.logErrorMessage;
 		dialogue.lineHandler = this.lineHandler;
 		dialogue.optionsHandler = this.optionsHandler;
-		dialogue.commandHandler = this.commandHanlder;
+		dialogue.commandHandler = this.commandHandler;
 		dialogue.nodeCompleteHandler = this.nodeCompleteHandler;
 		dialogue.nodeStartHandler = this.nodeStartHandler;
 		dialogue.dialogueCompleteHandler = this.dialogueCompleteHandler;
@@ -52,16 +52,6 @@ class TestBase {
 		do {
 			dialogue.resume();
 		} while (dialogue.isActive());
-	}
-
-	public function getComposedTextForLine(line:Line):String {
-		var text = stringTable[line.id].text;
-
-		for (index => sub in line.substitutions) {
-			text = StringTools.replace(text, '{$index}', sub);
-		}
-
-		return Dialogue.expandFormatFunctions(text, "EN");
 	}
 
 	function setUp(fileName:String) {}
@@ -111,11 +101,12 @@ class TestBase {
 
 			assertInt(testPlan.nextExpectedOptions.length, optionCount);
 
-			for (index => option in optionText) {
-				assertString(testPlan.nextExpectedOptions[index], option);
+			for (index => option in options.options) {
+				assertString(testPlan.nextExpectedOptions[index].line, optionText[index]);
+				assertBool(testPlan.nextExpectedOptions[index].enabled, option.enabled);
 			}
 
-			if (testPlan.nextOptionToSelect != -1) {
+			if (testPlan.nextOptionToSelect > 0) {
 				dialogue.setSelectedOption(testPlan.nextOptionToSelect - 1);
 			} else {
 				dialogue.setSelectedOption(0);
@@ -123,7 +114,15 @@ class TestBase {
 		}
 	}
 
-	public function commandHanlder(command:Command) {
+	public function getComposedTextForLine(line:Line):String {
+		var substitutedText = Dialogue.expandSubstitutions(stringTable[line.id].text, line.substitutions);
+
+		var markup = dialogue.parseMarkup(substitutedText);
+
+		return markup.text;
+	}
+
+	public function commandHandler(command:Command) {
 		trace('Command: ${command.text}');
 
 		if (testPlan != null) {
@@ -153,6 +152,11 @@ class TestBase {
 	}
 
 	function assertString(expected:String, actual:String) {
+		if (expected != actual)
+			throw new Exception('Expected: "$expected", but got "$actual"');
+	}
+
+	function assertBool(expected:Bool, actual:Bool) {
 		if (expected != actual)
 			throw new Exception('Expected: "$expected", but got "$actual"');
 	}

@@ -91,6 +91,8 @@ class DeclaractionVisitor extends BaseVisitor {
 		declaration.sourceNodeLine = nodePositionInFile;
 		declaration.isImplicit = false;
 
+		newDeclarations.push(declaration);
+
 		return value.type;
 	}
 }

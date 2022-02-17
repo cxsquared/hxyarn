@@ -54,10 +54,10 @@ class Value {
 
 	public function asString():String {
 		if (type == BuiltInTypes.string)
-			return Std.string(internalValue);
+			return cast(internalValue, String);
 
 		if (type == BuiltInTypes.number) {
-			var numberValue = Std.parseFloat(internalValue);
+			var numberValue = cast(internalValue, Float);
 			return Math.isNaN(numberValue) ? "NaN" : Std.string(numberValue);
 		}
 
@@ -72,7 +72,7 @@ class Value {
 
 	function getValue():Dynamic {
 		if (type == BuiltInTypes.number)
-			return Std.parseFloat(internalValue);
+			return cast(internalValue, Float);
 
 		if (type == BuiltInTypes.boolean)
 			return cast(internalValue, Bool);

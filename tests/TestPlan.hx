@@ -3,12 +3,17 @@ package tests;
 import sys.io.File;
 import haxe.Exception;
 
+typedef ExpectedOption = {
+	line:String,
+	enabled:Bool
+};
+
 class TestPlan {
 	var steps = new Array<Step>();
 	var currentTestPlanStep = 0;
 
 	public var nextExpectedType:StepType;
-	public var nextExpectedOptions = new Array<String>();
+	public var nextExpectedOptions = new Array<ExpectedOption>();
 	public var nextOptionToSelect = -1;
 	public var nextExpectedValue:String = null;
 	public var path:String;
@@ -31,7 +36,7 @@ class TestPlan {
 
 	public function next() {
 		if (nextExpectedType == StepType.Select) {
-			nextExpectedOptions = new Array<String>();
+			nextExpectedOptions = new Array<ExpectedOption>();
 			nextOptionToSelect = 0;
 		}
 
@@ -47,7 +52,7 @@ class TestPlan {
 					nextExpectedValue = currentStep.stringValue;
 					stop = true;
 				case Option:
-					nextExpectedOptions.push(currentStep.stringValue);
+					nextExpectedOptions.push({line: currentStep.stringValue, enabled: currentStep.expectedOptionEnabled});
 					continue;
 				case Select:
 					nextExpectedType = currentStep.type;
@@ -75,6 +80,7 @@ class Step {
 
 	public var stringValue:String;
 	public var intValue:Int;
+	public var expectedOptionEnabled = true;
 
 	public function new(s:String) {
 		intValue = -1;
@@ -92,20 +98,11 @@ class Step {
 
 			switch (type) {
 				case Line:
-					stringValue = StringTools.trim(reader.readTillEnd());
-					if (stringValue == "*") {
-						stringValue = null;
-					}
+					handleDefault(reader);
 				case Option:
-					stringValue = StringTools.trim(reader.readTillEnd());
-					if (stringValue == "*") {
-						stringValue = null;
-					}
+					handleDefault(reader);
 				case Command:
-					stringValue = StringTools.trim(reader.readTillEnd());
-					if (stringValue == "*") {
-						stringValue = null;
-					}
+					handleDefault(reader);
 				case Select:
 					intValue = reader.readNext(0);
 
@@ -115,6 +112,18 @@ class Step {
 			}
 		} catch (e:Exception) {
 			throw new Exception('Failed to parse step line: "$s" (reason: ${e.message})', e);
+		}
+	}
+
+	function handleDefault(reader:Reader) {
+		stringValue = StringTools.trim(reader.readTillEnd());
+		if (stringValue == "*") {
+			stringValue = null;
+		}
+
+		if (type == StepType.Option && StringTools.endsWith(stringValue, " [disabled]")) {
+			expectedOptionEnabled = false;
+			stringValue = StringTools.replace(stringValue, " [disabled]", "");
 		}
 	}
 }

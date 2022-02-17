@@ -8,7 +8,10 @@ class NumberType extends TypeBase implements IBridgeableType<Float> {
 	public function new() {
 		super(defaultMethods());
 		name = "Number";
-		parent = BuiltInTypes.any;
+	}
+
+	public override function parent():IType {
+		return BuiltInTypes.any;
 	}
 
 	public function toBridgedType(value:Value):Float {

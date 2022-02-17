@@ -1,9 +1,7 @@
 package tests;
 
 import src.hxyarn.program.types.BuiltInTypes;
-import src.hxyarn.dialogue.Dialogue.HandlerExecutionType;
 import src.hxyarn.program.Value;
-import src.hxyarn.compiler.Compiler;
 import tests.TestBase;
 
 class ShipTest extends TestBase {

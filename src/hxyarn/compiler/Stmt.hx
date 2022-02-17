@@ -138,7 +138,7 @@ class StmtLineFormattedText extends Stmt {
 			if (Std.isOfType(child, Token)) {
 				return cast(child, Token).type != TEXT;
 			}
-			return Std.isOfType(child, Expr);
+			return !Std.isOfType(child, Expr);
 		});
 
 		if (nonValidChildren.length > 0)
@@ -308,7 +308,7 @@ class StmtCommandFormattedText extends Stmt {
 			if (Std.isOfType(child, Token)) {
 				return cast(child, Token).type != COMMAND_TEXT;
 			}
-			return Std.isOfType(child, Expr);
+			return !Std.isOfType(child, Expr);
 		});
 
 		if (nonValidChildren.length > 0)
@@ -354,10 +354,10 @@ class StmtShortcutOption extends Stmt {
 }
 
 class StmtDeclare extends Stmt {
-	public function new(variable:ValueVariable, value:Expr, ?as:Token) {
+	public function new(variable:ValueVariable, value:Expr, ?asFuncId:Token) {
 		this.variable = variable;
 		this.value = value;
-		this.as = as;
+		this.asFuncId = asFuncId;
 	}
 
 	override public function accept(visitor:StmtVisitor) {
@@ -366,7 +366,7 @@ class StmtDeclare extends Stmt {
 
 	public var variable(default, null):ValueVariable;
 	public var value(default, null):Expr;
-	public var as(default, null):Token;
+	public var asFuncId(default, null):Token;
 }
 
 class StmtJump extends Stmt {

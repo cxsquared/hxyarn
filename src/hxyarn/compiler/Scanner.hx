@@ -7,6 +7,7 @@ import src.hxyarn.compiler.Token.TokenType;
 class Scanner {
 	var source:String;
 	var tokens:Array<Token> = new Array<Token>();
+	var indents = new GenericStack<Int>();
 
 	var start:Int = 0;
 	var current:Int = 0;
@@ -22,6 +23,7 @@ class Scanner {
 		keywords.set("or", OPERATOR_LOGICAL_OR);
 		keywords.set("and", OPERATOR_LOGICAL_AND);
 		keywords.set("is", OPERATOR_LOGICAL_EQUALS);
+		keywords.set("eq", OPERATOR_LOGICAL_EQUALS);
 		keywords.set("lt", OPERATOR_LOGICAL_LESS);
 		keywords.set("lte", OPERATOR_LOGICAL_LESS_THAN_EQUALS);
 		keywords.set("gt", OPERATOR_LOGICAL_GREATER);
@@ -88,10 +90,10 @@ class Scanner {
 			case '\t':
 			case '\r':
 				match('\n'); // consume newlines for windows
-				line++;
+				newLine();
 			case '\n':
 				// TODO figure out whitespace channels
-				line++;
+				newLine();
 			case '-':
 				if (match("-") && match("-")) {
 					addToken(BODY_START);
@@ -120,12 +122,12 @@ class Scanner {
 			case ' ':
 			case '\r':
 				match('\n'); // consume newlines for windows
-				line++;
+				newLine();
 				// addToken(NEWLINE); TODO: figure out newline channel
 				mode.pop();
 			case '\n':
-				line++;
 				// addToken(NEWLINE); TODO: figure out newline channel
+				newLine();
 				mode.pop();
 			case _:
 				restOfTheLine(true);
@@ -139,10 +141,10 @@ class Scanner {
 			case '\t': // skip
 			case '\r':
 				match('\n'); // consume newlines for windows
-				line++;
+				newLine();
 			// addToken(NEWLINE); TODO: figure out newline channel
 			case '\n':
-				line++;
+				newLine();
 			// addToken(NEWLINE); TODO: figure out newline channel
 			case '/': // commnet
 				if (match('/')) {
@@ -192,24 +194,21 @@ class Scanner {
 		switch (c) {
 			case '\r':
 				match('\n');
-				line++;
-				addToken(NEWLINE);
+				newLine(true);
 				mode.pop();
 			case '\n':
-				line++;
-				addToken(NEWLINE);
+				newLine(true);
 				mode.pop();
 			case '\\':
-				if (match('\\')) {
-					if (match('[') || match(']')) {
-						addToken(TEXT);
-						return;
-					}
-
-					mode.add(TextEscapedMode);
+				if (match('[') || match(']')) {
+					addToken(TEXT);
+					return;
 				}
+
+				mode.add(TextEscapedMode);
 			case '#':
 				addToken(HASHTAG);
+				mode.pop(); // popping to replace current mode
 				mode.add(TextCommandOrHashtagMode);
 				mode.add(HashtagMode);
 			case '{':
@@ -218,6 +217,8 @@ class Scanner {
 			case '<':
 				if (match('<')) {
 					addToken(COMMAND_START);
+					// Popping to actually switch to text command mode before going to command mode
+					mode.pop();
 					mode.add(TextCommandOrHashtagMode);
 					mode.add(CommandMode);
 				} else {
@@ -265,12 +266,10 @@ class Scanner {
 			case '\t':
 			case '\r':
 				match('\n'); // consume newlines for windows
-				line++;
-				// addToken(NEWLINE); TODO: figure out newline channel
+				newLine(true);
 				mode.pop();
 			case '\n':
-				line++;
-				// addToken(NEWLINE); TODO: figure out newline channel
+				newLine(true);
 				mode.pop();
 			case '/':
 				if (match('/'))
@@ -295,6 +294,7 @@ class Scanner {
 			case '#':
 				addToken(HASHTAG);
 			case _:
+				// TODO Hashtag texts actually stop on whitespace
 				restOfTheLine(true, HASHTAG_TEXT);
 				mode.pop();
 		}
@@ -369,8 +369,6 @@ class Scanner {
 	function commandMode(c:String) {
 		switch (c) {
 			case ' ':
-			case '\r':
-			case '\n':
 			case '\t':
 			case '>':
 				if (match('>')) {
@@ -389,7 +387,6 @@ class Scanner {
 			case '>':
 				if (match('>')) {
 					addToken(COMMAND_TEXT_END);
-					mode.pop();
 					mode.pop();
 					return;
 				}
@@ -423,6 +420,10 @@ class Scanner {
 
 	function commandIdMode(c:String) {
 		switch (c) {
+			case '{':
+				addToken(EXPRESSION_START);
+				mode.pop();
+				mode.add(ExpressionMode);
 			case '>':
 				if (match('>')) {
 					addToken(COMMAND_END);
@@ -461,6 +462,8 @@ class Scanner {
 		if (peek() == '{')
 			return false;
 		if (peek() == '[')
+			return false;
+		if (peek() == "\\")
 			return false;
 
 		return !isAtEnd();
@@ -516,6 +519,7 @@ class Scanner {
 				addToken(COMMAND_LOCAL);
 			case _:
 				addToken(COMMAND_TEXT);
+				mode.pop(); // popping to replace current mode
 				mode.add(CommandTextMode);
 		}
 	}
@@ -576,11 +580,9 @@ class Scanner {
 			advance();
 		}
 
-		line++;
 		if (asToken) {
 			var value = source.substr(start, current - start);
 			addToken(token, value);
-			advance();
 		}
 	}
 
@@ -632,6 +634,62 @@ class Scanner {
 
 	function isAlphaNumeric(c:String):Bool {
 		return isAlpha(c) || isDigit(c);
+	}
+
+	function newLine(?storeToken:Bool = false) {
+		line++;
+		var currentLenght = lengthOfIndent();
+
+		if (storeToken) {
+			var value = source.substr(start + 1, current - 2 - start);
+			addToken(NEWLINE, value);
+		}
+
+		var previousIndent:Int;
+		if (this.indents.isEmpty()) {
+			previousIndent = 0;
+		} else {
+			previousIndent = this.indents.first();
+		}
+
+		if (currentLenght > previousIndent) {
+			this.indents.add(currentLenght);
+			addToken(INDENT, '<indent to $currentLenght>');
+		} else if (currentLenght < previousIndent) {
+			while (currentLenght < previousIndent) {
+				previousIndent = this.indents.pop();
+				addToken(DEDENT, '<dedent from $previousIndent>');
+
+				if (!this.indents.isEmpty()) {
+					previousIndent = this.indents.first();
+				} else {
+					previousIndent = 0;
+				}
+			}
+		}
+	}
+
+	function lengthOfIndent():Int {
+		var length = 0;
+		var sawSpaces = false;
+		var sawTabs = false;
+
+		while (peek() == ' ' || peek() == '\t') {
+			if (match(' ')) {
+				length += 1;
+				sawSpaces = true;
+			}
+
+			if (match('\t')) {
+				length += 8;
+				sawTabs = true;
+			}
+		}
+
+		if (sawSpaces && sawTabs)
+			throw new Exception('Cannot mix spaces and tabs');
+
+		return length;
 	}
 }
 

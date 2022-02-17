@@ -82,7 +82,9 @@ class StmtParser {
 		if (match([NEWLINE]))
 			return new StmtHeader(id, previous());
 
-		var value = consume(REST_OF_LINE, "");
+		var value:Token = null;
+		if (peek().type == REST_OF_LINE)
+			value = consume(REST_OF_LINE, "");
 
 		return new StmtHeader(id, value);
 	}
@@ -90,38 +92,38 @@ class StmtParser {
 	function body():StmtBody {
 		var stmts = new Array<Stmt>();
 		while (!match([BODY_END])) {
-			stmts.push(statement());
+			stmts = stmts.concat(statement());
 		}
 
 		return new StmtBody(stmts);
 	}
 
-	function statement():Stmt {
+	function statement():Array<Stmt> {
 		// shortcut
 		if (match([SHORTCUT_ARROW]))
-			return shortcutOptionStatement();
+			return [shortcutOptionStatement()];
 
 		// command
 		if (match([COMMAND_START])) {
 			// if
 			if (match([COMMAND_IF]))
-				return ifStatement();
+				return [ifStatement()];
 
 			// set
 			if (match([COMMAND_SET]))
-				return setStatement();
+				return [setStatement()];
 
 			// call
 			if (match([COMMAND_CALL]))
-				return callStatement();
+				return [callStatement()];
 
 			// declare
 			if (match([COMMAND_DECLARE]))
-				return declareStatement();
+				return [declareStatement()];
 
 			// jump
 			if (match([COMMAND_JUMP]))
-				return jumpStatement();
+				return [jumpStatement()];
 
 			if (match([COMMAND_TEXT, COMMAND_EXPRESSION_START])) {
 				var text = commandFormattedText();
@@ -130,13 +132,22 @@ class StmtParser {
 					hashtags.push(hashtag());
 				}
 
-				return new StmtCommand(text, hashtags);
+				return [new StmtCommand(text, hashtags)];
 			}
+		}
+
+		if (match([INDENT])) {
+			var statements = new Array<Stmt>();
+			while (!match([DEDENT])) {
+				statements = statements.concat(statement());
+			}
+
+			return statements;
 		}
 
 		// TODO indent/dedent
 		// line
-		return lineStatement();
+		return [lineStatement()];
 	}
 
 	function shortcutOptionStatement():StmtShortcutOptionStatement {
@@ -150,10 +161,11 @@ class StmtParser {
 
 	function shortcutOption():StmtShortcutOption {
 		var line = lineStatement();
-		// TODO indent/dedent
 		var statements = new Array<Stmt>();
-		while (peek().type != TokenType.SHORTCUT_ARROW && peek().type != TokenType.DEDENT && peek().type != TokenType.BODY_END) {
-			statements.push(statement());
+		if (match([INDENT])) {
+			while (!match([DEDENT])) {
+				statements = statements.concat(statement());
+			}
 		}
 		return new StmtShortcutOption(line, statements);
 	}
@@ -181,7 +193,7 @@ class StmtParser {
 
 		var statements = new Array<Stmt>();
 		while (peekForward(1).type != COMMAND_ELSEIF && peekForward(1).type != COMMAND_ELSE && peekForward(1).type != COMMAND_ENDIF) {
-			statements.push(statement());
+			statements = statements.concat(statement());
 		}
 
 		return new StmtIfClause(expression, statements);
@@ -192,7 +204,7 @@ class StmtParser {
 		consume(COMMAND_END, "Expected >>");
 		var statements = new Array<Stmt>();
 		while (peekForward(1).type != COMMAND_ELSEIF && peekForward(1).type != COMMAND_ELSE && peekForward(1).type != COMMAND_ENDIF) {
-			statements.push(statement());
+			statements = statements.concat(statement());
 		}
 
 		return new StmtElseIfClause(expression, statements);
@@ -202,7 +214,7 @@ class StmtParser {
 		consume(COMMAND_END, "Expected >>");
 		var statements = new Array<Stmt>();
 		while (peekForward(1).type != COMMAND_ENDIF) {
-			statements.push(statement());
+			statements = statements.concat(statement());
 		}
 
 		return new StmtElseClause(statements);
@@ -286,7 +298,7 @@ class StmtParser {
 		var value = value();
 		var as:Token = null;
 		if (match([EXPRESSION_AS])) {
-			as = consume(EXPRESSION_AS, "Expected as");
+			as = consume(FUNC_ID, "Expected Id");
 		}
 		consume(COMMAND_END, "expected >>");
 
@@ -303,11 +315,15 @@ class StmtParser {
 	}
 
 	function commandFormattedText():StmtCommandFormattedText {
-		// TODO handle expressions
 		var texts = new Array<Dynamic>();
 		texts.push(previous());
 		while (!match([COMMAND_TEXT_END])) {
-			texts.push(consume(COMMAND_TEXT, "Expected Text"));
+			if (match([COMMAND_EXPRESSION_START])) {
+				texts.push(expression());
+				consume(EXPRESSION_END, "expected }");
+			} else {
+				texts.push(consume(COMMAND_TEXT, "expected text"));
+			}
 		}
 		return new StmtCommandFormattedText(texts);
 	}
@@ -511,7 +527,7 @@ class StmtParser {
 			return new Expr.ExprValue(new ValueNumber(previous(), previous().lexeme));
 
 		if (match([TokenType.STRING]))
-			return new Expr.ExprValue(new ValueString(previous(), previous().lexeme));
+			return new Expr.ExprValue(new ValueString(previous()));
 
 		if (peek().type == TokenType.VAR_ID)
 			return new Expr.ExprValue(variable());
