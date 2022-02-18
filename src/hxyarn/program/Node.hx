@@ -1,4 +1,4 @@
-package src.hxyarn.program;
+package hxyarn.program;
 
 import haxe.display.Display.Package;
 import haxe.Int32;

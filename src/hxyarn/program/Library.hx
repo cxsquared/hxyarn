@@ -1,8 +1,8 @@
-package src.hxyarn.program;
+package hxyarn.program;
 
-import src.hxyarn.program.types.TypeUtils;
-import src.hxyarn.program.types.IType;
-import src.hxyarn.program.types.BuiltInTypes;
+import hxyarn.program.types.TypeUtils;
+import hxyarn.program.types.IType;
+import hxyarn.program.types.BuiltInTypes;
 import haxe.Exception;
 
 typedef ValueFunction = Array<Value>->Dynamic;

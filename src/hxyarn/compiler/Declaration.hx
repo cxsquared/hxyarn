@@ -1,6 +1,6 @@
-package src.hxyarn.compiler;
+package hxyarn.compiler;
 
-import src.hxyarn.program.types.IType;
+import hxyarn.program.types.IType;
 
 class Declaration {
 	public var name:String;

@@ -1,6 +1,6 @@
-package src.hxyarn.program.types;
+package hxyarn.program.types;
 
-import src.hxyarn.program.types.IType.MethodCollection;
+import hxyarn.program.types.IType.MethodCollection;
 
 class NumberType extends TypeBase implements IBridgeableType<Float> {
 	public var defaultValue = 0.0;

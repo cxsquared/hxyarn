@@ -1,10 +1,10 @@
-package src.hxyarn.compiler;
+package hxyarn.compiler;
 
-import src.hxyarn.compiler.Stmt.StmtDeclare;
-import src.hxyarn.compiler.Stmt.StmtNode;
-import src.hxyarn.compiler.Stmt.StmtFileHashtag;
-import src.hxyarn.program.types.BuiltInTypes;
-import src.hxyarn.program.types.IType;
+import hxyarn.compiler.Stmt.StmtDeclare;
+import hxyarn.compiler.Stmt.StmtNode;
+import hxyarn.compiler.Stmt.StmtFileHashtag;
+import hxyarn.program.types.BuiltInTypes;
+import hxyarn.program.types.IType;
 
 class DeclaractionVisitor extends BaseVisitor {
 	var existingDeclarations:Array<Declaration> = [];
@@ -74,7 +74,7 @@ class DeclaractionVisitor extends BaseVisitor {
 
 		var constantValueVistitor = new ConstantValueVisitor(stmt, sourceFileName, types);
 		var constantValue = constantValueVistitor.visitDeclare(stmt);
-		var value = cast(constantValue, src.hxyarn.program.Value);
+		var value = cast(constantValue, hxyarn.program.Value);
 
 		// TODO Typed Declare statement?
 		var positionInFile = stmt.variable.varId.line;

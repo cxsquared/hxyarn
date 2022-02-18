@@ -1,12 +1,12 @@
-package src.hxyarn.program;
+package hxyarn.program;
 
-import src.hxyarn.dialogue.DialogueExcpetion.DialogueException;
-import src.hxyarn.dialogue.Line;
-import src.hxyarn.dialogue.Option;
-import src.hxyarn.dialogue.OptionSet;
-import src.hxyarn.dialogue.Command;
+import hxyarn.dialogue.DialogueExcpetion.DialogueException;
+import hxyarn.dialogue.Line;
+import hxyarn.dialogue.Option;
+import hxyarn.dialogue.OptionSet;
+import hxyarn.dialogue.Command;
 import haxe.Exception;
-import src.hxyarn.dialogue.Dialogue;
+import hxyarn.dialogue.Dialogue;
 
 class VirtualMachine {
 	var dialogue:Dialogue;

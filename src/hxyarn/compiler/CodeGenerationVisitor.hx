@@ -1,23 +1,23 @@
-package src.hxyarn.compiler;
+package hxyarn.compiler;
 
-import src.hxyarn.compiler.Value.ValueString;
-import src.hxyarn.compiler.Value.ValueFalse;
-import src.hxyarn.compiler.Value.ValueTrue;
-import src.hxyarn.compiler.Value.ValueNumber;
-import src.hxyarn.compiler.Value.ValueNull;
-import src.hxyarn.compiler.Value.ValueFunctionCall;
-import src.hxyarn.program.types.TypeUtils;
-import src.hxyarn.program.types.IType;
-import src.hxyarn.program.Operator;
-import src.hxyarn.compiler.Value.ValueVariable;
-import src.hxyarn.compiler.BaseVisitor;
-import src.hxyarn.program.Operand;
-import src.hxyarn.compiler.Stmt;
-import src.hxyarn.program.Instruction.OpCode;
-import src.hxyarn.compiler.Expr;
-import src.hxyarn.compiler.Compiler;
-import src.hxyarn.compiler.Stmt.StmtLine;
-import src.hxyarn.compiler.Stmt.StmtSet;
+import hxyarn.compiler.Value.ValueString;
+import hxyarn.compiler.Value.ValueFalse;
+import hxyarn.compiler.Value.ValueTrue;
+import hxyarn.compiler.Value.ValueNumber;
+import hxyarn.compiler.Value.ValueNull;
+import hxyarn.compiler.Value.ValueFunctionCall;
+import hxyarn.program.types.TypeUtils;
+import hxyarn.program.types.IType;
+import hxyarn.program.Operator;
+import hxyarn.compiler.Value.ValueVariable;
+import hxyarn.compiler.BaseVisitor;
+import hxyarn.program.Operand;
+import hxyarn.compiler.Stmt;
+import hxyarn.program.Instruction.OpCode;
+import hxyarn.compiler.Expr;
+import hxyarn.compiler.Compiler;
+import hxyarn.compiler.Stmt.StmtLine;
+import hxyarn.compiler.Stmt.StmtSet;
 
 class CodeGenerationVisitor extends BaseVisitor {
 	var compiler:Compiler;

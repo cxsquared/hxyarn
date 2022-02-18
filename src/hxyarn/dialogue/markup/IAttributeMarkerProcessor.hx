@@ -1,4 +1,4 @@
-package src.hxyarn.dialogue.markup;
+package hxyarn.dialogue.markup;
 
 interface IAttributeMarkerProcessor {
 	function replacementTextForMarker(marker:MarkupAttributeMarker):String;

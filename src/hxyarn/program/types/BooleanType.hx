@@ -1,6 +1,6 @@
-package src.hxyarn.program.types;
+package hxyarn.program.types;
 
-import src.hxyarn.program.types.IType.MethodCollection;
+import hxyarn.program.types.IType.MethodCollection;
 
 class BooleanType extends TypeBase implements IBridgeableType<Bool> {
 	public var defaultValue = false;

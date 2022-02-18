@@ -1,7 +1,7 @@
-package src.hxyarn.compiler;
+package hxyarn.compiler;
 
-import src.hxyarn.program.Operator;
-import src.hxyarn.compiler.Token.TokenType;
+import hxyarn.program.Operator;
+import hxyarn.compiler.Token.TokenType;
 
 class OperatorUtils {
 	public static var tokensToOperators = [

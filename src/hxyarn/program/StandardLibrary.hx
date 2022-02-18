@@ -1,7 +1,7 @@
-package src.hxyarn.program;
+package hxyarn.program;
 
-import src.hxyarn.program.types.BuiltInTypes;
-import src.hxyarn.program.VirtualMachine.TokenType;
+import hxyarn.program.types.BuiltInTypes;
+import hxyarn.program.VirtualMachine.TokenType;
 
 class StandardLibrary extends Library {
 	public function new() {

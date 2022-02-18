@@ -1,4 +1,4 @@
-package src.hxyarn.dialogue.markup;
+package hxyarn.dialogue.markup;
 
 class NoMarkupTextProcessor implements IAttributeMarkerProcessor {
 	public function new() {}

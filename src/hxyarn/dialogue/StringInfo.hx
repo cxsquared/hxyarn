@@ -1,4 +1,4 @@
-package src.hxyarn.dialogue;
+package hxyarn.dialogue;
 
 class StringInfo {
 	public var text:String;

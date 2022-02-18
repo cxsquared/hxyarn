@@ -1,4 +1,4 @@
-package src.hxyarn.dialogue;
+package hxyarn.dialogue;
 
 import haxe.Exception;
 

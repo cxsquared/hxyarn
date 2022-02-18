@@ -1,8 +1,8 @@
-package src.hxyarn.compiler;
+package hxyarn.compiler;
 
 import haxe.ds.GenericStack;
 import haxe.Exception;
-import src.hxyarn.compiler.Token.TokenType;
+import hxyarn.compiler.Token.TokenType;
 
 class Scanner {
 	var source:String;

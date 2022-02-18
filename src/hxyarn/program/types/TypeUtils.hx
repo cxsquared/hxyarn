@@ -1,4 +1,4 @@
-package src.hxyarn.program.types;
+package hxyarn.program.types;
 
 class TypeUtils {
 	public static function findImplementingTypeForMethod(type:IType, methodName:String):IType {

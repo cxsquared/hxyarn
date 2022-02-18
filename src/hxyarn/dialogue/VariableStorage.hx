@@ -1,7 +1,7 @@
-package src.hxyarn.dialogue;
+package hxyarn.dialogue;
 
-import src.hxyarn.program.types.BuiltInTypes;
-import src.hxyarn.program.Value;
+import hxyarn.program.types.BuiltInTypes;
+import hxyarn.program.Value;
 
 interface VariableStorage {
 	public function setValue(variableName:String, value:Dynamic):Void;

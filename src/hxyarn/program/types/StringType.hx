@@ -1,7 +1,7 @@
-package src.hxyarn.program.types;
+package hxyarn.program.types;
 
-import src.hxyarn.program.types.IType.MethodCollection;
-import src.hxyarn.program.Operator;
+import hxyarn.program.types.IType.MethodCollection;
+import hxyarn.program.Operator;
 
 class StringType extends TypeBase implements IBridgeableType<String> {
 	public var defaultValue = "";

@@ -1,4 +1,4 @@
-package src.hxyarn.dialogue.markup;
+package hxyarn.dialogue.markup;
 
 class MarkupAttribute {
 	public var position:Int;

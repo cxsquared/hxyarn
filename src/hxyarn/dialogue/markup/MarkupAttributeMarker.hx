@@ -1,4 +1,4 @@
-package src.hxyarn.dialogue.markup;
+package hxyarn.dialogue.markup;
 
 class MarkupAttributeMarker {
 	public function new(name:String, position:Int, sourcePosition:Int, properties:Array<MarkupProperty>, type:TagType) {

@@ -1,4 +1,4 @@
-package src.hxyarn.dialogue;
+package hxyarn.dialogue;
 
 class Command {
 	public function new(text:String) {

@@ -1,7 +1,7 @@
-package src.hxyarn.compiler;
+package hxyarn.compiler;
 
-import src.hxyarn.program.types.IType;
-import src.hxyarn.compiler.Value.ValueVariable;
+import hxyarn.program.types.IType;
+import hxyarn.compiler.Value.ValueVariable;
 import haxe.Exception;
 
 interface ExprVisitor {

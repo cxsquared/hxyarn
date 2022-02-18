@@ -1,14 +1,14 @@
-package src.hxyarn.compiler;
+package hxyarn.compiler;
 
-import src.hxyarn.compiler.DeclarationVisitor.DeclaractionVisitor;
-import src.hxyarn.program.types.BuiltInTypes;
-import src.hxyarn.compiler.Stmt.StmtDialogue;
-import src.hxyarn.program.Operand;
-import src.hxyarn.program.Instruction;
+import hxyarn.compiler.DeclarationVisitor.DeclaractionVisitor;
+import hxyarn.program.types.BuiltInTypes;
+import hxyarn.compiler.Stmt.StmtDialogue;
+import hxyarn.program.Operand;
+import hxyarn.program.Instruction;
 import sys.FileSystem;
-import src.hxyarn.program.Node;
+import hxyarn.program.Node;
 import sys.io.File;
-import src.hxyarn.program.Program;
+import hxyarn.program.Program;
 
 class Compiler {
 	var labelCount = 0;

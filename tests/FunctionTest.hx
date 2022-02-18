@@ -1,7 +1,7 @@
 package tests;
 
-import src.hxyarn.program.types.BuiltInTypes;
-import src.hxyarn.program.Value;
+import hxyarn.program.types.BuiltInTypes;
+import hxyarn.program.Value;
 import tests.TestBase;
 
 class FunctionTest extends TestBase {

@@ -1,4 +1,4 @@
-package src.hxyarn.program;
+package hxyarn.program;
 
 enum Operator {
 	NONE;

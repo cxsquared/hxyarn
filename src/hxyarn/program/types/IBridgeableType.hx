@@ -1,4 +1,4 @@
-package src.hxyarn.program.types;
+package hxyarn.program.types;
 
 interface IBridgeableType<T> extends IType {
 	public var defaultValue:T;

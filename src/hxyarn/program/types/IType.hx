@@ -1,6 +1,6 @@
-package src.hxyarn.program.types;
+package hxyarn.program.types;
 
-import src.hxyarn.program.Library.ValueFunction;
+import hxyarn.program.Library.ValueFunction;
 
 typedef Method = {
 	func:ValueFunction,

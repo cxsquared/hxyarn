@@ -1,4 +1,4 @@
-package src.hxyarn.compiler;
+package hxyarn.compiler;
 
 class Token {
 	public var type:TokenType;

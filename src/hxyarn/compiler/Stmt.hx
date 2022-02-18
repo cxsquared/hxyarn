@@ -1,7 +1,7 @@
-package src.hxyarn.compiler;
+package hxyarn.compiler;
 
-import src.hxyarn.compiler.Value.ValueVariable;
-import src.hxyarn.compiler.Value.ValueFunctionCall;
+import hxyarn.compiler.Value.ValueVariable;
+import hxyarn.compiler.Value.ValueFunctionCall;
 import haxe.Exception;
 
 interface StmtVisitor {

@@ -1,7 +1,7 @@
-package src.hxyarn.program.types;
+package hxyarn.program.types;
 
 import haxe.exceptions.NotImplementedException;
-import src.hxyarn.program.types.IType.MethodCollection;
+import hxyarn.program.types.IType.MethodCollection;
 
 class TypeBase implements IType {
 	public var name:String;

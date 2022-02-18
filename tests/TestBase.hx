@@ -1,15 +1,15 @@
 package tests;
 
-import src.hxyarn.compiler.Compiler;
+import hxyarn.compiler.Compiler;
 import haxe.Exception;
 import tests.TestPlan;
-import src.hxyarn.program.Value;
-import src.hxyarn.dialogue.Command;
-import src.hxyarn.dialogue.OptionSet;
-import src.hxyarn.dialogue.Line;
-import src.hxyarn.dialogue.VariableStorage.MemoryVariableStore;
-import src.hxyarn.dialogue.Dialogue;
-import src.hxyarn.dialogue.StringInfo;
+import hxyarn.program.Value;
+import hxyarn.dialogue.Command;
+import hxyarn.dialogue.OptionSet;
+import hxyarn.dialogue.Line;
+import hxyarn.dialogue.VariableStorage.MemoryVariableStore;
+import hxyarn.dialogue.Dialogue;
+import hxyarn.dialogue.StringInfo;
 
 class TestBase {
 	var storage = new MemoryVariableStore();

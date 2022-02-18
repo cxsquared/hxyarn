@@ -1,15 +1,15 @@
-package src.hxyarn.dialogue;
+package hxyarn.dialogue;
 
-import src.hxyarn.dialogue.markup.MarkupAttributeMarker;
-import src.hxyarn.dialogue.markup.IAttributeMarkerProcessor;
-import src.hxyarn.dialogue.markup.MarkupParseResult;
-import src.hxyarn.program.StandardLibrary;
-import src.hxyarn.program.Library;
-import src.hxyarn.dialogue.CLDR.PluralCase;
-import src.hxyarn.dialogue.DialogueExcpetion.DialogueException;
-import src.hxyarn.program.VirtualMachine;
-import src.hxyarn.dialogue.OptionSet;
-import src.hxyarn.program.Program;
+import hxyarn.dialogue.markup.MarkupAttributeMarker;
+import hxyarn.dialogue.markup.IAttributeMarkerProcessor;
+import hxyarn.dialogue.markup.MarkupParseResult;
+import hxyarn.program.StandardLibrary;
+import hxyarn.program.Library;
+import hxyarn.dialogue.CLDR.PluralCase;
+import hxyarn.dialogue.DialogueExcpetion.DialogueException;
+import hxyarn.program.VirtualMachine;
+import hxyarn.dialogue.OptionSet;
+import hxyarn.program.Program;
 
 typedef Logger = String->Void;
 typedef LineHandler = Line->Void;

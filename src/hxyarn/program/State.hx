@@ -1,8 +1,8 @@
-package src.hxyarn.program;
+package hxyarn.program;
 
-import src.hxyarn.program.types.BuiltInTypes;
+import hxyarn.program.types.BuiltInTypes;
 import haxe.ds.GenericStack;
-import src.hxyarn.dialogue.Line;
+import hxyarn.dialogue.Line;
 
 typedef LineKeyValuePair = {line:Line, value:String, enabled:Bool};
 

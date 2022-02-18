@@ -1,4 +1,4 @@
-package src.hxyarn.dialogue;
+package hxyarn.dialogue;
 
 // https://www.unicode.org/cldr/cldr-aux/charts/36.1/supplemental/language_plural_rules.html
 // TODO: Pull this out into it's own library

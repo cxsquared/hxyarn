@@ -1,4 +1,4 @@
-package src.hxyarn.dialogue.markup;
+package hxyarn.dialogue.markup;
 
 class MarkupProperty {
 	public function new(name:String, value:MarkupValue) {

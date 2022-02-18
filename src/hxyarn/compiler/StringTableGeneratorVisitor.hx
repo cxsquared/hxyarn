@@ -1,8 +1,8 @@
-package src.hxyarn.compiler;
+package hxyarn.compiler;
 
-import src.hxyarn.compiler.Stmt.StmtHashtag;
-import src.hxyarn.compiler.Stmt.StmtLine;
-import src.hxyarn.compiler.Stmt.StmtNode;
+import hxyarn.compiler.Stmt.StmtHashtag;
+import hxyarn.compiler.Stmt.StmtLine;
+import hxyarn.compiler.Stmt.StmtNode;
 
 typedef FormattedTextOuput = {outputString:String, expressionCount:Int};
 

@@ -1,15 +1,15 @@
-package src.hxyarn.dialogue;
+package hxyarn.dialogue;
 
 import haxe.iterators.StringIteratorUnicode;
-import src.hxyarn.dialogue.markup.NoMarkupTextProcessor;
-import src.hxyarn.dialogue.markup.MarkupProperty;
-import src.hxyarn.dialogue.markup.MarkupValue;
-import src.hxyarn.dialogue.markup.MarkupValue.MarkupValueType;
-import src.hxyarn.dialogue.markup.MarkupAttributeMarker;
-import src.hxyarn.dialogue.markup.MarkupAttribute;
-import src.hxyarn.dialogue.markup.MarkupParseResult;
+import hxyarn.dialogue.markup.NoMarkupTextProcessor;
+import hxyarn.dialogue.markup.MarkupProperty;
+import hxyarn.dialogue.markup.MarkupValue;
+import hxyarn.dialogue.markup.MarkupValue.MarkupValueType;
+import hxyarn.dialogue.markup.MarkupAttributeMarker;
+import hxyarn.dialogue.markup.MarkupAttribute;
+import hxyarn.dialogue.markup.MarkupParseResult;
 
-using src.hxyarn.dialogue.markup.IAttributeMarkerProcessor;
+using hxyarn.dialogue.markup.IAttributeMarkerProcessor;
 
 class LineParser {
 	public static final ReplacementMarkerContents = "contents";

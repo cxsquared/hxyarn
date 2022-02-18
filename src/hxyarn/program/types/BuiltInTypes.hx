@@ -1,4 +1,4 @@
-package src.hxyarn.program.types;
+package hxyarn.program.types;
 
 class BuiltInTypes {
 	public static final undefined:IType = null;
