@@ -1,5 +1,6 @@
 package hxyarn.dialogue;
 
+import hxyarn.program.Value;
 import hxyarn.dialogue.markup.MarkupAttributeMarker;
 import hxyarn.dialogue.markup.IAttributeMarkerProcessor;
 import hxyarn.dialogue.markup.MarkupParseResult;
@@ -35,6 +36,9 @@ class Dialogue implements IAttributeMarkerProcessor {
 
 	static inline var formatFunctionValuePlaceHolder = "<VALUE PLACEHOLDER>";
 
+	public var waiting:Bool = false;
+	public var resumeAfterWait:Bool = true;
+
 	var program(default, set):Program;
 
 	function set_program(newProgram) {
@@ -52,11 +56,14 @@ class Dialogue implements IAttributeMarkerProcessor {
 
 	public var lineHandler(get, set):LineHandler;
 	public var optionsHandler(get, set):OptionsHandler;
+
 	public var commandHandler(get, set):CommandHandler;
 	public var nodeStartHandler(get, set):NodeStartHanlder;
 	public var nodeCompleteHandler(get, set):NodeCompleteHandler;
 	public var dialogueCompleteHandler(get, set):DialogueCompleteHandler;
 	public var prepareForLinesHandler(get, set):PrepareForLinesHandler;
+
+	var userCommandHandler:CommandHandler;
 
 	public function get_lineHandler() {
 		return vm.lineHandler;
@@ -75,11 +82,11 @@ class Dialogue implements IAttributeMarkerProcessor {
 	}
 
 	public function get_commandHandler() {
-		return vm.commandHandler;
+		return userCommandHandler;
 	}
 
 	public function set_commandHandler(newCommandHandler) {
-		return vm.commandHandler = newCommandHandler;
+		return userCommandHandler = newCommandHandler;
 	}
 
 	public function get_nodeStartHandler() {
@@ -130,6 +137,7 @@ class Dialogue implements IAttributeMarkerProcessor {
 		library = new Library();
 
 		this.vm = new VirtualMachine(this);
+		vm.commandHandler = this.handleCommand;
 
 		library.importLibrary(new StandardLibrary());
 
@@ -138,6 +146,25 @@ class Dialogue implements IAttributeMarkerProcessor {
 		lineParser.registerMarkerProcessor("select", this);
 		lineParser.registerMarkerProcessor("plural", this);
 		lineParser.registerMarkerProcessor("ordinal", this);
+	}
+
+	function handleCommand(command:Command) {
+		if (StringTools.startsWith(command.text, "wait")) {
+			var timeInSeconds = Std.parseFloat(command.text.substring(4));
+			waiting = true;
+			haxe.Timer.delay(function() {
+				waiting = false;
+				if (resumeAfterWait) {
+					this.resume();
+				}
+			}, Std.int(timeInSeconds * 1000));
+
+			return;
+		}
+
+		if (commandHandler != null) {
+			commandHandler(command);
+		}
 	}
 
 	public function setProgram(program:Program) {
@@ -165,10 +192,16 @@ class Dialogue implements IAttributeMarkerProcessor {
 		if (vm.executionState == ExecutionState.Running)
 			return;
 
+		resumeAfterWait = true;
+
+		if (waiting)
+			return;
+
 		vm.contiune();
 	}
 
 	public function stop() {
+		resumeAfterWait = false;
 		if (vm != null)
 			vm.stop();
 	}
