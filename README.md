@@ -2,13 +2,19 @@
 
 A Haxe port of [Yarn Spinner](https://github.com/YarnSpinnerTool/YarnSpinner)
 
-This is currently a work in progress though the major functionality has been implemented.
+This is currently a work in progress though the major functionality has been implemented. I've probably got most of V2.1 implemented...probably...
+
+Most of the non-Unity specific [documentation on the Yarn Spinner website](https://docs.yarnspinner.dev/) is valid for this library in some fashion.
+
+Feel free to support the main YarnSpinner team over on [Patreon](https://www.patreon.com/secretlab)
 
 ## Install
 
-### Standard
+You should probably install this from development because I'm not positive this is super stable yet. Once I'm confident it is stable I'll submit it to haxelib
 
-```sh
+### Development Build
+
+```posh
 haxelib git hxyarn https://github.com/cxsquared/hxyarn.git
 ```
 
@@ -49,12 +55,24 @@ class DialogueExample {
         dialogue.addProgram(compiler.program);
     }
 
-    public function start() {
-        dialogue.setNode("Start");
+    public function load(text:String, name:String) {
+        var compiler = Compiler.compileText(text, name);
+        stringTable = compiler.stringTable;
 
-        do {
-            dialogue.resume();
-        } while (dialogue.isActive());
+        dialogue.addProgram(compiler.program);
+    }
+
+    public function runNode(nodeName:String) {
+        dialogue.setNode(nodeName);
+        dialogue.resume();
+    }
+
+    public function unload() {
+        dialogue.unloadAll();
+    }
+
+    public function resume() {
+        dialogue.resume();
     }
 
     public function logDebugMessage(message:String):Void {
@@ -105,7 +123,7 @@ class DialogueExample {
 
 ### Custom Functions
 
-You can register custom functions like ```<<hello_world>>``` and ```<<camera_shake 1.5>>``` to be called from your yarn files. Due to implementation details all functions must take in an array of hxyarn.program.Values even if it doesn't expect any and must return an object. Valid return types are ```Bool```, ```Float```, ```String```, and ```Null```.
+You can register custom functions like ```<<call hello_world()>>``` and ```<<call camera_shake(1.5)>>``` to be called from your yarn files. Due to implementation details all functions must take in an array of hxyarn.program.Values even if it doesn't expect any and must return an object. Valid return types are ```Bool```, ```Float```, ```String```, and ```Null```.
 
 ```haxe
 import hxyarn.program.types.BuiltInTypes;
@@ -122,6 +140,27 @@ dialogue.library.registerFunction("camera_shake", 1, function(values:Array<Value
 });
 ```
 
-## Known Issues
+### Hot Reload
 
+If you are using [Heaps](https://heaps.io/) you can hot reload your .yarn files. This only works if you are using local resources and not embedded resources.
+
+```haxe
+hxd.Res.initLocal();
+
+var manager = new DialogueManager(sceneEventBus);
+manager.load(hxd.Res.yarnfile.entry.getText(), hxd.Res.yarnfile.name);
+
+hxd.Res.yarnfile.watch(function() {
+    manager.stop();
+    manager.unload();
+    manager.load(hxd.Res.yarnfile.entry.getText(), hxd.Res.yarnfile.name);
+});
+```
+
+## Known Issues/Not Implemented
+
+- Missing built in functions: ```round_places```, ```decimal```
+- Two failing unit tests:
+  - ```Identifies.yarn``` - Issue with "fun" characters
 - Lacking support for emojis and most non latin unicode characters
+- No localization support

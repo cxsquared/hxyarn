@@ -42,10 +42,10 @@ class Main {
 		runTest('./yarns/yarn/Escaping.yarn', './yarns/testcases/Escaping.testplan');
 		// Passing
 		runTest('./yarns/yarn/Smileys.yarn', './yarns/testcases/Smileys.testplan');
+		// Passing
+		runTest('./yarns/yarn/Jumps.yarn', './yarns/testcases/Jumps.testplan');
 		// Failing
 		runTest('./yarns/yarn/Identifiers.yarn', './yarns/testcases/Identifiers.testplan');
-		// Failing
-		runTest('./yarns/yarn/Jumps.yarn', './yarns/testcases/Jumps.testplan');
 	}
 
 	static function runTest(file:String, testPlan:String) {

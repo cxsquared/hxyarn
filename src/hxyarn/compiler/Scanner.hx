@@ -410,7 +410,8 @@ class Scanner {
 				}
 				throw 'Unexpected char at line $line: $c';
 			case '{':
-				addToken(COMMAND_EXPRESSION_START);
+				addToken(EXPRESSION_START);
+				mode.pop(); // Pop the just switch modes
 				mode.add(ExpressionMode);
 			case _:
 				identifier(ID);
@@ -487,36 +488,46 @@ class Scanner {
 		switch (value) {
 			case "if":
 				addToken(COMMAND_IF);
+				consumeWhitespace();
 				mode.add(ExpressionMode);
 			case "elseif":
 				addToken(COMMAND_ELSEIF);
+				consumeWhitespace();
 				mode.add(ExpressionMode);
 			case "else":
 				addToken(COMMAND_ELSE);
+				consumeWhitespace();
 			case "set":
 				addToken(COMMAND_SET);
+				consumeWhitespace();
 				mode.add(ExpressionMode);
 			case "endif":
 				addToken(COMMAND_ENDIF);
 			case "call":
 				addToken(COMMAND_CALL);
+				consumeWhitespace();
 				mode.add(ExpressionMode);
 			case "declare":
 				addToken(COMMAND_DECLARE);
+				consumeWhitespace();
 				mode.add(ExpressionMode);
 			case "jump":
 				addToken(COMMAND_JUMP);
+				consumeWhitespace();
 				mode.add(CommandIdOrExpressionMode);
 			case "case":
 				addToken(COMMAND_CASE);
+				consumeWhitespace();
 				mode.add(CommandIdMode);
 			case "enum":
 				addToken(COMMAND_ENUM);
 				mode.add(CommandIdMode);
 			case "endenum":
 				addToken(COMMAND_ENDENUM);
+				consumeWhitespace();
 			case "local":
 				addToken(COMMAND_LOCAL);
+				consumeWhitespace();
 			case _:
 				addToken(COMMAND_TEXT);
 				mode.pop(); // popping to replace current mode

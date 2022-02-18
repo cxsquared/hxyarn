@@ -299,8 +299,7 @@ class CodeGenerationVisitor extends BaseVisitor {
 	}
 
 	public override function visitJumpToNodeName(stmt:StmtJumpToNodeName):Dynamic {
-		// TODO figure out why I need to trim here
-		compiler.emit(OpCode.PUSH_STRING, [Operand.fromString(StringTools.trim(stmt.destination.lexeme))]);
+		compiler.emit(OpCode.PUSH_STRING, [Operand.fromString(stmt.destination.lexeme)]);
 		compiler.emit(OpCode.RUN_NODE, []);
 
 		return 0;
