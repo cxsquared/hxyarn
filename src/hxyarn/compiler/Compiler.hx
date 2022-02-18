@@ -1,5 +1,8 @@
 package hxyarn.compiler;
 
+import haxe.ds.BalancedTree;
+import haxe.io.BufferInput;
+import hxyarn.program.types.FunctionType;
 import hxyarn.compiler.DeclarationVisitor.DeclaractionVisitor;
 import hxyarn.program.types.BuiltInTypes;
 import hxyarn.compiler.Stmt.StmtDialogue;
@@ -99,6 +102,34 @@ class Compiler {
 		var results = new CompilationResult();
 		results.program = program;
 		results.stringTable = stringTableManager.stringTable;
+
+		for (declaration in knownVariableDeclarations) {
+			if (Std.isOfType(declaration.type, FunctionType))
+				continue;
+
+			if (declaration.type == BuiltInTypes.undefined)
+				continue;
+
+			var value:Operand;
+
+			if (declaration.defaultValue == null) {
+				// TODO: Diagnostic
+				continue;
+			}
+
+			if (declaration.type == BuiltInTypes.string) {
+				value = Operand.fromString(declaration.defaultValue);
+			} else if (declaration.type == BuiltInTypes.number) {
+				value = Operand.fromFloat(cast(declaration.defaultValue, Float));
+			} else if (declaration.type == BuiltInTypes.boolean) {
+				value = Operand.fromBool(cast(declaration.defaultValue, Bool));
+			} else {
+				throw 'Cannot create an initial value for type ${declaration.type.name}';
+			}
+
+			results.program.initialValues.set(declaration.name, value);
+		}
+
 		results.declarations = derivedVariableDeclarations;
 
 		return results;

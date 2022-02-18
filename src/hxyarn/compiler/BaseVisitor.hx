@@ -119,13 +119,6 @@ class BaseVisitor implements StmtVisitor implements ExprVisitor implements Value
 		return 0;
 	}
 
-	public function visitFunctionCall(stmt:ValueFunctionCall):Dynamic {
-		for (expression in stmt.expressions) {
-			expression.accept(this);
-		}
-		return 0;
-	}
-
 	public function visitIf(stmt:StmtIf):Dynamic {
 		stmt.ifClause.accept(this);
 		if (stmt.elseIfClauses != null) {

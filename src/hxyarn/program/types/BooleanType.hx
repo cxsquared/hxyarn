@@ -43,7 +43,7 @@ class BooleanType extends TypeBase implements IBridgeableType<Bool> {
 			},
 			Operator.NOT.getName() => {
 				func: methodNot,
-				numberOfArgs: 2,
+				numberOfArgs: 1,
 				returnType: BuiltInTypes.boolean
 			}
 			// TODO: figure out Xor boolean
@@ -51,11 +51,11 @@ class BooleanType extends TypeBase implements IBridgeableType<Bool> {
 	}
 
 	private static function methodEqualTo(values:Array<Value>):Dynamic {
-		return values[0].equals(values[1].asBool());
+		return values[0].asBool() == values[1].asBool();
 	}
 
 	private static function methodNotEqualTo(values:Array<Value>):Dynamic {
-		return !values[0].equals(values[1].asBool());
+		return values[0].asBool() != values[1].asBool();
 	}
 
 	private static function methodAnd(values:Array<Value>):Dynamic {

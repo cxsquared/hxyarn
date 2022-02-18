@@ -84,11 +84,11 @@ class NumberType extends TypeBase implements IBridgeableType<Float> {
 	}
 
 	private static function methodEqualTo(values:Array<Value>):Dynamic {
-		return values[0].equals(values[1]);
+		return values[0].asNumber() == values[1].asNumber();
 	}
 
 	private static function methodNotEqualTo(values:Array<Value>):Dynamic {
-		return !values[0].equals(values[1]);
+		return values[0].asNumber() != values[1].asNumber();
 	}
 
 	private static function methodAdd(values:Array<Value>):Dynamic {

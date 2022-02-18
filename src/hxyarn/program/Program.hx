@@ -5,6 +5,7 @@ import haxe.Exception;
 class Program {
 	public var name:String;
 	public var nodes = new Map<String, Node>();
+	public var initialValues = new Map<String, Operand>();
 
 	public function new() {}
 

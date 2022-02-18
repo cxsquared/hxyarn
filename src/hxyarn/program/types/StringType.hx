@@ -40,11 +40,11 @@ class StringType extends TypeBase implements IBridgeableType<String> {
 	}
 
 	private static function methodEqualTo(values:Array<Value>):Dynamic {
-		return values[0].equals(values[1]);
+		return values[0].asString() == values[1].asString();
 	}
 
 	private static function methodNotEqualTo(values:Array<Value>):Dynamic {
-		return !values[0].equals(values[1]);
+		return values[0].asString() != values[1].asString();
 	}
 
 	private static function methodAdd(values:Array<Value>):Dynamic {

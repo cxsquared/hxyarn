@@ -1,5 +1,8 @@
 package hxyarn.program;
 
+import Type.ValueType;
+import hxyarn.program.types.TypeUtils;
+import hxyarn.program.types.BuiltInTypes;
 import hxyarn.dialogue.DialogueExcpetion.DialogueException;
 import hxyarn.dialogue.Line;
 import hxyarn.dialogue.Option;
@@ -254,6 +257,25 @@ class VirtualMachine {
 			case PUSH_VARIABLE:
 				var variableName = i.operands[0].stringValue;
 				var loadedValue = dialogue.variableStorage.getValue(variableName);
+
+				if (loadedValue == Value.NULL) {
+					if (program.initialValues.exists(variableName)) {
+						var initialValue = program.initialValues[variableName];
+						switch (initialValue.type) {
+							case STRING:
+								loadedValue = new Value(initialValue.stringValue, BuiltInTypes.string);
+							case BOOL:
+								loadedValue = new Value(initialValue.boolValue, BuiltInTypes.boolean);
+							case FLOAT:
+								loadedValue = new Value(initialValue.floatValue, BuiltInTypes.number);
+							case _:
+								throw 'Unknown intial value type ${initialValue.type}';
+						}
+					} else {
+						throw 'Variable ${variableName} has not been set';
+					}
+				}
+
 				state.PushValue(loadedValue);
 			case STORE_VARIABLE:
 				var topValue = state.PeekValue();

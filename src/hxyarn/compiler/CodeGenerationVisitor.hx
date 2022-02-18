@@ -118,9 +118,9 @@ class CodeGenerationVisitor extends BaseVisitor {
 		return 0;
 	}
 
-	public override function visitFunctionCall(stmt:ValueFunctionCall):Dynamic {
-		var name = stmt.functionId.lexeme;
-		handleFunction(name, stmt.expressions);
+	public override function visitValueFunctionCall(value:ValueFunctionCall):Dynamic {
+		var name = value.functionId.lexeme;
+		handleFunction(name, value.expressions);
 
 		return 0;
 	}
@@ -210,6 +210,12 @@ class CodeGenerationVisitor extends BaseVisitor {
 
 	public override function visitExprParens(expr:ExprParens):Dynamic {
 		return expr.expression.accept(this);
+	}
+
+	public override function visitExprNot(expr:ExprNot):Dynamic {
+		generateCodeForOperations(Operator.NOT, expr.type, [expr.expression]);
+
+		return 0;
 	}
 
 	public override function visitExprNegative(expr:ExprNegative):Dynamic {
@@ -337,11 +343,11 @@ class CodeGenerationVisitor extends BaseVisitor {
 	}
 
 	function generateClause(jumpLabel:String, children:Array<Stmt>, condition:Expr) {
-		var endOfCluase = compiler.registerLabel("skipclause");
+		var endOfClauseLabel = compiler.registerLabel("skipclause");
 
 		if (condition != null) {
 			condition.accept(this);
-			compiler.emit(OpCode.JUMP_IF_FALSE, [Operand.fromString(jumpLabel)]);
+			compiler.emit(OpCode.JUMP_IF_FALSE, [Operand.fromString(endOfClauseLabel)]);
 		}
 
 		for (stmt in children) {
@@ -351,17 +357,9 @@ class CodeGenerationVisitor extends BaseVisitor {
 		compiler.emit(OpCode.JUMP_TO, [Operand.fromString(jumpLabel)]);
 
 		if (condition != null) {
-			compiler.currentNode.labels.set(endOfCluase, compiler.currentNode.instructions.length);
+			compiler.currentNode.labels.set(endOfClauseLabel, compiler.currentNode.instructions.length);
 			compiler.emit(OpCode.POP, []);
 		}
-	}
-
-	public override function visitVariable(stmt:ValueVariable):Dynamic {
-		var variableName = stmt.varId.lexeme;
-		compiler.emit(OpCode.STORE_VARIABLE, [Operand.fromString(variableName)]);
-		compiler.emit(OpCode.POP, []);
-
-		return 0;
 	}
 
 	function handleFunction(funcName:String, parameters:Array<Expr>) {

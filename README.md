@@ -9,13 +9,14 @@ This is currently a work in progress though the major functionality has been imp
 ### Standard
 
 ```sh
-haxelib git https://github.com/cxsquared/hxyarn.git
+haxelib git hxyarn https://github.com/cxsquared/hxyarn.git
 ```
 
 ## Usage
 
-```haxe
+### Example
 
+```haxe
 import hxyarn.dialogue.Dialogue;
 import hxyarn.dialogue.VariableStorage.MemoryVariableStore;
 import hxyarn.dialogue.StringInfo;
@@ -100,6 +101,25 @@ class DialogueExample {
     public function dialogueCompleteHandler() {
     }
 }
+```
+
+### Custom Functions
+
+You can register custom functions like ```<<hello_world>>``` and ```<<camera_shake 1.5>>``` to be called from your yarn files. Due to implementation details all functions must take in an array of hxyarn.program.Values even if it doesn't expect any and must return an object. Valid return types are ```Bool```, ```Float```, ```String```, and ```Null```.
+
+```haxe
+import hxyarn.program.types.BuiltInTypes;
+import hxyarn.program.Value;
+
+dialogue.library.registerFunction("hello_world", 0, function(values:Array<Value>) {
+    return "Hello World!";
+}, BuiltInTypes.string);
+
+dialogue.library.registerFunction("camera_shake", 1, function(values:Array<Value>) {
+    var shakeTime = values[0].asNumber();
+    trace('Shaking camera for $shakeTime seconds');
+    return null;
+});
 ```
 
 ## Known Issues
