@@ -9,7 +9,7 @@ This is currently a work in progress though the major functionality has been imp
 ### Standard
 
 ```sh
-haxelib git https://github.com/cxsquared/hxyarn.git
+haxelib git hxyarn https://github.com/cxsquared/hxyarn.git
 ```
 
 ## Usage
