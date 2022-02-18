@@ -2,7 +2,7 @@
 
 A Haxe port of [Yarn Spinner](https://github.com/YarnSpinnerTool/YarnSpinner)
 
-This is currently a work in progress though the major functionality has been implemented. I've probably got most of V2.1 implemented...probably...
+This is currently a work in progress though the major functionality has been implemented. I've got most of V2.1 implemented...probably...
 
 Most of the non-Unity specific [documentation on the Yarn Spinner website](https://docs.yarnspinner.dev/) is valid for this library in some fashion.
 
