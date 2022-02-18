@@ -24,6 +24,10 @@ class Compiler {
 		this.fileName = fileName;
 	}
 
+	public static function compileText(text:String, name:String):CompilationResult {
+		return handleYarn(text, name);
+	}
+
 	public static function compileFile(path:String):CompilationResult {
 		var string = File.read(path).readAll().toString();
 		var directories = FileSystem.absolutePath(path).split('/');

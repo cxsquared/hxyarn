@@ -319,7 +319,7 @@ class VirtualMachine {
 				executionState = WaitingOnOptionSelection;
 				optionsHandler(new OptionSet(optionChoices));
 
-				if (executionState == WaitingOnOptionSelection) {
+				if (executionState == WaitingForContinue) {
 					executionState = Running;
 				}
 			case _:
