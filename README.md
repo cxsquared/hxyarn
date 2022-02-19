@@ -49,14 +49,14 @@ class DialogueExample {
         dialogue.nodeStartHandler = this.nodeStartHandler;
         dialogue.dialogueCompleteHandler = this.dialogueCompleteHandler;
 
-        var compiler = Compiler.compileFile(yarnFile);
+        var compiler = Compiler.compileFile(yarnFile, dialogue.library);
         stringTable = compiler.stringTable;
 
         dialogue.addProgram(compiler.program);
     }
 
     public function load(text:String, name:String) {
-        var compiler = Compiler.compileText(text, name);
+        var compiler = Compiler.compileText(text, name, dialogue.library);
         stringTable = compiler.stringTable;
 
         dialogue.addProgram(compiler.program);
@@ -123,7 +123,7 @@ class DialogueExample {
 
 ### Custom Functions
 
-You can register custom functions like ```<<call hello_world()>>``` and ```<<call camera_shake(1.5)>>``` to be called from your yarn files. Due to implementation details all functions must take in an array of hxyarn.program.Values even if it doesn't expect any and must return an object. Valid return types are ```Bool```, ```Float```, ```String```, and ```Null```.
+You can register custom functions like `<<call hello_world()>>` and `<<call camera_shake(1.5)>>` to be called from your yarn files. Due to implementation details all functions must take in an array of hxyarn.program.Values even if it doesn't expect any and must return an object. Valid return types are `Bool`, `Float`, `String`, and `Null`.
 
 ```haxe
 import hxyarn.program.types.BuiltInTypes;
@@ -159,8 +159,9 @@ hxd.Res.yarnfile.watch(function() {
 
 ## Known Issues/Not Implemented
 
-- Missing built in functions: ```round_places```, ```decimal```
+- Error handling is very much lacking
+- Missing built in functions: `round_places`, `decimal`
 - Two failing unit tests:
-  - ```Identifies.yarn``` - Issue with "fun" characters
+  - `Identifies.yarn` - Issue with "fun" characters
 - Lacking support for emojis and most non latin unicode characters
 - No localization support

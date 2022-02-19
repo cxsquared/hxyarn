@@ -4,7 +4,7 @@
   "license": "MIT",
   "tags": ["yarn", "dialogue", "spinner", "unity", "game"],
   "description": "Parser and runner for Yarn dialogue files",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "classPath": "src/",
   "contributors": ["cxsquared"],
   "releasenote": "",

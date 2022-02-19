@@ -1,5 +1,7 @@
 package hxyarn.compiler;
 
+import hxyarn.program.types.IType;
+import hxyarn.program.Library;
 import haxe.ds.BalancedTree;
 import haxe.io.BufferInput;
 import hxyarn.program.types.FunctionType;
@@ -27,25 +29,25 @@ class Compiler {
 		this.fileName = fileName;
 	}
 
-	public static function compileText(text:String, name:String):CompilationResult {
-		return handleYarn(text, name);
+	public static function compileText(text:String, name:String, ?library:Library):CompilationResult {
+		return handleYarn(text, name, library);
 	}
 
-	public static function compileFile(path:String):CompilationResult {
+	public static function compileFile(path:String, ?library:Library):CompilationResult {
 		var string = File.read(path).readAll().toString();
 		var directories = FileSystem.absolutePath(path).split('/');
 		var fileName = directories[directories.length - 1];
 
-		return handleYarn(string, fileName);
+		return handleYarn(string, fileName, library);
 	}
 
-	static function handleYarn(yarn:String, fileName:String):CompilationResult {
+	static function handleYarn(yarn:String, fileName:String, ?library:Library):CompilationResult {
 		var compiler = new Compiler(fileName);
 
-		return compiler.compileYarn(yarn);
+		return compiler.compileYarn(yarn, library);
 	}
 
-	function compileYarn(yarn:String):CompilationResult {
+	function compileYarn(yarn:String, ?library:Library):CompilationResult {
 		var tokens = Scanner.scan(yarn);
 		var dialogue = new StmtParser(tokens).parse();
 
@@ -54,6 +56,12 @@ class Compiler {
 		var derivedVariableDeclarations = new Array<Declaration>();
 		var knownVariableDeclarations = new Array<Declaration>();
 		var typeDelaractions = BuiltInTypes.all;
+
+		if (library != null) {
+			// TODO Diagnotsics
+			var declarations = getDeclaractionsFromLibrary(library);
+			knownVariableDeclarations = knownVariableDeclarations.concat(declarations);
+		}
 
 		registerStrings(fileName, stringTableManager, dialogue);
 
@@ -78,6 +86,8 @@ class Compiler {
 			knownVariableDeclarations = knownVariableDeclarations.concat(declaractionVisitor.newDeclarations);
 			var checker = new TypeCheckVisitor(fileName, knownVariableDeclarations, typeDelaractions);
 			checker.visitNode(node);
+			derivedVariableDeclarations = derivedVariableDeclarations.concat(checker.newDeclarations);
+			knownVariableDeclarations = knownVariableDeclarations.concat(checker.newDeclarations);
 			var visitor = new CodeGenerationVisitor(this);
 			visitor.visitNode(node);
 			var hasRemainingOptions = false;
@@ -162,5 +172,35 @@ class Compiler {
 
 	public function registerLabel(?commentary:String = null) {
 		return 'L${labelCount++}$commentary';
+	}
+
+	function getDeclaractionsFromLibrary(library:Library):Array<Declaration> {
+		var declarations = new Array<Declaration>();
+
+		for (func in library.functions) {
+			// we don't handle non built in types here
+			if (!Std.isOfType(func.returnType, IType))
+				continue;
+
+			var functionType = new FunctionType();
+			var includeMethod = true;
+
+			// TODO Param Types
+			for (i in 0...func.paramCount)
+				functionType.parameters.push(BuiltInTypes.any);
+
+			functionType.returnType = func.returnType;
+
+			var decl = new Declaration();
+			decl.name = func.name;
+			decl.type = functionType;
+			decl.sourceFileLine = -1;
+			decl.sourceNodeLine = -1;
+			decl.sourceFileName = "External";
+
+			declarations.push(decl);
+		}
+
+		return declarations;
 	}
 }

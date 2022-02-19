@@ -40,7 +40,7 @@ class TestBase {
 		if (testPlanFile != null && StringTools.trim(testPlanFile).length > 0)
 			testPlan = new TestPlan(testPlanFile);
 
-		var compiler = Compiler.compileFile(yarnFile);
+		var compiler = Compiler.compileFile(yarnFile, dialogue.library);
 		stringTable = compiler.stringTable;
 
 		dialogue.addProgram(compiler.program);

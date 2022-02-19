@@ -1,5 +1,7 @@
 package hxyarn.compiler;
 
+import hxyarn.compiler.Stmt.StmtSet;
+import hxyarn.compiler.Token.TokenType;
 import hxyarn.compiler.Stmt.StmtJumpToExpression;
 import hxyarn.program.types.TypeUtils;
 import hxyarn.compiler.Stmt.StmtElseIfClause;
@@ -29,10 +31,11 @@ import hxyarn.compiler.Stmt.StmtNode;
 import hxyarn.compiler.Declaration;
 
 class TypeCheckVisitor extends BaseVisitor {
+	public var newDeclarations:Array<Declaration>;
+
 	var currentNodeName:String = null;
 	var sourceFileName:String;
 	var existingDeclarations:Array<Declaration>;
-	var newDeclarations:Array<Declaration>;
 	var types:Array<IType>;
 	var currentNodeContext:StmtNode;
 
@@ -100,17 +103,9 @@ class TypeCheckVisitor extends BaseVisitor {
 	public override function visitValueFunctionCall(value:ValueFunctionCall):Dynamic {
 		var functionName = value.functionId.lexeme;
 
-		var functionDeclarationList = declarations().filter(function(d:Declaration) {
-			return Std.isOfType(d.type, FunctionType);
-		}).filter(function(d:Declaration) {
-			return d.name == functionName;
-		});
-
-		var functionDeclaration:Declaration = null;
-
-		if (functionDeclarationList.length > 0) {
-			functionDeclaration = functionDeclarationList[0];
-		}
+		var functionDeclaration = declarations().filter(function(d:Declaration) {
+			return Std.isOfType(d.type, FunctionType) && d.name == functionName;
+		})[0];
 
 		var functionType:FunctionType = null;
 
@@ -126,6 +121,7 @@ class TypeCheckVisitor extends BaseVisitor {
 			functionDeclaration.sourceFileName = sourceFileName;
 			functionDeclaration.sourceFileLine = value.functionId.line;
 			functionDeclaration.sourceNodeName = currentNodeName;
+			// TODO Range
 
 			var parameterTypes = value.expressions.map(function(e:Expr) {
 				return BuiltInTypes.undefined;
@@ -138,9 +134,10 @@ class TypeCheckVisitor extends BaseVisitor {
 			newDeclarations.push(functionDeclaration);
 		} else {
 			functionType = cast(functionDeclaration.type, FunctionType);
+			if (functionType == null)
+				throw "Internal error: decl's type is not a FunctionType";
 		}
 
-		// TODO type check parameters of function
 		var suppliedParameters = value.expressions;
 		var expectedParameters = functionType.parameters;
 
@@ -167,6 +164,67 @@ class TypeCheckVisitor extends BaseVisitor {
 		}
 
 		return functionType.returnType;
+	}
+
+	public override function visitSet(stmt:StmtSet):Dynamic {
+		var variableContext = new ExprValue(stmt.variable);
+		var expressionContext = stmt.expression;
+
+		if (expressionContext == null || variableContext == null)
+			return BuiltInTypes.undefined;
+
+		var expressionType = expressionContext.accept(this);
+		var variableType = expressionContext.accept(this);
+
+		var variableName = stmt.variable.varId.lexeme;
+
+		var terms = [variableContext, expressionContext];
+
+		var type:IType = null;
+		var op:Operator = null;
+
+		switch (stmt.op.type) {
+			case TokenType.OPERATOR_ASSIGNMENT:
+				if (variableType != BuiltInTypes.undefined && TypeUtils.isSubType(variableType, expressionType) == false) {
+					// TODO diagnotics
+				} else if (variableType == BuiltInTypes.undefined && expressionType != BuiltInTypes.undefined) {
+					var nodePositionInFile = 0; // TODO
+
+					var decl = new Declaration();
+					decl.name = variableName;
+					decl.description = 'Implicitly declared in $sourceFileName, node $currentNodeName at 0'; // TODO location
+					decl.type = expressionType;
+					decl.defaultValue = defaultValueForType(expressionType);
+					decl.sourceFileName = sourceFileName;
+					decl.sourceNodeName = currentNodeName;
+					// TODO Range
+					decl.isImplicit = true;
+					newDeclarations.push(decl);
+				}
+
+			case TokenType.OPERATOR_MATHS_ADDITION_EQUALS:
+				op = OperatorUtils.tokensToOperators[TokenType.OPERATOR_MATHS_ADDITION];
+				type = checkOperation(stmt, terms, op, stmt.op.lexeme);
+			case TokenType.OPERATOR_MATHS_SUBTRACTION_EQUALS:
+				op = OperatorUtils.tokensToOperators[TokenType.OPERATOR_MATHS_SUBTRACTION];
+				type = checkOperation(stmt, terms, op, stmt.op.lexeme);
+			case TokenType.OPERATOR_MATHS_MULTIPLICATION_EQUALS:
+				op = OperatorUtils.tokensToOperators[TokenType.OPERATOR_MATHS_MULTIPLICATION];
+				type = checkOperation(stmt, terms, op, stmt.op.lexeme);
+			case TokenType.OPERATOR_MATHS_DIVISION_EQUALS:
+				op = OperatorUtils.tokensToOperators[TokenType.OPERATOR_MATHS_DIVISION];
+				type = checkOperation(stmt, terms, op, stmt.op.lexeme);
+			case TokenType.OPERATOR_MATHS_MODULUS_EQUALS:
+				op = OperatorUtils.tokensToOperators[TokenType.OPERATOR_MATHS_MODULUS];
+				type = checkOperation(stmt, terms, op, stmt.op.lexeme);
+			case _:
+				throw 'Internal error: visitSet got unexpected operand ${stmt.op.lexeme}';
+		}
+
+		if (expressionType == BuiltInTypes.undefined)
+			return variableType;
+
+		return expressionType;
 	}
 
 	public override function visitExprValue(expr:ExprValue):Dynamic {

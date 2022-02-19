@@ -8,7 +8,7 @@ import haxe.Exception;
 typedef ValueFunction = Array<Value>->Dynamic;
 
 class Library {
-	var functions = new Map<String, FunctionInfo>();
+	public var functions = new Map<String, FunctionInfo>();
 
 	public function new() {}
 
@@ -62,12 +62,10 @@ class Library {
 
 class FunctionInfo {
 	public var name:String;
+	public var paramCount:Int;
+	public var returnType:IType;
 
 	var func:ValueFunction;
-
-	public var paramCount:Int;
-
-	var returnType:IType;
 
 	public function new(name:String, paramCount:Int, func:ValueFunction, ?returnType:IType = null) {
 		this.name = name;
