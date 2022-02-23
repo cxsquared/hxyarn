@@ -2,116 +2,92 @@ package hxyarn.compiler;
 
 import hxyarn.program.types.IType;
 import hxyarn.program.Library;
-import haxe.ds.BalancedTree;
-import haxe.io.BufferInput;
 import hxyarn.program.types.FunctionType;
 import hxyarn.compiler.DeclarationVisitor.DeclaractionVisitor;
 import hxyarn.program.types.BuiltInTypes;
 import hxyarn.compiler.Stmt.StmtDialogue;
 import hxyarn.program.Operand;
 import hxyarn.program.Instruction;
-import sys.FileSystem;
 import hxyarn.program.Node;
-import sys.io.File;
 import hxyarn.program.Program;
 
 class Compiler {
-	var labelCount = 0;
-
 	public var currentNode:Node;
 
+	var labelCount = 0;
 	var rawTextNode = false; // TODO
 	var program:Program;
 	var fileName:String;
+	var library:Library;
+	var variableDeclarations:Array<Declaration>;
+	var fileParseResult:StmtDialogue;
 
-	public function new(fileName:String) {
+	public function new(fileName:String, fileParseResult:StmtDialogue) {
 		program = new Program();
 		this.fileName = fileName;
+		this.fileParseResult = fileParseResult;
 	}
 
-	public static function compileText(text:String, name:String, ?library:Library):CompilationResult {
-		return handleYarn(text, name, library);
-	}
-
-	public static function compileFile(path:String, ?library:Library):CompilationResult {
-		var string = File.read(path).readAll().toString();
-		var directories = FileSystem.absolutePath(path).split('/');
-		var fileName = directories[directories.length - 1];
-
-		return handleYarn(string, fileName, library);
-	}
-
-	static function handleYarn(yarn:String, fileName:String, ?library:Library):CompilationResult {
-		var compiler = new Compiler(fileName);
-
-		return compiler.compileYarn(yarn, library);
-	}
-
-	function compileYarn(yarn:String, ?library:Library):CompilationResult {
-		var tokens = Scanner.scan(yarn);
-		var dialogue = new StmtParser(tokens).parse();
-
-		var stringTableManager = new StringTableManager();
-
+	public static function compile(job:CompilationJob):CompilationResult {
+		var results = new Array<CompilationResult>();
 		var derivedVariableDeclarations = new Array<Declaration>();
 		var knownVariableDeclarations = new Array<Declaration>();
 		var typeDelaractions = BuiltInTypes.all;
 
-		if (library != null) {
+		if (job.variableDelarations != null) {
+			knownVariableDeclarations = job.variableDelarations;
+		}
+
+		// TODO Diagnotics
+
+		if (job.library != null) {
 			// TODO Diagnotsics
-			var declarations = getDeclaractionsFromLibrary(library);
+			var declarations = getDeclaractionsFromLibrary(job.library);
 			knownVariableDeclarations = knownVariableDeclarations.concat(declarations);
 		}
 
-		registerStrings(fileName, stringTableManager, dialogue);
+		var parsedFiles = new Array<StmtDialogue>();
+		var stringTableManager = new StringTableManager();
 
-		for (node in dialogue.nodes) {
-			currentNode = new Node();
-			for (header in node.headers) {
-				if (header.id.lexeme == "title") {
-					currentNode.name = StringTools.trim(header.value.lexeme);
-				}
-				if (header.id.lexeme == "tags") {
-					var tags = [];
-					if (header.value != null)
-						tags = header.value.lexeme.split(',');
+		for (file in job.files) {
+			var tokens = Scanner.scan(file.source);
+			var dialogue = new StmtParser(tokens).parse();
 
-					currentNode.tags.concat(tags);
-				}
-			}
-			currentNode.labels.set(registerLabel(), currentNode.instructions.length);
-			var declaractionVisitor = new DeclaractionVisitor(fileName, knownVariableDeclarations, typeDelaractions);
-			declaractionVisitor.visitNode(node);
-			derivedVariableDeclarations = derivedVariableDeclarations.concat(declaractionVisitor.newDeclarations);
-			knownVariableDeclarations = knownVariableDeclarations.concat(declaractionVisitor.newDeclarations);
-			var checker = new TypeCheckVisitor(fileName, knownVariableDeclarations, typeDelaractions);
-			checker.visitNode(node);
-			derivedVariableDeclarations = derivedVariableDeclarations.concat(checker.newDeclarations);
-			knownVariableDeclarations = knownVariableDeclarations.concat(checker.newDeclarations);
-			var visitor = new CodeGenerationVisitor(this);
-			visitor.visitNode(node);
-			var hasRemainingOptions = false;
-			for (instruction in currentNode.instructions) {
-				if (instruction.opcode == OpCode.ADD_OPTIONS)
-					hasRemainingOptions = true;
-
-				if (instruction.opcode == OpCode.SHOW_OPTIONS)
-					hasRemainingOptions = false;
-			}
-
-			if (hasRemainingOptions) {
-				emit(OpCode.SHOW_OPTIONS, []);
-				emit(OpCode.RUN_NODE, []);
-			} else {
-				emit(OpCode.STOP, []);
-			}
-
-			program.nodes.set(currentNode.name, currentNode);
+			parsedFiles.push(dialogue);
+			registerStrings(file.fileName, stringTableManager, dialogue);
 		}
 
-		var results = new CompilationResult();
-		results.program = program;
-		results.stringTable = stringTableManager.stringTable;
+		var fileTags = new Map<String, Array<String>>();
+
+		for (i => parsedFile in parsedFiles) {
+			var file = job.files[i];
+			var declaractionVisitor = new DeclaractionVisitor(file.fileName, knownVariableDeclarations, typeDelaractions);
+			declaractionVisitor.visitDialogue(parsedFile);
+			derivedVariableDeclarations = derivedVariableDeclarations.concat(declaractionVisitor.newDeclarations);
+			knownVariableDeclarations = knownVariableDeclarations.concat(declaractionVisitor.newDeclarations);
+			// TODO Diagnostics
+
+			fileTags.set(file.fileName, declaractionVisitor.fileTags);
+		}
+
+		for (i => parsedFile in parsedFiles) {
+			var file = job.files[i];
+			var checker = new TypeCheckVisitor(file.fileName, knownVariableDeclarations, typeDelaractions);
+			checker.visitDialogue(parsedFile);
+			derivedVariableDeclarations = derivedVariableDeclarations.concat(checker.newDeclarations);
+			knownVariableDeclarations = knownVariableDeclarations.concat(checker.newDeclarations);
+
+			// TODO Diagnostics
+			// TODO Validate Expressions
+		}
+
+		for (i => parsedFile in parsedFiles) {
+			var file = job.files[i];
+			var compilationResult = generatecode(parsedFile, file.fileName, knownVariableDeclarations, job, stringTableManager);
+			results.push(compilationResult);
+		}
+
+		var finalResults = CompilationResult.combineCompilationResults(results, stringTableManager);
 
 		for (declaration in knownVariableDeclarations) {
 			if (Std.isOfType(declaration.type, FunctionType))
@@ -137,16 +113,71 @@ class Compiler {
 				throw 'Cannot create an initial value for type ${declaration.type.name}';
 			}
 
-			results.program.initialValues.set(declaration.name, value);
+			finalResults.program.initialValues.set(declaration.name, value);
 		}
 
-		results.declarations = derivedVariableDeclarations;
+		finalResults.declarations = derivedVariableDeclarations;
+		finalResults.tags = fileTags;
 
-		return results;
+		return finalResults;
 	}
 
-	function registerStrings(fileName:String, stringTableManager:StringTableManager, dialogue:StmtDialogue) {
-		var visitor = new StringTableGeneratorVisitor(fileName, stringTableManager, this);
+	static function generatecode(parsedFile:StmtDialogue, fileName:String, variableDeclarations:Array<Declaration>, job:CompilationJob,
+			stringTableManager:StringTableManager):CompilationResult {
+		var compiler = new Compiler(fileName, parsedFile);
+		compiler.library = job.library;
+		compiler.variableDeclarations = variableDeclarations;
+		compiler.compileParsedFile();
+
+		// TODO DebugInfo
+
+		var result = new CompilationResult();
+		result.program = compiler.program;
+		result.stringTable = stringTableManager.stringTable;
+
+		return result;
+	}
+
+	function compileParsedFile() {
+		for (node in this.fileParseResult.nodes) {
+			currentNode = new Node();
+			for (header in node.headers) {
+				if (header.id.lexeme == "title") {
+					currentNode.name = StringTools.trim(header.value.lexeme);
+				}
+				if (header.id.lexeme == "tags") {
+					var tags = [];
+					if (header.value != null)
+						tags = header.value.lexeme.split(',');
+
+					currentNode.tags.concat(tags);
+				}
+			}
+			currentNode.labels.set(registerLabel(), currentNode.instructions.length);
+			var visitor = new CodeGenerationVisitor(this);
+			visitor.visitNode(node);
+			var hasRemainingOptions = false;
+			for (instruction in currentNode.instructions) {
+				if (instruction.opcode == OpCode.ADD_OPTIONS)
+					hasRemainingOptions = true;
+
+				if (instruction.opcode == OpCode.SHOW_OPTIONS)
+					hasRemainingOptions = false;
+			}
+
+			if (hasRemainingOptions) {
+				emit(OpCode.SHOW_OPTIONS, []);
+				emit(OpCode.RUN_NODE, []);
+			} else {
+				emit(OpCode.STOP, []);
+			}
+
+			program.nodes.set(currentNode.name, currentNode);
+		}
+	}
+
+	static function registerStrings(fileName:String, stringTableManager:StringTableManager, dialogue:StmtDialogue) {
+		var visitor = new StringTableGeneratorVisitor(fileName, stringTableManager);
 		visitor.visitDialogue(dialogue);
 	}
 
@@ -158,7 +189,11 @@ class Compiler {
 		currentNode.instructions.push(instruction);
 	}
 
-	public function getLineIdTag(hashtags:Array<String>):String {
+	public function registerLabel(?commentary:String = null) {
+		return 'L${labelCount++}$commentary';
+	}
+
+	public static function getLineIdTag(hashtags:Array<String>):String {
 		if (hashtags == null)
 			return null;
 
@@ -170,11 +205,7 @@ class Compiler {
 		return null;
 	}
 
-	public function registerLabel(?commentary:String = null) {
-		return 'L${labelCount++}$commentary';
-	}
-
-	function getDeclaractionsFromLibrary(library:Library):Array<Declaration> {
+	static function getDeclaractionsFromLibrary(library:Library):Array<Declaration> {
 		var declarations = new Array<Declaration>();
 
 		for (func in library.functions) {

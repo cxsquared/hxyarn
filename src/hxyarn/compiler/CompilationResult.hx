@@ -10,19 +10,27 @@ class CompilationResult {
 
 	public var declarations:Array<Declaration>;
 
+	public var tags:Map<String, Array<String>>;
+
 	public function new() {}
 
 	public static function combineCompilationResults(results:Array<CompilationResult>, stringTableManager:StringTableManager):CompilationResult {
 		var programs = new Array<Program>();
-		var declarations:Array<Declaration> = new Array<Declaration>();
-		// TODO FileTags
+		var declarations = new Array<Declaration>();
+		var tags = new Map<String, Array<String>>();
 		// TODO Diagnostics
 
 		for (result in results) {
 			programs.push(result.program);
 
 			if (result.declarations != null)
-				declarations.concat(result.declarations);
+				declarations = declarations.concat(result.declarations);
+
+			if (result.tags != null) {
+				for (key => tag in result.tags) {
+					tags.set(key, tag);
+				}
+			}
 		}
 
 		var newResults = new CompilationResult();

@@ -15,7 +15,7 @@ class DeclaractionVisitor extends BaseVisitor {
 
 	public var newDeclarations:Array<Declaration> = [];
 
-	var fileTags:Array<String> = [];
+	public var fileTags:Array<String> = [];
 
 	var keywordsToBuiltinTypes = [
 		"string" => BuiltInTypes.string,

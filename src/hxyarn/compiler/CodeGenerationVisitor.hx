@@ -52,7 +52,7 @@ class CodeGenerationVisitor extends BaseVisitor {
 		var hashtags = stmt.hashtags != null ? stmt.hashtags.map(function(h:StmtHashtag) {
 			return h.text.lexeme;
 		}) : null;
-		var lineId = compiler.getLineIdTag(hashtags);
+		var lineId = Compiler.getLineIdTag(hashtags);
 		if (lineId == null)
 			throw "line needs an id";
 
@@ -169,7 +169,7 @@ class CodeGenerationVisitor extends BaseVisitor {
 
 			var expressionCount = generateCodeForExpressionsInFormattedText(shortcut.lineStatement.formattedText.children);
 
-			var lineIdTag = compiler.getLineIdTag(shortcut.lineStatement.hashtags.map(function(h:StmtHashtag) {
+			var lineIdTag = Compiler.getLineIdTag(shortcut.lineStatement.hashtags.map(function(h:StmtHashtag) {
 				return h.text.lexeme;
 			}));
 

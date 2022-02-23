@@ -10,12 +10,10 @@ class StringTableGeneratorVisitor extends BaseVisitor {
 	var currentNodeName = "";
 	var fileName = "";
 	var stringTableManager:StringTableManager;
-	var compiler:Compiler;
 
-	public function new(fileName:String, stringTableManagmer:StringTableManager, compiler:Compiler) {
+	public function new(fileName:String, stringTableManagmer:StringTableManager) {
 		this.fileName = fileName;
 		this.stringTableManager = stringTableManagmer;
-		this.compiler = compiler;
 	}
 
 	public override function visitNode(stmt:StmtNode):Dynamic {
@@ -56,7 +54,7 @@ class StringTableGeneratorVisitor extends BaseVisitor {
 			return hashtag.text.lexeme;
 		});
 
-		var lineIdTag = compiler.getLineIdTag(hashtagText);
+		var lineIdTag = Compiler.getLineIdTag(hashtagText);
 
 		var formattedTextOutput = generateFormattedText(stmt.formattedText.children);
 

@@ -1,5 +1,6 @@
 package tests;
 
+import hxyarn.compiler.CompilationJob;
 import hxyarn.compiler.Compiler;
 import haxe.Exception;
 import tests.TestPlan;
@@ -40,10 +41,11 @@ class TestBase {
 		if (testPlanFile != null && StringTools.trim(testPlanFile).length > 0)
 			testPlan = new TestPlan(testPlanFile);
 
-		var compiler = Compiler.compileFile(yarnFile, dialogue.library);
-		stringTable = compiler.stringTable;
+		var job = CompilationJob.createFromFiles([yarnFile], dialogue.library);
+		var compilerResults = Compiler.compile(job);
+		stringTable = compilerResults.stringTable;
 
-		dialogue.addProgram(compiler.program);
+		dialogue.addProgram(compilerResults.program);
 	}
 
 	public function start() {
