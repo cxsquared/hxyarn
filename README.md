@@ -31,6 +31,7 @@ import hxyarn.dialogue.Command;
 import hxyarn.dialogue.Option;
 import hxyarn.dialogue.OptionSet;
 import hxyarn.compiler.Compiler;
+import hxyarn.compiler.CompilationJob;
 
 class DialogueExample {
     var storage = new MemoryVariableStore();
@@ -56,10 +57,11 @@ class DialogueExample {
     }
 
     public function load(text:String, name:String) {
-        var compiler = Compiler.compileText(text, name, dialogue.library);
-        stringTable = compiler.stringTable;
+        var job = CompilationJob.createFromStrings(texts, names, dialogue.library);
+		var compiler = Compiler.compile(job);
+		stringTable = compiler.stringTable;
 
-        dialogue.addProgram(compiler.program);
+		dialogue.addProgram(compiler.program);
     }
 
     public function runNode(nodeName:String) {
