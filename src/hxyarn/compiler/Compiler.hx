@@ -150,7 +150,7 @@ class Compiler {
 					if (header.value != null)
 						tags = header.value.lexeme.split(',');
 
-					currentNode.tags.concat(tags);
+					currentNode.tags = currentNode.tags.concat(tags);
 				}
 			}
 			currentNode.labels.set(registerLabel(), currentNode.instructions.length);
