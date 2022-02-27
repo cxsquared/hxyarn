@@ -12,7 +12,11 @@ class CompilationJob {
 		var fileList = new Array<FileInfo>();
 
 		for (file in files) {
+			#if sys
 			fileList.push(new FileInfo(file, sys.io.File.getContent(file)));
+			#else
+			throw "Not supported on JS";
+			#end
 		}
 
 		var job = new CompilationJob();

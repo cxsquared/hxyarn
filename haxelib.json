@@ -2,11 +2,19 @@
   "name": "hxyarn",
   "url": "https://github.com/cxsquared/hxyarn",
   "license": "MIT",
-  "tags": ["yarn", "dialogue", "spinner", "unity", "game"],
+  "tags": [
+    "yarn",
+    "dialogue",
+    "spinner",
+    "unity",
+    "game"
+  ],
   "description": "Parser and runner for Yarn dialogue files",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "classPath": "src/",
-  "contributors": ["cxsquared"],
+  "contributors": [
+    "cxsquared"
+  ],
   "releasenote": "",
   "dependencies": {}
 }

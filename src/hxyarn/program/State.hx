@@ -7,8 +7,8 @@ import hxyarn.dialogue.Line;
 typedef LineKeyValuePair = {line:Line, value:String, enabled:Bool};
 
 class State {
-	public var currentNodeName:String;
-	public var programCounter:Int;
+	public var currentNodeName:String = "";
+	public var programCounter:Int = 0;
 	public var currentOptions = new Array<LineKeyValuePair>();
 
 	var stack = new GenericStack<Value>();
