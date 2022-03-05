@@ -21,13 +21,13 @@ class LineParser {
 
 	final markerProcessors = new Map<String, IAttributeMarkerProcessor>();
 
-	var input:String;
-	var current:Int;
-	var offset:Int;
+	var input:String = "";
+	var current:Int = 0;
+	var offset:Int = 0;
 
-	var position:Int;
+	var position:Int = 0;
 
-	var sourcePosition:Int;
+	var sourcePosition:Int = 0;
 
 	public function new() {
 		this.registerMarkerProcessor("nomarkup", new NoMarkupTextProcessor());
@@ -54,8 +54,8 @@ class LineParser {
 
 		var markers = new List<MarkupAttributeMarker>();
 
-		var nextCharacter:String = input.charAt(0);
-		var lastCharacter:String = String.fromCharCode(0);
+		var nextCharacter = input.charAt(0);
+		var lastCharacter = "\\0";
 
 		while (current < lenght && nextCharacter != null) {
 			var c = nextCharacter;

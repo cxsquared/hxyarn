@@ -51,7 +51,7 @@ class Dialogue implements IAttributeMarkerProcessor {
 	var vm:VirtualMachine;
 
 	public function isActive() {
-		return vm.executionState != ExecutionState.Stopped;
+		return vm.executionState != null && vm.executionState != ExecutionState.Stopped;
 	}
 
 	public var lineHandler(get, set):LineHandler;

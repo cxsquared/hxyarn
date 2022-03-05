@@ -25,7 +25,7 @@ class VirtualMachine {
 	public var dialogueCompleteHandler:DialogueCompleteHandler;
 	public var prepareForLinesHandler:PrepareForLinesHandler;
 
-	public var executionState(default, set):ExecutionState;
+	public var executionState(default, set):ExecutionState = Stopped;
 
 	function set_executionState(newExecutionState) {
 		if (newExecutionState == ExecutionState.Stopped) {
