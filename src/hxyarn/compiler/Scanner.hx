@@ -78,6 +78,10 @@ class Scanner {
 					commandIdOrExpressionMode(c);
 				case CommandIdMode:
 					commandIdMode(c);
+				case JumpOptionMode:
+					jumpOptionMode(c);
+				case JumpOptionTextMode:
+					jumpOptionTextMode(c);
 			}
 		} else {
 			rootMode(c);
@@ -176,6 +180,16 @@ class Scanner {
 
 				addToken(TEXT, c);
 				mode.add(TextMode);
+			case '[':
+				if (match('[')) {
+					addToken(JUMP_OPTION_START);
+					mode.add(JumpOptionMode);
+					mode.add(JumpOptionTextMode);
+					return;
+				}
+
+				addToken(TEXT, c);
+				mode.add(TextMode);
 			case '#':
 				addToken(HASHTAG);
 				mode.add(TextCommandOrHashtagMode);
@@ -214,6 +228,14 @@ class Scanner {
 			case '{':
 				addToken(EXPRESSION_START);
 				mode.add(ExpressionMode);
+			case '[':
+				if (match('[')) {
+					addToken(JUMP_OPTION_START);
+					mode.add(JumpOptionMode);
+					mode.add(JumpOptionTextMode);
+				} else {
+					restOfTheLine(true);
+				}
 			case '<':
 				if (match('<')) {
 					addToken(COMMAND_START);
@@ -436,6 +458,55 @@ class Scanner {
 				identifier(ID);
 				mode.pop();
 		}
+	}
+
+	function jumpOptionTextMode(c:String) {
+		switch (c) {
+			case '|':
+				addToken(JUMP_OPTION_LINK);
+				mode.pop();
+			case ']':
+				throw 'Unexpected char at line $line: $c';
+			case '{':
+				addToken(COMMAND_EXPRESSION_START);
+				mode.add(ExpressionMode);
+			case _:
+				jumpOptionText();
+		}
+	}
+
+	function jumpOptionText() {
+		while (peek() != ']' && peek() != '|' && peek() != '{' && !isAtEnd()) {
+			advance();
+		}
+
+		var value = source.substr(start, current - start);
+		addToken(TEXT, value);
+	}
+
+	function jumpOptionMode(c:String) {
+		switch (c) {
+			case ']':
+				if (match(']')) {
+					addToken(JUMP_OPTION_END);
+					mode.pop();
+					return;
+				}
+				throw 'Unexpected char at line $line: $c';
+			case '{':
+				throw 'Unexpected char at line $line: $c';
+			case _:
+				jumpOption();
+		}
+	}
+
+	function jumpOption() {
+		while (peek() != ']' && peek() != '{' && !isAtEnd()) {
+			advance();
+		}
+
+		var value = source.substr(start, current - start);
+		addToken(JUMP_OPTION_LINK, value);
 	}
 
 	function text() {
@@ -716,4 +787,6 @@ enum ScannerMode {
 	CommandTextMode;
 	CommandIdOrExpressionMode;
 	CommandIdMode;
+	JumpOptionMode;
+	JumpOptionTextMode;
 }

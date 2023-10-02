@@ -25,6 +25,8 @@ interface StmtVisitor {
 	function visitCommandFormattedText(stmt:StmtCommandFormattedText):Dynamic;
 	function visitShortcutOptionStatement(stmt:StmtShortcutOptionStatement):Dynamic;
 	function visitShortcutOption(stmt:StmtShortcutOption):Dynamic;
+	function visitJumpOptionStatement(stmt:StmtJumpOptionStatement):Dynamic;
+	function visitJumpOption(stmt:StmtJumpOption):Dynamic;
 	function visitDeclare(stmt:StmtDeclare):Dynamic;
 	function visitJump(stmt:StmtJump):Dynamic;
 	function visitJumpToNodeName(stmt:StmtJumpToNodeName):Dynamic;
@@ -347,6 +349,35 @@ class StmtShortcutOption extends Stmt {
 
 	override public function accept(visitor:StmtVisitor) {
 		return visitor.visitShortcutOption(this);
+	}
+
+	public var lineStatement(default, null):StmtLine;
+	public var statements(default, null):Array<Stmt>;
+}
+
+class StmtJumpOptionStatement extends Stmt {
+	public function new(options:Array<StmtJumpOption>) {
+		if (options.length < 1)
+			throw "Expected at least one option";
+
+		this.options = options;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitJumpOptionStatement(this);
+	}
+
+	public var options(default, null):Array<StmtJumpOption>;
+}
+
+class StmtJumpOption extends Stmt {
+	public function new(lineStatement:StmtLine, ?statements:Array<Stmt>) {
+		this.lineStatement = lineStatement;
+		this.statements = statements;
+	}
+
+	override public function accept(visitor:StmtVisitor) {
+		return visitor.visitJumpOption(this);
 	}
 
 	public var lineStatement(default, null):StmtLine;

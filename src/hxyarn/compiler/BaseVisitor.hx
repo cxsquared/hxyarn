@@ -1,5 +1,7 @@
 package hxyarn.compiler;
 
+import hxyarn.compiler.Stmt.StmtJumpOption;
+import hxyarn.compiler.Stmt.StmtJumpOptionStatement;
 import hxyarn.compiler.Stmt.StmtJumpToNodeName;
 import hxyarn.compiler.Stmt.StmtJumpToExpression;
 import hxyarn.compiler.Value.ValueVariable;
@@ -192,6 +194,23 @@ class BaseVisitor implements StmtVisitor implements ExprVisitor implements Value
 	}
 
 	public function visitShortcutOption(stmt:StmtShortcutOption):Dynamic {
+		stmt.lineStatement.accept(this);
+		for (statement in stmt.statements) {
+			statement.accept(this);
+		}
+
+		return 0;
+	}
+
+	public function visitJumpOptionStatement(stmt:StmtJumpOptionStatement):Dynamic {
+		for (option in stmt.options) {
+			option.accept(this);
+		}
+
+		return 0;
+	}
+
+	public function visitJumpOption(stmt:StmtJumpOption):Dynamic {
 		stmt.lineStatement.accept(this);
 		for (statement in stmt.statements) {
 			statement.accept(this);
