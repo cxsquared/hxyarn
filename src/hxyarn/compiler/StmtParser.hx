@@ -1,5 +1,6 @@
 package hxyarn.compiler;
 
+import hxyarn.compiler.Stmt.StmtJumpOption;
 import hxyarn.compiler.Stmt.StmtJumpToExpression;
 import hxyarn.compiler.Stmt.StmtJumpToNodeName;
 import hxyarn.compiler.Stmt.StmtCommand;
@@ -21,6 +22,8 @@ import hxyarn.compiler.Stmt.StmtDeclare;
 import hxyarn.compiler.Stmt.StmtJump;
 import hxyarn.compiler.Stmt.StmtShortcutOption;
 import hxyarn.compiler.Stmt.StmtShortcutOptionStatement;
+import hxyarn.compiler.Stmt.StmtJumpOption;
+import hxyarn.compiler.Stmt.StmtJumpOptionStatement;
 import hxyarn.compiler.Stmt.StmtLineFormattedText;
 import hxyarn.compiler.Stmt.StmtCall;
 import hxyarn.compiler.Stmt.StmtIf;
@@ -136,6 +139,10 @@ class StmtParser {
 			}
 		}
 
+		if (match([JUMP_OPTION_START])) {
+			return [jumpOptionStatement()];
+		}
+
 		if (match([INDENT])) {
 			var statements = new Array<Stmt>();
 			while (!match([DEDENT])) {
@@ -168,6 +175,39 @@ class StmtParser {
 			}
 		}
 		return new StmtShortcutOption(line, statements);
+	}
+
+	function jumpOptionStatement():StmtJumpOptionStatement {
+		var options = [jumpOption()];
+		while (match([JUMP_OPTION_START])) {
+			options.push(jumpOption());
+		}
+
+		return new StmtJumpOptionStatement(options);
+	}
+
+	function jumpOption():StmtJumpOption {
+		var lineFormattedText = jumpOptionFormattedText();
+		var hashTags = new Array<StmtHashtag>();
+		var statementLine = new StmtLine(lineFormattedText, null, hashTags);
+		var destination = consume(JUMP_OPTION_LINK, "Expected Jump Option Link");
+		var jumpLinkStmt = new StmtJumpToNodeName(destination);
+		consume(JUMP_OPTION_END, "expected ]]");
+
+		return new StmtJumpOption(statementLine, [jumpLinkStmt]);
+	}
+
+	function jumpOptionFormattedText():StmtLineFormattedText {
+		var texts = new Array<Dynamic>();
+		while (!match([JUMP_OPTION_LINK])) {
+			if (match([COMMAND_EXPRESSION_START])) {
+				texts.push(expression());
+				consume(EXPRESSION_END, "expected }");
+			} else {
+				texts.push(consume(TEXT, "expected text"));
+			}
+		}
+		return new StmtLineFormattedText(texts);
 	}
 
 	function ifStatement():StmtIf {

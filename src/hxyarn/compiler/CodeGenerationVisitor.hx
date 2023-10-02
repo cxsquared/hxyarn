@@ -208,6 +208,69 @@ class CodeGenerationVisitor extends BaseVisitor {
 		return 0;
 	}
 
+	public override function visitJumpOptionStatement(stmt:StmtJumpOptionStatement):Dynamic {
+		var endOfGroupLabel = compiler.registerLabel("group_end");
+
+		var labels = new Array<String>();
+
+		var optionCount = 0;
+
+		for (jumpOption in stmt.options) {
+			var nodeName = "node";
+			if (compiler.currentNode != null && compiler.currentNode.name != null && compiler.currentNode.name != "")
+				nodeName = compiler.currentNode.name;
+
+			var optionDestinationLabel = compiler.registerLabel('jumpOption_${nodeName}_${optionCount + 1}');
+			labels.push(optionDestinationLabel);
+
+			var hasLineCondition = false;
+			if (jumpOption.lineStatement.condition != null) {
+				jumpOption.lineStatement.condition.accept(this);
+
+				hasLineCondition = true;
+			}
+
+			var expressionCount = generateCodeForExpressionsInFormattedText(jumpOption.lineStatement.formattedText.children);
+
+			var lineIdTag = Compiler.getLineIdTag(jumpOption.lineStatement.hashtags.map(function(h:StmtHashtag) {
+				return h.text.lexeme;
+			}));
+
+			if (lineIdTag == null)
+				throw "Internal error: no line id provided";
+
+			compiler.emit(OpCode.ADD_OPTIONS, [
+				Operand.fromString(lineIdTag),
+				Operand.fromString(optionDestinationLabel),
+				Operand.fromFloat(expressionCount),
+				Operand.fromBool(hasLineCondition)
+			]);
+
+			optionCount++;
+		}
+
+		compiler.emit(OpCode.SHOW_OPTIONS, []);
+		compiler.emit(OpCode.JUMP, []);
+
+		optionCount = 0;
+		for (jumpOption in stmt.options) {
+			compiler.currentNode.labels.set(labels[optionCount], compiler.currentNode.instructions.length);
+
+			for (child in jumpOption.statements) {
+				child.accept(this);
+			}
+
+			compiler.emit(OpCode.JUMP_TO, [Operand.fromString(endOfGroupLabel)]);
+
+			optionCount++;
+		}
+
+		compiler.currentNode.labels.set(endOfGroupLabel, compiler.currentNode.instructions.length);
+		compiler.emit(OpCode.POP, []);
+
+		return 0;
+	}
+
 	public override function visitExprParens(expr:ExprParens):Dynamic {
 		return expr.expression.accept(this);
 	}
