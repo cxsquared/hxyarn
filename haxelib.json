@@ -4,9 +4,9 @@
   "license": "MIT",
   "tags": ["yarn", "dialogue", "spinner", "unity", "game"],
   "description": "Parser and runner for Yarn dialogue files",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "classPath": "src/",
   "contributors": ["cxsquared"],
-  "releasenote": "",
+  "releasenote": "Jump Options support thanks to @andresmakesgames",
   "dependencies": {}
 }
