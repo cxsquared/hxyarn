@@ -234,7 +234,7 @@ class Scanner {
 					mode.add(JumpOptionMode);
 					mode.add(JumpOptionTextMode);
 				} else {
-					restOfTheLine(true);
+					text();
 				}
 			case '<':
 				if (match('<')) {

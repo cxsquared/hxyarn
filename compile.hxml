@@ -1,5 +1,0 @@
--cp tests
--cp src
--main tests.Main
--hl bin/test.hl
---debug
