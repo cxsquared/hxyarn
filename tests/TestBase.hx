@@ -17,9 +17,12 @@ class TestBase {
 	var dialogue:Dialogue;
 	var stringTable:Map<String, StringInfo>;
 	var testPlan:TestPlan;
+	var file:String;
 
 	public function new(yarnFile:String, ?testPlanFile:String = null) {
 		dialogue = new Dialogue(new MemoryVariableStore());
+
+		file = yarnFile;
 
 		dialogue.logDebugMessage = this.logDebugMessage;
 		dialogue.logErrorMessage = this.logErrorMessage;
@@ -150,7 +153,10 @@ class TestBase {
 			}
 
 			logDebugMessage('${testPlan.path} test passed!');
+			return;
 		}
+
+		logDebugMessage('${file} test passed!');
 	}
 
 	function assertString(expected:String, actual:String) {

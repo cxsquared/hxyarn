@@ -1,7 +1,5 @@
 package hxyarn.program;
 
-import Type.ValueType;
-import hxyarn.program.types.TypeUtils;
 import hxyarn.program.types.BuiltInTypes;
 import hxyarn.dialogue.DialogueExcpetion.DialogueException;
 import hxyarn.dialogue.Line;

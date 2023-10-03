@@ -233,9 +233,10 @@ class Scanner {
 					addToken(JUMP_OPTION_START);
 					mode.add(JumpOptionMode);
 					mode.add(JumpOptionTextMode);
-				} else {
-					restOfTheLine(true);
+					return;
 				}
+
+				text();
 			case '<':
 				if (match('<')) {
 					addToken(COMMAND_START);

@@ -58,10 +58,10 @@ class DialogueExample {
 
     public function load(text:String, name:String) {
         var job = CompilationJob.createFromStrings(texts, names, dialogue.library);
-		var compiler = Compiler.compile(job);
-		stringTable = compiler.stringTable;
+        var compiler = Compiler.compile(job);
+        stringTable = compiler.stringTable;
 
-		dialogue.addProgram(compiler.program);
+        dialogue.addProgram(compiler.program);
     }
 
     public function runNode(nodeName:String) {
