@@ -236,6 +236,8 @@ class Scanner {
 				} else {
 					text();
 				}
+
+				text();
 			case '<':
 				if (match('<')) {
 					addToken(COMMAND_START);
