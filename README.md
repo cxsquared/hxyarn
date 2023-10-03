@@ -33,12 +33,12 @@ import hxyarn.dialogue.OptionSet;
 import hxyarn.compiler.Compiler;
 import hxyarn.compiler.CompilationJob;
 
-class DialogueExample {
+class DialogueManager {
     var storage = new MemoryVariableStore();
     var dialogue:Dialogue;
     var stringTable:Map<String, StringInfo>;
 
-    public function new(yarnFile:String) {
+    public function new() {
         dialogue = new Dialogue(new MemoryVariableStore());
 
         dialogue.logDebugMessage = this.logDebugMessage;
@@ -56,8 +56,8 @@ class DialogueExample {
         dialogue.addProgram(compiler.program);
     }
 
-    public function load(text:String, name:String) {
-        var job = CompilationJob.createFromStrings(texts, names, dialogue.library);
+    public function loadFromString(text:Array<String>, fileNames:Array<String>) {
+        var job = CompilationJob.createFromStrings(text, names, dialogue.library);
         var compiler = Compiler.compile(job);
         stringTable = compiler.stringTable;
 
@@ -158,6 +158,10 @@ hxd.Res.yarnfile.watch(function() {
     manager.load(hxd.Res.yarnfile.entry.getText(), hxd.Res.yarnfile.name);
 });
 ```
+
+## Example Projects
+
+- <https://github.com/cxsquared/GoblinJamFeb22>
 
 ## Known Issues/Not Implemented
 
