@@ -167,7 +167,5 @@ hxd.Res.yarnfile.watch(function() {
 
 - Error handling is very much lacking
 - Missing built in functions: `round_places`, `decimal`
-- Two failing unit tests:
-  - `Identifies.yarn` - Issue with "fun" characters
-- Lacking support for emojis and most non latin unicode characters
+- Un tested support for emojis and most non latin unicode characters
 - No localization support
