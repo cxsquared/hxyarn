@@ -1,5 +1,6 @@
 package tests;
 
+import haxe.Log;
 import hxyarn.compiler.CompilationJob;
 import hxyarn.compiler.Compiler;
 import haxe.Exception;
@@ -62,16 +63,22 @@ class TestBase {
 	function setUp(fileName:String) {}
 
 	public function logDebugMessage(message:String):Void {
-		trace('DEBUG: $message');
+		#if debug
+		Log.trace('DEBUG: $message');
+		#end
 	}
 
 	public function logErrorMessage(message:String):Void {
-		trace('Error: $message');
+		#if debug
+		Log.trace('Error: $message');
+		#end
 	}
 
 	public function lineHandler(line:Line):HandlerExecutionType {
 		var text = getComposedTextForLine(line);
-		trace('Line: $text');
+		#if debug
+		Log.trace('Line: $text');
+		#end
 
 		if (testPlan != null) {
 			testPlan.next();
@@ -90,11 +97,16 @@ class TestBase {
 		var optionCount = options.options.length;
 		var optionText = new Array<String>();
 
-		trace("Options:");
+		#if debug
+		Log.trace("Options:");
+		#end
+
 		for (option in options.options) {
 			var text = getComposedTextForLine(option.line);
 			optionText.push(text);
-			trace(' - $text');
+			#if debug
+			Log.trace(' - $text');
+			#end
 		}
 
 		if (testPlan != null) {
@@ -128,7 +140,9 @@ class TestBase {
 	}
 
 	public function commandHandler(command:Command) {
-		trace('Command: ${command.text}');
+		#if debug
+		Log.trace('Command: ${command.text}');
+		#end
 
 		if (testPlan != null) {
 			testPlan.next();
@@ -152,11 +166,11 @@ class TestBase {
 				throw new Exception('Stopped dialogue,  but wasn\'t expecting to select one (was expecting ${testPlan.nextExpectedType.getName()})');
 			}
 
-			logDebugMessage('${testPlan.path} test passed!');
+			Log.trace('${testPlan.path} test passed!');
 			return;
 		}
 
-		logDebugMessage('${file} test passed!');
+		Log.trace('${file} test passed!');
 	}
 
 	function assertString(expected:String, actual:String) {

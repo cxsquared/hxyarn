@@ -54,6 +54,7 @@ class Scanner {
 
 	function scanToken() {
 		var c = advance();
+
 		if (!mode.isEmpty()) {
 			switch (mode.first()) {
 				case BodyMode:
@@ -611,15 +612,38 @@ class Scanner {
 		return current >= source.length;
 	}
 
+	// Taken from StringTools
+	static inline var MIN_SURROGATE_CODE_POINT = 65536;
+
+	// Taken from StringTools
+	static inline function utf16CodePointAt(s:String, index:Int):Int {
+		var c = StringTools.fastCodeAt(s, index);
+		if (c >= 0xD800 && c <= 0xDBFF) {
+			c = ((c - 0xD7C0) << 10) | (StringTools.fastCodeAt(s, index + 1) & 0x3FF);
+		}
+		return c;
+	}
+
 	function advance():String {
 		current++;
-		return source.charAt(current - 1);
+
+		// Taken from StringTools
+		#if utf16
+		var c = utf16CodePointAt(source, current - 1);
+		if (c >= MIN_SURROGATE_CODE_POINT) {
+			current++;
+		}
+
+		return String.fromCharCode(c);
+		#else
+		throw new Exception('Most support UTF16');
+		#end
 	}
 
 	function match(expected:String):Bool {
 		if (isAtEnd())
 			return false;
-		if (source.charAt(current) != expected)
+		if (String.fromCharCode(utf16CodePointAt(source, current)) != expected)
 			return false;
 
 		current++;
@@ -633,13 +657,13 @@ class Scanner {
 	function peek():String {
 		if (isAtEnd())
 			return "\\0";
-		return source.charAt(current);
+		return String.fromCharCode(utf16CodePointAt(source, current));
 	}
 
 	function peekNext() {
 		if (current + 1 >= source.length)
 			return '\\0';
-		return source.charAt(current + 1);
+		return String.fromCharCode(utf16CodePointAt(source, current + 1));
 	}
 
 	function string() {
@@ -711,8 +735,18 @@ class Scanner {
 
 	var alpha = ~/^[a-zA-Z_$]+$/;
 
+	var id_head = ~/^[a-zA-Z_$\u00A8\u00AA\u00AD\u00AF\u00B2-\u00B5\u00B7-\u00BA\u00BC-\u00BE\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\u0100-\u02FF\u0370-\u167F\u1681-\u180D\u180F-\u1DBF\u1E00-\u1FFF\u200B-\u200D\u202A-\u202E\u203F-\u2040\u2054\u2060-\u206F\u2070-\u20CF\u2100-\u218F\u2460-\u24FF\u2776-\u2793\u2C00-\u2DFF\u2E80-\u2FFF\u3004-\u3007\u3021-\u302F\u3031-\u303F\u3040-\uD7FF\uF900-\uFD3D\uFD40-\uFDCF\uFDF0-\uFE1F\uFE30-\uFE44\uFE47-\uFFFD]+$/;
+
 	function isAlpha(c:String):Bool {
-		return alpha.match(c);
+		if (id_head.match(c))
+			return true;
+
+		// Emoji stuff seems like regex in haxe doesn't support UTF16 so we'll do it manually
+		var code = new UnicodeString(c).charCodeAt(0);
+		return code > 0x10000 && code < 0x1FFFD || code > 0x20000 && code < 0x2FFFD || code > 0x30000 && code < 0x3FFFD || code > 0x40000 && code < 0x4FFFD
+			|| code > 0x50000 && code < 0x5FFFD || code > 0x60000 && code < 0x6FFFD || code > 0x70000 && code < 0x7FFFD || code > 0x80000 && code < 0x8FFFD
+			|| code > 0x90000 && code < 0x9FFFD || code > 0xA0000 && code < 0xAFFFD || code > 0xB0000 && code < 0xBFFFD || code > 0xC0000 && code < 0xCFFFD
+			|| code > 0xD0000 && code < 0xDFFFD;
 	}
 
 	function isAlphaNumeric(c:String):Bool {

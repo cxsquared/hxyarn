@@ -1,5 +1,6 @@
 package tests;
 
+import haxe.Log;
 import haxe.Exception;
 import tests.TestBase;
 import tests.FunctionTest;
@@ -10,6 +11,8 @@ class Main {
 	}
 
 	static function runYarn() {
+		// Failing
+		runTest('./yarns/yarn/Identifiers.yarn', './yarns/testcases/Identifiers.testplan');
 		// Passing
 		runTest('./yarns/yarn/AnalysisTest.yarn', null);
 		// Passing
@@ -32,8 +35,6 @@ class Main {
 		runTest('./yarns/yarn/FormatFunctions.yarn', './yarns/testcases/FormatFunctions.testplan');
 		// Passing
 		runFunctionTest('./yarns/yarn/Functions.yarn', './yarns/testcases/Functions.testplan');
-		// Failing
-		runTest('./yarns/yarn/Identifiers.yarn', './yarns/testcases/Identifiers.testplan');
 		// Pasing
 		runTest('./yarns/yarn/IfStatements.yarn', './yarns/testcases/IfStatements.testplan');
 		// Passing
@@ -61,9 +62,9 @@ class Main {
 			var test = new TestBase(file, testPlan);
 			test.start();
 		} catch (e:Exception) {
-			trace('------$file: $testPlan failed----------');
-			trace(e.message);
-			trace(e.stack);
+			Log.trace('------$file: $testPlan failed----------');
+			Log.trace(e.message);
+			Log.trace(e.stack);
 		}
 	}
 
@@ -72,9 +73,9 @@ class Main {
 			var test = new FunctionTest(file, testPlan);
 			test.start();
 		} catch (e:Exception) {
-			trace('------$file: $testPlan failed----------');
-			trace(e.message);
-			trace(e.stack);
+			Log.trace('------$file: $testPlan failed----------');
+			Log.trace(e.message);
+			Log.trace(e.stack);
 		}
 	}
 }
