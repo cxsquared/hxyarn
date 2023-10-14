@@ -1,5 +1,6 @@
 package hxyarn.dialogue;
 
+import hxyarn.compiler.YarnStringTools;
 import haxe.iterators.StringIteratorUnicode;
 import hxyarn.dialogue.markup.NoMarkupTextProcessor;
 import hxyarn.dialogue.markup.MarkupProperty;
@@ -54,7 +55,7 @@ class LineParser {
 
 		var markers = new List<MarkupAttributeMarker>();
 
-		var nextCharacter = input.charAt(0);
+		var nextCharacter = new UnicodeString(input).charAt(0);
 		var lastCharacter = "\\0";
 
 		while (current < lenght && nextCharacter != null) {
@@ -256,7 +257,7 @@ class LineParser {
 			return null;
 
 		current++;
-		return String.fromCharCode(input.charCodeAt(offset + current));
+		return String.fromCharCode(new UnicodeString(input).charCodeAt(offset + current));
 	}
 
 	function peek():String {

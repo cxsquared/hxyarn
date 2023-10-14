@@ -612,25 +612,13 @@ class Scanner {
 		return current >= source.length;
 	}
 
-	// Taken from StringTools
-	static inline var MIN_SURROGATE_CODE_POINT = 65536;
-
-	// Taken from StringTools
-	static inline function utf16CodePointAt(s:String, index:Int):Int {
-		var c = StringTools.fastCodeAt(s, index);
-		if (c >= 0xD800 && c <= 0xDBFF) {
-			c = ((c - 0xD7C0) << 10) | (StringTools.fastCodeAt(s, index + 1) & 0x3FF);
-		}
-		return c;
-	}
-
 	function advance():String {
 		current++;
 
 		// Taken from StringTools
 		#if utf16
-		var c = utf16CodePointAt(source, current - 1);
-		if (c >= MIN_SURROGATE_CODE_POINT) {
+		var c = YarnStringTools.utf16CodePointAt(source, current - 1);
+		if (c >= YarnStringTools.MIN_SURROGATE_CODE_POINT) {
 			current++;
 		}
 
@@ -643,7 +631,7 @@ class Scanner {
 	function match(expected:String):Bool {
 		if (isAtEnd())
 			return false;
-		if (String.fromCharCode(utf16CodePointAt(source, current)) != expected)
+		if (String.fromCharCode(YarnStringTools.utf16CodePointAt(source, current)) != expected)
 			return false;
 
 		current++;
@@ -657,13 +645,13 @@ class Scanner {
 	function peek():String {
 		if (isAtEnd())
 			return "\\0";
-		return String.fromCharCode(utf16CodePointAt(source, current));
+		return String.fromCharCode(YarnStringTools.utf16CodePointAt(source, current));
 	}
 
 	function peekNext() {
 		if (current + 1 >= source.length)
 			return '\\0';
-		return String.fromCharCode(utf16CodePointAt(source, current + 1));
+		return String.fromCharCode(YarnStringTools.utf16CodePointAt(source, current + 1));
 	}
 
 	function string() {
