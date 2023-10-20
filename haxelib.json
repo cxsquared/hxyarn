@@ -4,9 +4,9 @@
   "license": "MIT",
   "tags": ["yarn", "dialogue", "spinner", "unity", "game"],
   "description": "Parser and runner for Yarn dialogue files",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "classPath": "src/",
-  "contributors": ["cxsquared"],
-  "releasenote": "0.1.9 emoji displaying support for dialogue manager\n0.1.8 emoji/unicode support\n0.1.7 fixed bug with markup and format functions\n0.1.6: Jump Options support thanks to @andresmakesgames",
+  "contributors": ["cxsquared", "andresmakesgames"],
+  "releasenote": "Fix for consuming attribute line twice via @andresmakesgames",
   "dependencies": {}
 }
