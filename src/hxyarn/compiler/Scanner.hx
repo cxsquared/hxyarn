@@ -234,9 +234,7 @@ class Scanner {
 					addToken(JUMP_OPTION_START);
 					mode.add(JumpOptionMode);
 					mode.add(JumpOptionTextMode);
-					return;
 				}
-
 				text();
 			case '<':
 				if (match('<')) {
