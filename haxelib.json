@@ -6,7 +6,7 @@
   "description": "Parser and runner for Yarn dialogue files",
   "version": "0.1.10",
   "classPath": "src/",
-  "contributors": ["cxsquared", "andresmakesgames"],
+  "contributors": ["cxsquared"],
   "releasenote": "Fix for consuming attribute line twice via @andresmakesgames",
   "dependencies": {}
 }
