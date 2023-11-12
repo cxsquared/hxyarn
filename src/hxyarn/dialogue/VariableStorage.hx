@@ -4,6 +4,7 @@ import hxyarn.program.types.BuiltInTypes;
 import hxyarn.program.Value;
 
 interface VariableStorage {
+	public function contains(variableName:String):Bool;
 	public function setValue(variableName:String, value:Dynamic):Void;
 	public function getValue(variableName:String):Value;
 	public function clear():Void;
@@ -44,5 +45,9 @@ class MemoryVariableStore implements VariableStorage {
 
 	public function clear() {
 		variables.clear();
+	}
+
+	public function contains(variableName:String):Bool {
+		return variables.exists(variableName);
 	}
 }

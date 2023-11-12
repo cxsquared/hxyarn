@@ -4,9 +4,9 @@
   "license": "MIT",
   "tags": ["yarn", "dialogue", "spinner", "unity", "game"],
   "description": "Parser and runner for Yarn dialogue files",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "classPath": "src/",
   "contributors": ["cxsquared"],
-  "releasenote": "Fix for consuming attribute line twice via @andresmakesgames",
+  "releasenote": "Loading initial variables on program set",
   "dependencies": {}
 }

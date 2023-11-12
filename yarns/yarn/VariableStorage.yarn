@@ -9,6 +9,9 @@ title: Start
 <<declare $str2 = "">>
 <<declare $str3 = "">>
 
+// Testing intial value
+<<call assert($num1 == 0)>>
+
 // Testing variable storage
 <<set $num1 to 1>>
 

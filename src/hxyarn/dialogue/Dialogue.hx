@@ -1,6 +1,5 @@
 package hxyarn.dialogue;
 
-import hxyarn.program.Value;
 import hxyarn.dialogue.markup.MarkupAttributeMarker;
 import hxyarn.dialogue.markup.IAttributeMarkerProcessor;
 import hxyarn.dialogue.markup.MarkupParseResult;
@@ -148,6 +147,29 @@ class Dialogue implements IAttributeMarkerProcessor {
 		lineParser.registerMarkerProcessor("ordinal", this);
 	}
 
+	public function setInitialVariables(overrideExisting:Bool = false) {
+		if (program == null) {
+			logErrorMessage("Unable to set default values, there is no project set");
+			return;
+		}
+
+		for (valueName => value in program.initialValues) {
+			if (!overrideExisting && variableStorage.contains(valueName))
+				continue;
+
+			switch (value.type) {
+				case STRING:
+					variableStorage.setValue(valueName, value.stringValue);
+				case BOOL:
+					variableStorage.setValue(valueName, value.boolValue);
+				case FLOAT:
+					variableStorage.setValue(valueName, value.floatValue);
+				case _:
+					logDebugMessage('$valueName is of an invalid type: ${value.type}');
+			}
+		}
+	}
+
 	function handleCommand(command:Command) {
 		if (StringTools.startsWith(command.text, "wait")) {
 			var timeInSeconds = Std.parseFloat(command.text.substring(4));
@@ -169,6 +191,7 @@ class Dialogue implements IAttributeMarkerProcessor {
 
 	public function setProgram(program:Program) {
 		this.program = program;
+		setInitialVariables();
 	}
 
 	public function addProgram(program:Program) {

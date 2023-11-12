@@ -19,10 +19,14 @@ class Program {
 		for (otherProgram in programs) {
 			for (nodeName => node in otherProgram.nodes) {
 				if (output.nodes.exists(nodeName)) {
-					throw new Exception('This node already contains a node named $nodeName');
+					throw new Exception('This program already contains a node named $nodeName');
 				}
 
 				output.nodes.set(nodeName, node.clone());
+			}
+
+			for (initialValueName => value in otherProgram.initialValues) {
+				output.initialValues.set(initialValueName, value);
 			}
 		}
 
