@@ -58,6 +58,19 @@ class Library {
 			this.registerFunction(canonicalName, methodInfo.numberOfArgs, methodInfo.func, methodInfo.returnType);
 		}
 	}
+
+	/// <summary>
+	/// Generates a unique tracking variable name.
+	/// This is intended to be used to generate names for visting.
+	/// Ideally these will very reproduceable and sensible.
+	/// For now it will be something terrible and easy.
+	/// </summary>
+	/// <param name="nodeName">The name of the node that needs to
+	/// have a tracking variable created.</param>
+	/// <returns>The new variable name.</returns>
+	public static function generateUniqueVisitedVariableForNode(nodeName:String):String {
+		return '$$Yarn.Internal.Visiting.$nodeName';
+	}
 }
 
 class FunctionInfo {

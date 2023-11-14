@@ -1,5 +1,7 @@
 package hxyarn.dialogue;
 
+import hxyarn.program.Value;
+import hxyarn.program.types.BuiltInTypes;
 import hxyarn.dialogue.markup.MarkupAttributeMarker;
 import hxyarn.dialogue.markup.IAttributeMarkerProcessor;
 import hxyarn.dialogue.markup.MarkupParseResult;
@@ -139,6 +141,12 @@ class Dialogue implements IAttributeMarkerProcessor {
 		vm.commandHandler = this.handleCommand;
 
 		library.importLibrary(new StandardLibrary());
+		library.registerFunction("visited", 1, function(parameters:Array<Value>):Dynamic {
+			return isNodeVisted(parameters[0].asString());
+		}, BuiltInTypes.boolean);
+		library.registerFunction("visited_count", 1, function(parameters:Array<Value>):Dynamic {
+			return getNodeVisitCount(parameters[0].asString());
+		}, BuiltInTypes.number);
 
 		lineParser = new LineParser();
 
@@ -348,5 +356,21 @@ class Dialogue implements IAttributeMarkerProcessor {
 
 		var input = replacementValue.toString();
 		return ValuePlaceholderRegex.replace(input, value);
+	}
+
+	function isNodeVisted(nodeName:String):Bool {
+		var count = variableStorage.getValue(Library.generateUniqueVisitedVariableForNode(nodeName));
+		if (count == hxyarn.program.Value.NULL)
+			return false;
+
+		return count.asNumber() > 0;
+	}
+
+	function getNodeVisitCount(nodeName:String):Float {
+		var count = variableStorage.getValue(Library.generateUniqueVisitedVariableForNode(nodeName));
+		if (count == hxyarn.program.Value.NULL)
+			return 0.;
+
+		return count.asNumber();
 	}
 }

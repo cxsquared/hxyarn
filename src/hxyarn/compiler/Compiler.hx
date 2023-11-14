@@ -21,6 +21,7 @@ class Compiler {
 	var library:Library;
 	var variableDeclarations:Array<Declaration>;
 	var fileParseResult:StmtDialogue;
+	var trackingNodes:Array<String>;
 
 	public function new(fileName:String, fileParseResult:StmtDialogue) {
 		program = new Program();
@@ -81,9 +82,33 @@ class Compiler {
 			// TODO Validate Expressions
 		}
 
+		// determining the nodes we need to track visits on
+		// this needs to be done before we finish up with declarations
+		// so that any tracking variables are included in the compiled declarations
+		var trackingNodes = new Array<String>();
+		var ignoringNodes = new Array<String>();
+		for (parsedFile in parsedFiles) {
+			var thingy = new NodeTrackingVisitor(trackingNodes, ignoringNodes);
+			thingy.visitDialogue(parsedFile);
+		}
+
+		// removing all nodes we are told explicitly to not track
+		trackingNodes = trackingNodes.filter(function(n) {
+			return !ignoringNodes.contains(n);
+		});
+
+		var trackingDeclarations = new Array<Declaration>();
+		for (node in trackingNodes) {
+			trackingDeclarations.push(Declaration.createVariable(Library.generateUniqueVisitedVariableForNode(node), BuiltInTypes.number, 0,
+				'The generated variable for tracking visits of node $node'));
+		}
+
+		knownVariableDeclarations = knownVariableDeclarations.concat(trackingDeclarations);
+		derivedVariableDeclarations = derivedVariableDeclarations.concat(trackingDeclarations);
+
 		for (i => parsedFile in parsedFiles) {
 			var file = job.files[i];
-			var compilationResult = generatecode(parsedFile, file.fileName, knownVariableDeclarations, job, stringTableManager);
+			var compilationResult = generateCode(parsedFile, file.fileName, knownVariableDeclarations, job, stringTableManager, trackingNodes);
 			results.push(compilationResult);
 		}
 
@@ -122,11 +147,12 @@ class Compiler {
 		return finalResults;
 	}
 
-	static function generatecode(parsedFile:StmtDialogue, fileName:String, variableDeclarations:Array<Declaration>, job:CompilationJob,
-			stringTableManager:StringTableManager):CompilationResult {
+	static function generateCode(parsedFile:StmtDialogue, fileName:String, variableDeclarations:Array<Declaration>, job:CompilationJob,
+			stringTableManager:StringTableManager, trackingNodes:Array<String>):CompilationResult {
 		var compiler = new Compiler(fileName, parsedFile);
 		compiler.library = job.library;
 		compiler.variableDeclarations = variableDeclarations;
+		compiler.trackingNodes = trackingNodes;
 		compiler.compileParsedFile();
 
 		// TODO DebugInfo
@@ -154,7 +180,9 @@ class Compiler {
 				}
 			}
 			currentNode.labels.set(registerLabel(), currentNode.instructions.length);
-			var visitor = new CodeGenerationVisitor(this);
+
+			var track = trackingNodes.contains(currentNode.name) ? Library.generateUniqueVisitedVariableForNode(currentNode.name) : null;
+			var visitor = new CodeGenerationVisitor(this, track);
 			visitor.visitNode(node);
 			var hasRemainingOptions = false;
 			for (instruction in currentNode.instructions) {
@@ -169,6 +197,9 @@ class Compiler {
 				emit(OpCode.SHOW_OPTIONS, []);
 				emit(OpCode.RUN_NODE, []);
 			} else {
+				if (track != null) {
+					CodeGenerationVisitor.generateTrackingCode(this, track);
+				}
 				emit(OpCode.STOP, []);
 			}
 

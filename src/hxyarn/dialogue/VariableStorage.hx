@@ -7,6 +7,7 @@ interface VariableStorage {
 	public function contains(variableName:String):Bool;
 	public function setValue(variableName:String, value:Dynamic):Void;
 	public function getValue(variableName:String):Value;
+	public function getAll():Map<String, Value>;
 	public function clear():Void;
 }
 
@@ -49,5 +50,9 @@ class MemoryVariableStore implements VariableStorage {
 
 	public function contains(variableName:String):Bool {
 		return variables.exists(variableName);
+	}
+
+	public function getAll():Map<String, Value> {
+		return variables.copy();
 	}
 }

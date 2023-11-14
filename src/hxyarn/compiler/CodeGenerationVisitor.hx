@@ -24,9 +24,11 @@ class CodeGenerationVisitor extends BaseVisitor {
 	var labelCount:Int = 0;
 	var ifStatementEndLabels = new List<String>();
 	var generateClauseLabels = new List<String>();
+	var trackingEnabled:String = null;
 
-	public function new(compiler:Compiler) {
+	public function new(compiler:Compiler, trackingEnabled:String) {
 		this.compiler = compiler;
+		this.trackingEnabled = trackingEnabled;
 	}
 
 	function generateCodeForExpressionsInFormattedText(nodes:Array<Dynamic>):Int {
@@ -362,6 +364,9 @@ class CodeGenerationVisitor extends BaseVisitor {
 	}
 
 	public override function visitJumpToNodeName(stmt:StmtJumpToNodeName):Dynamic {
+		if (trackingEnabled != null) {
+			generateTrackingCode(this.compiler, trackingEnabled);
+		}
 		compiler.emit(OpCode.PUSH_STRING, [Operand.fromString(stmt.destination.lexeme)]);
 		compiler.emit(OpCode.RUN_NODE, []);
 
@@ -369,6 +374,9 @@ class CodeGenerationVisitor extends BaseVisitor {
 	}
 
 	public override function visitJumpToExpression(stmt:StmtJumpToExpression):Dynamic {
+		if (trackingEnabled != null) {
+			generateTrackingCode(this.compiler, trackingEnabled);
+		}
 		stmt.expr.accept(this);
 		compiler.emit(OpCode.RUN_NODE, []);
 
@@ -431,5 +439,21 @@ class CodeGenerationVisitor extends BaseVisitor {
 
 		compiler.emit(OpCode.PUSH_FLOAT, [Operand.fromFloat(parameters.length)]);
 		compiler.emit(OpCode.CALL_FUNC, [Operand.fromString(funcName)]);
+	}
+
+	public static function generateTrackingCode(compiler:Compiler, variableName:String) {
+		// pushing the var and the increment onto the stack
+		compiler.emit(OpCode.PUSH_VARIABLE, [Operand.fromString(variableName)]);
+		compiler.emit(OpCode.PUSH_FLOAT, [Operand.fromFloat(1)]);
+
+		// Indicate that we are pushing this many items for comparison
+		compiler.emit(OpCode.PUSH_FLOAT, [Operand.fromFloat(2)]);
+
+		// calling the function
+		compiler.emit(OpCode.CALL_FUNC, [Operand.fromString("Number.ADD")]);
+
+		// now store the variable and clean up the stack
+		compiler.emit(OpCode.STORE_VARIABLE, [Operand.fromString(variableName)]);
+		compiler.emit(OpCode.POP, []);
 	}
 }

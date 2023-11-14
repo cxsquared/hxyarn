@@ -55,6 +55,10 @@ class Main {
 		runTest('./yarns/yarn/Types.yarn', './yarns/testcases/Types.testplan');
 		// Passing
 		runTest('./yarns/yarn/VariableStorage.yarn', './yarns/testcases/VariableStorage.testplan');
+		// Passing
+		runTest('./yarns/yarn/VisitCount.yarn', './yarns/testcases/VisitCount.testplan');
+		// Passing
+		runTest('./yarns/yarn/VisitTracking.yarn', './yarns/testcases/VisitTracking.testplan');
 	}
 
 	static function runTest(file:String, testPlan:String) {
