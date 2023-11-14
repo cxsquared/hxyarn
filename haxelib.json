@@ -4,9 +4,9 @@
   "license": "MIT",
   "tags": ["yarn", "dialogue", "spinner", "unity", "game"],
   "description": "Parser and runner for Yarn dialogue files",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "classPath": "src/",
   "contributors": ["cxsquared"],
-  "releasenote": "Loading initial variables on program set",
+  "releasenote": "Added Node Tracking",
   "dependencies": {}
 }
