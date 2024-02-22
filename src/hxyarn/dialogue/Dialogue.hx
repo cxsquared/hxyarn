@@ -18,7 +18,7 @@ typedef LineHandler = Line->Void;
 typedef OptionsHandler = OptionSet->Void;
 typedef CommandHandler = Command->Void;
 typedef NodeCompleteHandler = String->Void;
-typedef NodeStartHanlder = String->Void;
+typedef NodeStartHandler = String->Void;
 typedef DialogueCompleteHandler = Void->Void;
 typedef PrepareForLinesHandler = Array<String>->Void;
 

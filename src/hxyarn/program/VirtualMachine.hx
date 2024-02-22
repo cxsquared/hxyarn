@@ -18,7 +18,7 @@ class VirtualMachine {
 	public var lineHandler:LineHandler;
 	public var optionsHandler:OptionsHandler;
 	public var commandHandler:CommandHandler;
-	public var nodeStartHandler:NodeStartHanlder;
+	public var nodeStartHandler:NodeStartHandler;
 	public var nodeCompleteHandler:NodeCompleteHandler;
 	public var dialogueCompleteHandler:DialogueCompleteHandler;
 	public var prepareForLinesHandler:PrepareForLinesHandler;
