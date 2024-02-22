@@ -1,7 +1,7 @@
 package hxyarn.program;
 
 import hxyarn.program.types.BuiltInTypes;
-import hxyarn.dialogue.DialogueExcpetion.DialogueException;
+import hxyarn.dialogue.DialogueException.DialogueException;
 import hxyarn.dialogue.Line;
 import hxyarn.dialogue.Option;
 import hxyarn.dialogue.OptionSet;
@@ -18,7 +18,7 @@ class VirtualMachine {
 	public var lineHandler:LineHandler;
 	public var optionsHandler:OptionsHandler;
 	public var commandHandler:CommandHandler;
-	public var nodeStartHandler:NodeStartHanlder;
+	public var nodeStartHandler:NodeStartHandler;
 	public var nodeCompleteHandler:NodeCompleteHandler;
 	public var dialogueCompleteHandler:DialogueCompleteHandler;
 	public var prepareForLinesHandler:PrepareForLinesHandler;
