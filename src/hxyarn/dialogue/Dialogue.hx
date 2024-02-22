@@ -8,7 +8,7 @@ import hxyarn.dialogue.markup.MarkupParseResult;
 import hxyarn.program.StandardLibrary;
 import hxyarn.program.Library;
 import hxyarn.dialogue.CLDR.PluralCase;
-import hxyarn.dialogue.DialogueExcpetion.DialogueException;
+import hxyarn.dialogue.DialogueException.DialogueException;
 import hxyarn.program.VirtualMachine;
 import hxyarn.dialogue.OptionSet;
 import hxyarn.program.Program;
