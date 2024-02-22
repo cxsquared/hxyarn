@@ -1,7 +1,7 @@
 package hxyarn.program;
 
+import hxyarn.dialogue.DialogueExcpetion.DialogueException;
 import hxyarn.program.types.BuiltInTypes;
-import hxyarn.dialogue.DialogueException.DialogueException;
 import hxyarn.dialogue.Line;
 import hxyarn.dialogue.Option;
 import hxyarn.dialogue.OptionSet;

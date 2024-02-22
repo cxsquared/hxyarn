@@ -1,5 +1,6 @@
 package hxyarn.dialogue;
 
+import hxyarn.dialogue.DialogueExcpetion.DialogueException;
 import hxyarn.program.Value;
 import hxyarn.program.types.BuiltInTypes;
 import hxyarn.dialogue.markup.MarkupAttributeMarker;
@@ -8,7 +9,6 @@ import hxyarn.dialogue.markup.MarkupParseResult;
 import hxyarn.program.StandardLibrary;
 import hxyarn.program.Library;
 import hxyarn.dialogue.CLDR.PluralCase;
-import hxyarn.dialogue.DialogueException.DialogueException;
 import hxyarn.program.VirtualMachine;
 import hxyarn.dialogue.OptionSet;
 import hxyarn.program.Program;
@@ -59,7 +59,7 @@ class Dialogue implements IAttributeMarkerProcessor {
 	public var optionsHandler(get, set):OptionsHandler;
 
 	public var commandHandler(get, set):CommandHandler;
-	public var nodeStartHandler(get, set):NodeStartHanlder;
+	public var nodeStartHandler(get, set):NodeStartHandler;
 	public var nodeCompleteHandler(get, set):NodeCompleteHandler;
 	public var dialogueCompleteHandler(get, set):DialogueCompleteHandler;
 	public var prepareForLinesHandler(get, set):PrepareForLinesHandler;
