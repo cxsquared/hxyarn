@@ -1,3 +1,5 @@
+Moved to https://git.codyclaborn.me/cxsquared/hxyarn
+
 # hxyarn
 
 A Haxe port of [Yarn Spinner](https://github.com/YarnSpinnerTool/YarnSpinner)
